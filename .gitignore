@@ -1,0 +1,44 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# 视频资产（体积大，不入版本；由 scripts/export-ciwei.mjs 从 CiWei 主站复制生成）
+public/media/
+
+# 封面源图（可再生产物；由 scripts/export-ciwei.mjs 从 CiWei 主站复制，
+# 供 pipeline/make-covers.mjs 派生 webp 双版本）——磁盘保留，不入版本
+public/covers/*.jpg
+
+# Pipeline 源素材（体积大，不入版本；磁盘保留，供 pipeline 脚本手工调用）
+pipeline/raw/
+pipeline/fonts-source/
+
+# 清理软处置区与临时预览产物（可恢复，不进版本）
+_archive_*/
+/_*
+
+# dotenv environment variables file
+.env
+.env.*
+!.env.example
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

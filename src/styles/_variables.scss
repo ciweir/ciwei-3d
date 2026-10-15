@@ -1,0 +1,65 @@
+// =============================================================================
+// 设计 token · 此唯 3D 作品集世界
+// -----------------------------------------------------------------------------
+// 手绘纸世界的统一色板、文本层级、间距与动效。
+// 说明：canvas 内 three.js 的材质色属逐物件绘制调校，不在此列。
+// 色值经全项目取样收敛（原 417 处出现、80 种不同值、其中 48% 仅出现一次）。
+// =============================================================================
+
+// ── 墨色：铅笔笔迹（文本 / 描边 / 强调）────────────────────────────────
+$ink: #1a1a1a;          // 主墨色（全项目最高频）
+$ink-strong: #111111;   // 深墨（重标题、深遮罩）
+$black: #000000;        // 纯黑（视频框、暗底）
+
+// ── 纸色：背景 / 卡片 / 纸面 ───────────────────────────────────────
+$paper: #ffffff;        // 纸白（卡片、面板）
+$paper-warm: #fafafa;   // 温纸白（页面底）
+$paper-cream: #f5f0e6;  // 奶油纸（3D 世界基调）
+$paper-shade: #e0e0e0;  // 纸面阴影（缩略图底、占位）
+
+// ── 三级文本层级：标题 / 正文 / 元数据 ──────────────────────────────
+// 标题用 $text-title（最重）｜正文用 $text-body｜日期与计数等元数据用 $text-meta（最轻）
+$text-title: $ink;
+$text-body: #444444;
+$text-meta: #777777;
+
+// ── 线条：虚线分隔 / 描边 ────────────────────────────────────────
+$line: #cccccc;
+$line-soft: #bbbbbb;
+
+// ── 兼容旧名（既有样式沿用）────────────────────────────────────────
+$color-white: $paper;
+$color-black: $ink-strong;
+$color-gray: $ink;
+
+// ── 字体 ─────────────────────────────────────────────────────
+// 英文装饰字体无中文字形：中文文案必须显式指定 $font-cjk，否则会回退成系统字体。
+$font-title: 'Gloria Hallelujah', cursive;   // 英文装饰标题
+$font-handwritten: 'Caveat', cursive;        // 手写批注
+$font-primary: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+$font-cjk: 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans SC', sans-serif; // 中文字形（系统栈）
+// 注意：/fonts/NotoSansSC.ttf 是按 3D 已知文案裁剪的窄子集（pipeline/chars.txt），
+// 仅供 canvas 内的 <Text> 使用；不可作为通用 CSS 字体，否则会逐字回退。
+
+// ── 断点 ─────────────────────────────────────────────────────
+$breakpoint-mobile: 480px;
+$breakpoint-tablet: 768px;
+$breakpoint-desktop: 1024px;
+$breakpoint-wide: 1440px;
+
+// ── 层级 ─────────────────────────────────────────────────────
+$z-canvas: 1;
+$z-ui: 50;
+$z-preloader: 100;
+
+// ── 间距（4 的倍数，保证节奏一致）────────────────────────────────────
+$spacing-xs: 0.5rem;   // 8px
+$spacing-sm: 1rem;     // 16px
+$spacing-md: 2rem;     // 32px
+$spacing-lg: 4rem;     // 64px
+$spacing-xl: 8rem;     // 128px
+
+// ── 动效 ─────────────────────────────────────────────────────
+$transition-fast: 0.2s ease;
+$transition-normal: 0.4s ease;
+$transition-slow: 0.8s ease;

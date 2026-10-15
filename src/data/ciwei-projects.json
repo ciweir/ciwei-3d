@@ -1,0 +1,629 @@
+[
+  {
+    "id": "edifier-x5-evo",
+    "title": "漫步者 X5 Evo",
+    "front": "/covers/edifier-x5-evo-sketch.webp",
+    "painted": "/covers/edifier-x5-evo.webp",
+    "url": "#edifier-x5-evo",
+    "description": "39 秒讲清两个卖点：主动降噪与 43 小时续航。没有解说，靠画面和字幕完成叙事。",
+    "techStack": [],
+    "preview": "/media/preview/edifier-x5-evo.mp4",
+    "role": [
+      "剪辑",
+      "调色",
+      "拍摄（3 人协作）"
+    ],
+    "client": "漫步者",
+    "year": 2026,
+    "category": "产品片",
+    "durationSeconds": 39,
+    "background": "2026 年 6 月交付的漫步者 X5 Evo 产品片，全片 39 秒。拍摄由三人协作完成，剪辑与调色独立完成。\n\n成片采用静音设计 —— 原文件无音轨，产品卖点（主动降噪、43 小时续航、音质）全部由画面与烧入字幕承担。这是产品片常见的处理方式：在信息流里被静音播放时，不依赖声音也能把话说完。",
+    "problem": "产品片要在信息流里被静音播放，39 秒内还得把三个卖点（主动降噪、43 小时续航、音质）讲完。约束是双重的：时间极短，且原文件本身无音轨——声音这条路从一开始就不通。",
+    "process": "拍摄由三人协作完成，剪辑与调色独立完成。画面走花卉陪衬加暗调布光，产品特写负责承载质感；每一处转场都要给字幕留出落脚的位置，节奏跟着字幕走而不是跟着音乐走。",
+    "solution": "走静音设计：用烧入字幕承担卖点传达，画面负责「把话说得好看」。三个卖点按注意力顺序依次给出，避免 39 秒内挤成一团——信息流场景下，观众不点开声音也要能把话听完。",
+    "reflection": "静音设计在产品片里是常见做法，而不是这条片的特殊处理；真正的取舍在于把「时间短」和「卖点多」两个约束同时压到 39 秒内，靠字幕与画面分工去解，而不是靠加长时长去解。",
+    "results": [],
+    "videos": [
+      {
+        "id": "x5-film",
+        "title": "漫步者 X5 Evo · 产品片",
+        "url": "/media/edifier-x5-evo.mp4",
+        "durationSeconds": 38.64
+      }
+    ],
+    "gallery": []
+  },
+  {
+    "id": "emotion-narration",
+    "title": "情感类口播",
+    "front": "/covers/emotion-narration-sketch.webp",
+    "painted": "/covers/emotion-narration.webp",
+    "url": "#emotion-narration",
+    "description": "竖屏口播 2 分 29 秒。暖调居家场景，信息密度靠口播节奏和字幕出现时机撑起来。",
+    "techStack": [],
+    "preview": "/media/preview/emotion-narration.mp4",
+    "role": [
+      "剪辑",
+      "调色"
+    ],
+    "client": "自媒体账号",
+    "year": 2026,
+    "category": "口播",
+    "durationSeconds": 149,
+    "background": "2026 年 7 月完成的情感类自媒体内容，竖屏 9:16 画幅，成片 2 分 29 秒。\n\n口播类内容的剪辑重点不在画面组接，而在节奏：语速的停顿、情绪的起伏、字幕出现的时机。这条整体走暖调，居家场景降低与观众的距离感。",
+    "problem": "2 分 29 秒的竖屏口播，内容密度全压在人声上——画面组接不是重点，节奏（语速停顿、情绪起伏、字幕时机）才是；节奏一错整条就散。",
+    "process": "暖调居家场景打底，剪辑围绕人声的呼吸点做取舍：停顿处留白，情绪起处跟上，字幕出现的时机卡在说话的节奏上。",
+    "solution": "让节奏而非画面组接撑起信息密度——停顿、起伏、字幕三者对齐到同一条时间线，居家暖调降低观众的心理距离。",
+    "reflection": "口播类剪辑的重心和常规短片相反：不追求画面变化密度，而是让人声节奏成为主轴，画面与字幕都为它服务。",
+    "results": [],
+    "videos": [
+      {
+        "id": "emo-film",
+        "title": "情感类口播 · 正片",
+        "url": "/media/emotion-narration.mp4",
+        "durationSeconds": 149.37
+      }
+    ],
+    "gallery": []
+  },
+  {
+    "id": "parenting-education",
+    "title": "育儿教育类口播",
+    "front": "/covers/parenting-education-sketch.webp",
+    "painted": "/covers/parenting-education.webp",
+    "url": "#parenting-education",
+    "description": "竖屏口播 42 秒。校园实拍场景，观点类内容，字幕是主要信息载体。",
+    "techStack": [],
+    "preview": "/media/preview/parenting-education.mp4",
+    "role": [
+      "剪辑",
+      "调色"
+    ],
+    "client": "自媒体账号",
+    "year": 2026,
+    "category": "口播",
+    "durationSeconds": 42,
+    "background": "2026 年 7 月完成的育儿教育类自媒体内容，竖屏 9:16 画幅，成片 42 秒。\n\n这类短内容的剪辑约束和长片完全不同：42 秒里要把一个观点讲完并给出记忆点，每一句都要卡在信息密度最高的地方。实拍场景（教室、作品墙）提供了可信度，剪辑要做的是让画面跟上观点的推进。",
+    "problem": "42 秒的硬约束下要把一个观点讲完并留下记忆点，每一句都得卡在信息密度最高处，一句废话都会挤掉观点的完整度。",
+    "process": "以实拍场景（教室、作品墙）提供可信度背书，剪辑让画面推进节奏与观点推进节奏严格同步，字幕承担主要信息传递。",
+    "solution": "用实拍场景建立可信度，剪辑只做一件事——让画面跟上观点，不在 42 秒里插入任何不承载信息的镜头。",
+    "reflection": "短观点内容的剪辑约束与长片完全不同：时间不是用来铺陈的，每一句都要同时完成「推进」和「记忆」两个任务。",
+    "results": [],
+    "videos": [
+      {
+        "id": "edu-film",
+        "title": "育儿教育类口播 · 正片",
+        "url": "/media/parenting-education.mp4",
+        "durationSeconds": 42.1
+      }
+    ],
+    "gallery": []
+  },
+  {
+    "id": "medical-aesthetics",
+    "title": "医美类口播",
+    "front": "/covers/medical-aesthetics-sketch.webp",
+    "painted": "/covers/medical-aesthetics.webp",
+    "url": "#medical-aesthetics",
+    "description": "竖屏口播 1 分 59 秒。章节式字幕把一个话题拆成四个论点，是这三条里结构最完整的一条。",
+    "techStack": [],
+    "preview": "/media/preview/medical-aesthetics.mp4",
+    "role": [
+      "剪辑",
+      "调色"
+    ],
+    "client": "自媒体账号",
+    "year": 2026,
+    "category": "口播",
+    "durationSeconds": 119,
+    "background": "2026 年 7 月完成的医美类自媒体内容，竖屏 9:16 画幅，成片 1 分 59 秒。\n\n这条的特别之处是**章节式字幕**：正视负面偏见 → 树立正向医美观 → 把握审美上限 → 追求自然持久，四个论点层层递进。医美是强敏感话题，字幕设计的克制程度直接影响内容可信度 —— 信息架构清晰本身就是说服力。",
+    "problem": "医美是强敏感话题，观众对夸张表述天然警惕；1 分 59 秒里要把一个话题讲清楚，信息架构若混乱，再好的内容也难建立可信度。",
+    "process": "用章节式字幕把内容拆成四个层层递进的论点：正视负面偏见 → 树立正向医美观 → 把握审美上限 → 追求自然持久。",
+    "solution": "让信息架构本身承担说服力——章节式字幕给出清晰的推进路径，字幕设计保持克制，避免敏感话题里常见的过度包装。",
+    "reflection": "敏感话题的可信度很大程度上来自信息结构是否清晰、表达是否克制，而不是话术强度；结构清楚本身就是说服力。",
+    "results": [],
+    "videos": [
+      {
+        "id": "med-film",
+        "title": "医美类口播 · 正片",
+        "url": "/media/medical-aesthetics.mp4",
+        "durationSeconds": 118.67
+      }
+    ],
+    "gallery": []
+  },
+  {
+    "id": "xiaomi",
+    "title": "小米 12 · 新年快闪店",
+    "front": "/covers/xiaomi-sketch.webp",
+    "painted": "/covers/xiaomi.webp",
+    "url": "#xiaomi",
+    "description": "27 秒品牌快剪：快闪店现场与产品镜头交替，信息靠角标和节奏推进。",
+    "techStack": [],
+    "preview": "/media/preview/xiaomi.mp4",
+    "role": [
+      "剪辑"
+    ],
+    "client": "小米",
+    "year": 2026,
+    "category": "快剪",
+    "durationSeconds": 27,
+    "background": "小米 12 新年快闪店的宣传短片，全片 27 秒。画面上有品牌角标、活动主题（新年，新速度 · 限时快闪店）与城市信息（合肥）。\n\n品牌快剪的约束是：观众随时可能划走，前 3 秒必须建立\"这是什么\"。所以产品特写和现场氛围要交替出现，不能有一段超过两秒的\"慢下来\"。",
+    "problem": "观众随时可能划走，27 秒里前 3 秒必须建立「这是什么」，且全程不能出现超过两秒的「慢下来」——注意力断了就回不来。",
+    "process": "画面叠加品牌角标、活动主题（新年，新速度 · 限时快闪店）与城市信息（合肥），产品特写与现场氛围镜头交替推进。",
+    "solution": "用「交替」结构控制节奏：产品特写与现场氛围不断切换，不给观众任何停顿的窗口；活动信息交给角标，画面专注在场感。",
+    "reflection": "品牌快剪的节奏是被投放环境决定的——先有「随时会划走」这个前提，才有了不许慢下来这条规矩。",
+    "results": [],
+    "videos": [
+      {
+        "id": "mi-film",
+        "title": "小米 12 · 新年快闪店",
+        "url": "/media/xiaomi.mp4",
+        "durationSeconds": 27
+      }
+    ],
+    "gallery": []
+  },
+  {
+    "id": "deyunshe",
+    "title": "德云社 · 国风舞台",
+    "front": "/covers/deyunshe-sketch.webp",
+    "painted": "/covers/deyunshe.webp",
+    "url": "#deyunshe",
+    "description": "16 秒演出快剪：把长段落压成可传播的短版本，保留戏服与身段的高光瞬间。",
+    "techStack": [],
+    "preview": "/media/preview/deyunshe.mp4",
+    "role": [
+      "剪辑"
+    ],
+    "client": "德云社",
+    "year": 2026,
+    "category": "快剪",
+    "durationSeconds": 17,
+    "background": "国风舞台演出的短版成片，16 秒。暗调幕布让戏服的金饰和刺绣成为唯一亮色，构图本身就有很强的指向性。\n\n演出类素材做短版，取舍标准不是\"哪段好看\"，而是\"哪几帧能独立成立\"—— 脱离上下文还能让人看明白发生了什么，才值得放进这 16 秒。",
+    "problem": "从长演出里压出 16 秒可传播短版，取舍标准不是「哪段好看」，而是脱离上下文还能让人看明白的画面——多数精彩段落都带上下文依赖。",
+    "process": "逐帧筛选能独立成立的高光瞬间，围绕戏服的金饰与刺绣（暗调幕布下唯一的亮色）做画面取舍。",
+    "solution": "用「能否独立成立」作为唯一入选标准，让构图自带指向性的画面承担叙事，不要求观众理解前因后果。",
+    "reflection": "演出短版的取舍标准是独立性而非精彩度——放进 16 秒的每一帧都要自带上下文。",
+    "results": [],
+    "videos": [
+      {
+        "id": "dys-film",
+        "title": "德云社 · 国风舞台",
+        "url": "/media/deyunshe.mp4",
+        "durationSeconds": 16.52
+      }
+    ],
+    "gallery": []
+  },
+  {
+    "id": "bank",
+    "title": "银行年会 · 舞台节目",
+    "front": "/covers/bank-sketch.webp",
+    "painted": "/covers/bank.webp",
+    "url": "#bank",
+    "description": "27 秒活动快剪：年会舞台节目片段，在极短时长里保留表演的完整感。",
+    "techStack": [],
+    "preview": "",
+    "role": [
+      "剪辑"
+    ],
+    "client": "银行",
+    "year": 2026,
+    "category": "快剪",
+    "durationSeconds": 27,
+    "background": "银行年会舞台节目的成片片段，27 秒。现场是大型 LED 背景配舞台灯光，画面反差大、亮部容易过曝。\n\n舞台类素材的剪辑难点不在组接，而在**怎么在 27 秒里让一个节目看起来是完整的**：起手、展开、收势缺一不可，但又不能平均用力。",
+    "problem": "27 秒要让一个舞台节目看起来「完整」，起手、展开、收势缺一不可但不能平均用力；现场是大 LED 背景配舞台灯，反差大、亮部容易过曝。",
+    "process": "从节目段落中挑出起手、展开、收势三个关键节点搭建结构，控制各部分时长配比而非平均分配。",
+    "solution": "用非平均的时间配比保留完整感——收势给足让节目「落下来」，展开处快切保住密度，起手点明即进。",
+    "reflection": "完整感来自结构（起手/展开/收势俱全），而不是时长；27 秒也能让节目有头有尾，前提是三段都出现、但权重不同。",
+    "results": [],
+    "videos": [
+      {
+        "id": "bank-film",
+        "title": "银行年会 · 舞台节目",
+        "url": "/media/bank.mp4",
+        "durationSeconds": 27.32
+      }
+    ],
+    "gallery": []
+  },
+  {
+    "id": "double-eleven",
+    "title": "双十一 · 动效字卡",
+    "front": "/covers/double-eleven-sketch.webp",
+    "painted": "/covers/double-eleven.webp",
+    "url": "#double-eleven",
+    "description": "4 秒 AE 动效字卡。模糊底衬叠加高对比文字，在信息流里一眼抓住注意力。",
+    "techStack": [],
+    "preview": "",
+    "role": [
+      "动效"
+    ],
+    "client": "双十一",
+    "year": 2026,
+    "category": "快剪",
+    "durationSeconds": 4,
+    "background": "双十一大促用的动效字卡，4 秒，After Effects 制作。\n\n这类素材的时长是被投放场景决定的：作为片头或转场插入，超过 5 秒就会显得拖沓；而模糊底衬的作用是把背景的细节抹掉，让文字成为画面里唯一清晰的东西 —— 信息层级靠\"清晰度差\"而不是靠字号建立。",
+    "problem": "作为片头或转场插入，超过 5 秒就拖沓，4 秒是投放场景给的硬上限；同时背景杂乱时文字会读不清，注意力无处安放。",
+    "process": "After Effects 制作，用模糊底衬抹掉背景细节，文字保持高对比叠加在画面中央。",
+    "solution": "用「清晰度差」建立信息层级——背景模糊、文字锐利，注意力不需要被字号引导就能落在文字上。",
+    "reflection": "字卡的信息层级可以靠清晰度差建立，而不必靠字号；把背景模糊掉，文字自然成为画面里唯一清晰的东西。",
+    "results": [],
+    "videos": [
+      {
+        "id": "d11-film",
+        "title": "双十一 · 动效字卡",
+        "url": "/media/double-eleven.mp4",
+        "durationSeconds": 4.04
+      }
+    ],
+    "gallery": []
+  },
+  {
+    "id": "cleanser",
+    "title": "茶萃氨基酸洁面乳 · 信息流",
+    "front": "/covers/cleanser-sketch.webp",
+    "painted": "/covers/cleanser.webp",
+    "url": "#cleanser",
+    "description": "自拍自剪的洁面乳信息流，两条版本。膏体质地是核心卖点，镜头全部围着它做。",
+    "techStack": [],
+    "preview": "",
+    "role": [
+      "拍摄",
+      "剪辑"
+    ],
+    "client": "洗护品牌",
+    "year": 2026,
+    "category": "信息流",
+    "durationSeconds": 16,
+    "background": "2026 年 7 月完成的信息流投放素材，两条版本，竖屏 9:16，最长 16 秒。**拍摄与剪辑独立完成**。\n\n洁面产品的信息流有个天然约束：**膏体质感拍不出来就等于没拍**。所以两条片子都用了同一个办法 —— 把手背/手腕当背景色板，让白色膏体在肤色上形成对比，再用字幕把感受（\"像奶油一样包裹\"）直接说出来。画面负责证明，文字负责翻译。",
+    "problem": "洁面产品的信息流有个天然约束：膏体质感拍不出来就等于没拍——而膏体是白色的，缺少背景对比时质感完全看不见。",
+    "process": "拍摄与剪辑独立完成，两条版本用同一办法：手背/手腕当背景色板，白色膏体在肤色上形成对比，字幕直接说出触感（「像奶油一样包裹」）。",
+    "solution": "画面负责证明（肤色对比呈现膏体质感），文字负责翻译（把触觉感受说出来）；两条片子各一个版本，解法一致。",
+    "reflection": "触觉类卖点（质感、包裹感）没法直接拍出来，只能靠对比呈现加文字翻译，画面和字幕各承担一半说服力。",
+    "results": [],
+    "videos": [
+      {
+        "id": "cleanser-01",
+        "title": "洁面乳信息流 · 版本一",
+        "url": "/media/cleanser-01.mp4",
+        "durationSeconds": 16.43
+      },
+      {
+        "id": "cleanser-02",
+        "title": "洁面乳信息流 · 版本二",
+        "url": "/media/cleanser-02.mp4",
+        "durationSeconds": 14.9
+      }
+    ],
+    "gallery": []
+  },
+  {
+    "id": "peanut",
+    "title": "花生 · 信息流",
+    "front": "/covers/peanut-sketch.webp",
+    "painted": "/covers/peanut.webp",
+    "url": "#peanut",
+    "description": "18 秒食品信息流。素材我方剪辑，卖点落在颗粒大小和饱满度上。",
+    "techStack": [],
+    "preview": "",
+    "role": [
+      "剪辑"
+    ],
+    "client": "零食品牌",
+    "year": 2026,
+    "category": "信息流",
+    "durationSeconds": 18,
+    "background": "2026 年 7 月完成的食品类信息流素材，成片 18 秒，竖屏 9:16。**画面素材由客户提供，剪辑独立完成**。\n\n食品信息流的说服力来自\"看得出的物理属性\"—— 颗粒大不大、颜色正不正，这些不需要解释。所以剪辑的活儿主要是挑选：从素材里找到最能体现\"大又饱满\"的那几秒，把它放在观众还没划走的位置。",
+    "problem": "素材由客户提供，画面能改的余地有限；食品的说服力靠「看得出的物理属性」，颗粒大小和饱满度必须在观众划走前被看到。",
+    "process": "剪辑独立完成，从现有素材中筛选最能体现「大又饱满」的那几秒。",
+    "solution": "把筛选出的高光镜头放在观众还没划走的位置——剪辑的工作重心不是改造素材，而是挑选与排序。",
+    "reflection": "客户素材条件下的剪辑，主要价值在「挑」和「排」：找到最能证明卖点的那几秒，再决定它出现在时间线的哪个位置。",
+    "results": [],
+    "videos": [
+      {
+        "id": "peanut-film",
+        "title": "花生 · 信息流",
+        "url": "/media/peanut.mp4",
+        "durationSeconds": 17.83
+      }
+    ],
+    "gallery": []
+  },
+  {
+    "id": "snack-mix",
+    "title": "糖豆 · 信息流",
+    "front": "/covers/snack-mix-sketch.webp",
+    "painted": "/covers/snack-mix.webp",
+    "url": "#snack-mix",
+    "description": "13 秒食品信息流。素材我方剪辑，用勺舀动作和包装阵列传递产品线丰富度。",
+    "techStack": [],
+    "preview": "",
+    "role": [
+      "剪辑"
+    ],
+    "client": "零食品牌",
+    "year": 2026,
+    "category": "信息流",
+    "durationSeconds": 13,
+    "background": "2026 年 7 月完成的食品类信息流素材，成片 13 秒，竖屏 9:16。**画面素材由客户提供，剪辑独立完成**。\n\n背景里的产品包装阵列是这条片子的隐藏信息 —— 它在说\"这不是单一产品，是一整条产品线\"。剪辑时要让前景的动作（勺舀）和背景的阵列同时可读，两者都不抢戏。",
+    "problem": "13 秒内要同时传递「产品好吃」（前景动作）和「产品线丰富」（背景阵列）两层信息，且两者不能互相抢戏。",
+    "process": "剪辑独立完成，让前景勺舀动作与背景包装阵列在同一画面内都保持可读。",
+    "solution": "前后景分工——前景动作负责「想吃」，背景阵列负责「产品线」，用镜头停留时间控制两者的注意力配比。",
+    "reflection": "信息流里的隐藏信息（如产品线宽度）往往藏在背景里，剪辑的任务是让它和前景同时可读、但不争夺注意力。",
+    "results": [],
+    "videos": [
+      {
+        "id": "mix-film",
+        "title": "糖豆 · 信息流",
+        "url": "/media/snack-mix.mp4",
+        "durationSeconds": 13.13
+      }
+    ],
+    "gallery": []
+  },
+  {
+    "id": "bread",
+    "title": "面包 · 信息流",
+    "front": "/covers/bread-sketch.webp",
+    "painted": "/covers/bread.webp",
+    "url": "#bread",
+    "description": "14 秒食品信息流。素材我方剪辑，撕开面包的瞬间是整条的支点。",
+    "techStack": [],
+    "preview": "",
+    "role": [
+      "剪辑"
+    ],
+    "client": "零食品牌",
+    "year": 2026,
+    "category": "信息流",
+    "durationSeconds": 14,
+    "background": "2026 年 7 月完成的食品类信息流素材，成片 14 秒，竖屏 9:16。**画面素材由客户提供，剪辑独立完成**。\n\n面包类内容的通用做法是\"撕开\"—— 因为松软是个触觉词，只有把内部结构露出来，观众才能从视觉上换算出手感。整条的剪辑重心就是把那个撕开的瞬间安排在观众注意力最集中的位置。",
+    "problem": "「松软」是个触觉词，无法直接拍出——必须从视觉换算手感；14 秒信息流里，这个换算必须发生在注意力窗口内。",
+    "process": "剪辑独立完成，识别出「撕开露内部结构」这个关键瞬间，围绕它安排整条时间线。",
+    "solution": "把撕开瞬间安排在注意力最集中的位置——内部结构可见的一刻就是「松软」被证明的一刻，其余镜头为这一刻铺垫。",
+    "reflection": "触觉卖点（松软）要靠视觉动作（撕开）翻译；剪辑的核心是把这个「翻译瞬间」放到注意力峰值上。",
+    "results": [],
+    "videos": [
+      {
+        "id": "bread-film",
+        "title": "面包 · 信息流",
+        "url": "/media/bread.mp4",
+        "durationSeconds": 14.2
+      }
+    ],
+    "gallery": []
+  },
+  {
+    "id": "bottle",
+    "title": "儿童水杯 · 信息流",
+    "front": "/covers/bottle-sketch.webp",
+    "painted": "/covers/bottle.webp",
+    "url": "#bottle",
+    "description": "14 秒日用品信息流。素材我方剪辑，这条不在零食线的产品里，单独归类。",
+    "techStack": [],
+    "preview": "",
+    "role": [
+      "剪辑"
+    ],
+    "client": "日用品牌",
+    "year": 2026,
+    "category": "信息流",
+    "durationSeconds": 14,
+    "background": "2026 年 7 月完成的日用品类信息流素材，成片 14 秒，竖屏 9:16。**画面素材由客户提供，剪辑独立完成**。\n\n这条和同批的食品素材不属于同一品类（儿童水杯而非零食），所以在站上单独归类为「日用」。信息流的品类差异会直接影响节奏 —— 食品靠\"想咬一口\"的即时冲动，日用品则要让人先看清结构和细节。",
+    "problem": "与食品类信息流同批生产，但品类逻辑完全不同——食品靠即时冲动，日用品必须先让观众看清结构与细节，节奏策略不能照搬。",
+    "process": "剪辑独立完成，按日用品的观看逻辑调整节奏：给结构与细节更多停留时间，而非食品式的冲动剪辑。",
+    "solution": "按品类切换节奏策略——日用品让观众「先看清再决定」，镜头停留服务于结构与细节的辨识。",
+    "reflection": "信息流的节奏不是通用模板，而是由品类决定的：冲动型品类快，功能型品类要慢下来让人看清。",
+    "results": [],
+    "videos": [
+      {
+        "id": "bottle-film",
+        "title": "儿童水杯 · 信息流",
+        "url": "/media/bottle.mp4",
+        "durationSeconds": 14.03
+      }
+    ],
+    "gallery": []
+  },
+  {
+    "id": "live-beef",
+    "title": "风干牛肉 · 直播切片",
+    "front": "/covers/live-beef-sketch.webp",
+    "painted": "/covers/live-beef.webp",
+    "url": "#live-beef",
+    "description": "39 秒直播切片。把一场长直播里的讲解段落切出来，用屏内字幕补齐\"看得懂卖点\"这件事。",
+    "techStack": [],
+    "preview": "",
+    "role": [
+      "剪辑"
+    ],
+    "client": "食品品牌",
+    "year": 2026,
+    "category": "直播切片",
+    "durationSeconds": 39,
+    "background": "2026 年 7 月完成的带货直播切片，成片 39 秒，竖屏 9:16。**直播画面由直播间产出，剪辑与字幕包装独立完成**。\n\n直播切片和普通短视频的根本差别在于：素材是**不可重来的**。拍摄可以喊停重来，直播不会为剪辑重演一遍，所以只能从几小时里找到那几十秒。切片的判断标准也不是\"哪段最精彩\"，而是**哪一段脱离直播上下文还能独立成立** —— 前 3 秒必须把\"卖什么\"说清楚，否则划走就再也回不来。",
+    "problem": "直播素材不可重来——只能从几小时里找到那几十秒；且切片必须脱离直播上下文独立成立，前 3 秒说不清「卖什么」就永远回不来。",
+    "process": "剪辑与字幕包装独立完成，从长直播中筛选能独立成立的讲解段落，用屏内字幕补齐卖点信息。",
+    "solution": "以「能否脱离上下文独立成立」为筛选标准，前 3 秒先把「卖什么」说清楚，字幕承担直播现场本可能口头补充的信息。",
+    "reflection": "直播切片的素材是一次性的，这决定了判断标准：不是精彩度，而是独立性——脱离直播语境还能看懂的段落才值得切。",
+    "results": [],
+    "videos": [
+      {
+        "id": "beef-film",
+        "title": "风干牛肉 · 直播切片",
+        "url": "/media/live-beef.mp4",
+        "durationSeconds": 39.47
+      }
+    ],
+    "gallery": []
+  },
+  {
+    "id": "live-royal-tiger",
+    "title": "皇家小虎 6 周年庆 · 直播切片",
+    "front": "/covers/live-royal-tiger-sketch.webp",
+    "painted": "/covers/live-royal-tiger.webp",
+    "url": "#live-royal-tiger",
+    "description": "同一场 6 周年庆直播切出的两条。价格钩子不同，一条打单根价、一条打组合装。",
+    "techStack": [],
+    "preview": "",
+    "role": [
+      "剪辑"
+    ],
+    "client": "皇家小虎",
+    "year": 2026,
+    "category": "直播切片",
+    "durationSeconds": 18,
+    "background": "2026 年 7 月完成的带货直播切片，两条，竖屏 9:16。**直播画面由直播间产出，剪辑与字幕包装独立完成**。\n\n同一场直播切多条时，要避免的是\"两条说同一件事\"。这两条用了不同的价格钩子 —— 一条打**单根价不到 1 元**（低门槛，拉停留），一条打**6 包 59.9**（提客单，做转化）。素材来自同一场，但两条在投放里承担的任务不同。\n\n画面里还带了\"连续五年 全国销量第一\"的背书贴片，这类信息在切片里通常固定在画面上方，不参与镜头切换。",
+    "problem": "同一场直播切两条，若两条讲同一件事等于重复投放；必须让它们在投放里承担不同任务。",
+    "process": "剪辑与字幕包装独立完成，两条用不同价格钩子：一条打单根价不到 1 元（低门槛拉停留），一条打 6 包 59.9（提客单做转化）。",
+    "solution": "按投放任务分配钩子——停留型与转化型分开；「连续五年 全国销量第一」背书贴片固定在画面上方，不参与镜头切换。",
+    "reflection": "同源素材切多条的价值在于分工：每条只负责一个转化环节，避免两条信息重叠。",
+    "results": [],
+    "videos": [
+      {
+        "id": "tiger-01",
+        "title": "皇家小虎 6 周年庆 · 切片一",
+        "url": "/media/live-tiger-01.mp4",
+        "durationSeconds": 17.87
+      },
+      {
+        "id": "tiger-02",
+        "title": "皇家小虎 6 周年庆 · 切片二",
+        "url": "/media/live-tiger-02.mp4",
+        "durationSeconds": 17.1
+      }
+    ],
+    "gallery": []
+  },
+  {
+    "id": "live-canban",
+    "title": "参半 × 与辉同行 · 直播切片",
+    "front": "/covers/live-canban-sketch.webp",
+    "painted": "/covers/live-canban.webp",
+    "url": "#live-canban",
+    "description": "26 秒选品直播切片。产品在旋转展台上的展示段落，切成可独立传播的短版本。",
+    "techStack": [],
+    "preview": "",
+    "role": [
+      "剪辑"
+    ],
+    "client": "参半",
+    "year": 2026,
+    "category": "直播切片",
+    "durationSeconds": 26,
+    "background": "2026 年 7 月完成的选品直播切片，成片 26 秒，竖屏 9:16。**直播画面由直播间产出，剪辑与包装独立完成**。\n\n这条的素材里带有直播间自己的信息层 —— 主播排期、时段、活动名。切片的处理难点是**哪些信息该留、哪些该去**：排期和时段对观众没用（他们看到的是回放），但保留一部分反而强化了\"这是真实直播现场\"的可信度。判断依据是这条切片投放在哪里、给谁看。",
+    "problem": "切片素材带着直播间信息层（主播排期、时段、活动名），对回放观众多为无用信息，但完全去除又会丢失「真实直播现场」的可信度。",
+    "process": "剪辑与包装独立完成，逐项判断信息层元素的去留，基于投放渠道与目标观众做取舍。",
+    "solution": "保留部分直播信息层以强化现场可信度，去除对回放观众无用的具体排期；判断依据始终是「投放在哪、给谁看」。",
+    "reflection": "素材自带的信息层不一定要清空——保留能证明「真实发生」的部分，去除对当前观众无用的部分，去留标准在投放语境而不在素材本身。",
+    "results": [],
+    "videos": [
+      {
+        "id": "canban-film",
+        "title": "参半 × 与辉同行 · 直播切片",
+        "url": "/media/live-canban.mp4",
+        "durationSeconds": 26.2
+      }
+    ],
+    "gallery": []
+  },
+  {
+    "id": "shop-noodle",
+    "title": "面馆 · 探店",
+    "front": "/covers/shop-noodle-sketch.webp",
+    "painted": "/covers/shop-noodle.webp",
+    "url": "#shop-noodle",
+    "description": "1 分 04 秒餐饮探店。素材由商家提供，剪辑的重点是把\"出品过程\"排成能看饿的顺序。",
+    "techStack": [],
+    "preview": "",
+    "role": [
+      "剪辑"
+    ],
+    "client": "餐饮商家",
+    "year": 2026,
+    "category": "探店",
+    "durationSeconds": 64,
+    "background": "2026 年 7 月完成的餐饮探店，成片 1 分 04 秒，竖屏 9:16。**画面素材由商家提供，剪辑独立完成**。\n\n餐饮内容的剪辑逻辑和别的品类不太一样：**观众的决策发生在\"想不想吃\"而不是\"这家店好不好\"**。所以出品特写（捞面、装碗、下料）比环境和评价更靠前，让人先馋，再考虑去哪吃。",
+    "problem": "餐饮探店的观众决策点在「想不想吃」而非「这家店好不好」，常规的环境加评价开场在信息流里无效——人还没馋，就划走了。",
+    "process": "剪辑独立完成，把出品过程（捞面、装碗、下料）重排为能看饿的顺序，让出品特写排在环境与评价之前。",
+    "solution": "按「先馋再考虑去哪吃」的决策顺序排列镜头——出品特写前置，环境与评价后置。",
+    "reflection": "探店内容的镜头顺序应跟随观众的真实决策顺序，而不是拍摄的物理顺序：先产生食欲，再给出店家信息。",
+    "results": [],
+    "videos": [
+      {
+        "id": "noodle-film",
+        "title": "面馆 · 探店",
+        "url": "/media/shop-noodle.mp4",
+        "durationSeconds": 63.97
+      }
+    ],
+    "gallery": []
+  },
+  {
+    "id": "shop-hotpot",
+    "title": "火锅店 · 探店",
+    "front": "/covers/shop-hotpot-sketch.webp",
+    "painted": "/covers/shop-hotpot.webp",
+    "url": "#shop-hotpot",
+    "description": "31 秒探店，走观点路线：蘸料台实拍配一句判断，用\"懂行\"建立可信度。",
+    "techStack": [],
+    "preview": "",
+    "role": [
+      "剪辑"
+    ],
+    "client": "餐饮商家",
+    "year": 2026,
+    "category": "探店",
+    "durationSeconds": 31,
+    "background": "2026 年 7 月完成的餐饮探店，成片 31 秒，竖屏 9:16。**画面素材由商家提供，剪辑独立完成**。\n\n这条和同批的面馆走了**完全不同的策略**：面馆靠\"看出品看饿\"，火锅这条靠**一句判断**——「好的火锅蘸碟只需蒜和香油」。探店内容最怕的是\"什么都拍了但什么都没记住\"，观点型切法的好处是观众哪怕只记住这一句，这条片子也算成立了。",
+    "problem": "探店内容最怕「什么都拍了但什么都没记住」——信息全覆盖但没有记忆点，观众划过后不留下任何印象。",
+    "process": "剪辑独立完成，同批内容里与面馆走不同策略：不靠出品画面，而是围绕蘸料台实拍组织全片。",
+    "solution": "用一句具体判断——「好的火锅蘸碟只需蒜和香油」——承担全片记忆点；观众哪怕只记住这一句，这条片子也算成立。",
+    "reflection": "记忆点比信息覆盖更重要：一句具体判断比面面俱到更容易被留下；同一批素材也可以为不同记忆点服务。",
+    "results": [],
+    "videos": [
+      {
+        "id": "hotpot-film",
+        "title": "火锅店 · 探店",
+        "url": "/media/shop-hotpot.mp4",
+        "durationSeconds": 30.57
+      }
+    ],
+    "gallery": []
+  },
+  {
+    "id": "shop-market",
+    "title": "市集展位 · 探店",
+    "front": "/covers/shop-market-sketch.webp",
+    "painted": "/covers/shop-market.webp",
+    "url": "#shop-market",
+    "description": "1 分 06 秒市集探访，**独立完成拍摄与剪辑**。画面标注\"第二站\"，是多站式探访中的一站。",
+    "techStack": [],
+    "preview": "",
+    "role": [
+      "拍摄",
+      "剪辑"
+    ],
+    "client": "市集主办方",
+    "year": 2026,
+    "category": "探店",
+    "durationSeconds": 66,
+    "background": "2026 年 7 月完成的市集探访，成片 1 分 06 秒，横屏 16:9。**拍摄与剪辑独立完成**。\n\n画面里标着「第二站：十二星座」—— 说明这是**多站式探访的其中一站**，剪辑时要考虑两件事：这一站自己要立得住（单独看也完整），同时又要和前后站保持一致的节奏（连起来看是一条线）。\n\n横屏是这批探店里唯一的 —— 现场是展台和装裱画作这类**横向展开**的内容，横屏能一次性交代摊位的全貌，切成竖屏反而要来回摇。**画幅跟着被拍对象走，不是跟着平台走。**",
+    "problem": "作为多站式探访的第二站，这条既要独立完整（单独看也成立），又要和前后站节奏一致（连起来是一条线）；且展台与画作横向展开，竖屏无法一次交代全貌。",
+    "process": "拍摄与剪辑独立完成，横屏拍摄一次性交代摊位全貌；剪辑时同时校准单集完整性与系列节奏一致性。",
+    "solution": "画幅跟着被拍对象走——横向内容选横屏，避免竖屏来回摇；系列内容用统一节奏串联，同时保证每一站独立成立。",
+    "reflection": "画幅是被内容决定的，不是被平台决定的；系列内容的剪辑要做两套校准——单集的完整性与系列的连贯性。",
+    "results": [],
+    "videos": [
+      {
+        "id": "market-film",
+        "title": "市集展位 · 探店",
+        "url": "/media/shop-market.mp4",
+        "durationSeconds": 65.53
+      }
+    ],
+    "gallery": []
+  }
+]
