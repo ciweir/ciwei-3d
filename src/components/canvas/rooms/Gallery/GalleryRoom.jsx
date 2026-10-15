@@ -21,13 +21,14 @@ const _tempScale = new THREE.Vector3();
 // ⚙️ AUDIO SETTINGS - TWEAK HERE
 // 调整这些值可改变城市环境音的音量与可听范围
 // ============================================
-export const AUDIO_SETTINGS = {
+// 本文件内部使用，无需导出
+const AUDIO_SETTINGS = {
     volume: 0.6,
     distance: 2,
     rolloff: 1.5
 };
 
-export const GALLERY_INTERACTION_AUDIO_SETTINGS = {
+const GALLERY_INTERACTION_AUDIO_SETTINGS = {
     volume: 0.6,      // Volume for the paper clicking sound
     distance: 2,      // Reference distance for spatial audio before it starts dropping off
     rolloff: 2        // How fast the sound fades away (exponential)
@@ -684,9 +685,9 @@ const ProjectCard = memo(forwardRef(({ index, project, clothespinTexture, curren
         return sec === 60 ? `${m + 1}:00` : `${m}:${String(sec).padStart(2, '0')}`;
     })();
     const backMeta = [
-        project.client && `客户　${project.client}`,
-        project.category && `分类　${project.category}`,
-        durationLabel && `片长　${durationLabel}`,
+        project.client && `客户\u3000${project.client}`,
+        project.category && `分类\u3000${project.category}`,
+        durationLabel && `片长\u3000${durationLabel}`,
     ].filter(Boolean);
     const [hovered, setHovered] = useState(false);
     const [btnHovered, setBtnHovered] = useState(false);

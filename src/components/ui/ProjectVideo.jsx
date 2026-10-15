@@ -60,9 +60,9 @@ const ProjectVideo = ({ preview, src, poster, autoPlay = true, defaultFull = fal
             if (p && p.then) {
                 p.catch((err) => {
                     // ② 先试 webkit，再回退新标签页
-                    if (el.webkitEnterFullscreen) { try { el.webkitEnterFullscreen(); return; } catch {} }
+                    if (el.webkitEnterFullscreen) { try { el.webkitEnterFullscreen(); return; } catch { /* webkit 全屏不可用，忽略并继续回退 */ } }
                     if (el.webkitRequestFullscreen) {
-                        try { el.webkitRequestFullscreen(); return; } catch {}
+                        try { el.webkitRequestFullscreen(); return; } catch { /* webkitRequestFullscreen 不可用，忽略 */ }
                     }
                     fail('全屏被拒绝：' + (err?.name || '未知') + '（已尝试新标签页打开）');
                 });
@@ -72,9 +72,9 @@ const ProjectVideo = ({ preview, src, poster, autoPlay = true, defaultFull = fal
             return;
         }
         // ③ 旧 webkit
-        if (el.webkitEnterFullscreen) { try { el.webkitEnterFullscreen(); return; } catch {} }
+        if (el.webkitEnterFullscreen) { try { el.webkitEnterFullscreen(); return; } catch { /* webkit 全屏不可用，忽略并继续回退 */ } }
         if (el.webkitRequestFullscreen) {
-            try { el.webkitRequestFullscreen(); return; } catch {}
+            try { el.webkitRequestFullscreen(); return; } catch { /* webkitRequestFullscreen 不可用，忽略 */ }
         }
         fail('当前浏览器不支持网页全屏');
     }, [src, preview]);

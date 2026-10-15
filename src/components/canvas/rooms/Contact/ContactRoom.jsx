@@ -23,7 +23,8 @@ const WAVE_LAYERS = 4;
 // ⚙️ AUDIO SETTINGS - TWEAK HERE
 // 调整这些值可改变海浪声的音量与可听范围
 // ============================================
-export const AUDIO_SETTINGS = {
+// 本文件内部使用，无需导出
+const AUDIO_SETTINGS = {
     volume: 2,
     distance: 2,           // 声音开始衰减的距离（refDistance）
     rolloff: 1.2           // 衰减速度（rolloffFactor）
@@ -33,7 +34,7 @@ export const AUDIO_SETTINGS = {
 // ⚙️ LATARNIA SETTINGS - TWEAK HERE
 // 调整这些值可改变灯塔的位置、旋转与大小
 // ============================================
-export const LATARNIA_SETTINGS = {
+const LATARNIA_SETTINGS = {
     // 位置：[左右(X)、上下(Y)、前后(Z)]
     position: [-10, 5, -20],
 
@@ -48,7 +49,7 @@ export const LATARNIA_SETTINGS = {
 // ⚙️ STATEK SETTINGS - TWEAK HERE
 // 调整这些值可改变小船的位置、旋转与大小
 // ============================================
-export const STATEK_SETTINGS = {
+const STATEK_SETTINGS = {
     // 位置：[左右(X)、上下(Y)、前后(Z)]
     position: [0, 1.6, -15],
 

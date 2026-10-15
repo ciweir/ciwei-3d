@@ -31,7 +31,8 @@ const STUDIO_PAINT_CONFIG = {
 // ⚙️ AUDIO SETTINGS - TWEAK HERE
 // 调整这些值可改变显示器嗡鸣的音量与可听范围
 // ============================================
-export const AUDIO_SETTINGS = {
+// 本文件内部使用，无需导出
+const AUDIO_SETTINGS = {
     volume: 1,
     distance: 2,
     rolloff: 1.0

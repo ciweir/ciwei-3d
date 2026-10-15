@@ -104,9 +104,6 @@ const CorridorWalls = ({ zStart = 10, length = 80, doorPositions = [], zClip = 1
     const effectiveStart = Math.min(zStart, zClip);
     const effectiveLength = effectiveStart - (zStart - length);
 
-    // If fully clipped, render nothing
-    if (effectiveLength <= 0) return null;
-
     // =============================================
     // 踢脚线在门洞处的裁切量
     // =============================================
@@ -258,6 +255,11 @@ const CorridorWalls = ({ zStart = 10, length = 80, doorPositions = [], zClip = 1
 
     const leftSegments = useMemo(() => generateWallSegments('left'), [effectiveStart, effectiveLength, doorPositions]);
     const rightSegments = useMemo(() => generateWallSegments('right'), [effectiveStart, effectiveLength, doorPositions]);
+
+    // If fully clipped, render nothing
+    // 注意：必须放在 hooks 之后——原先位于 useMemo 之前会构成「条件式调用 Hook」，
+    // 一旦 effectiveLength 在两次渲染间跨越 0，Hook 数量变化会导致 React 报错。
+    if (effectiveLength <= 0) return null;
 
     return (
         <group>

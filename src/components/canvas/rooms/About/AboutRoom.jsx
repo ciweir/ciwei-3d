@@ -16,7 +16,8 @@ const CHUNK_LENGTH = 40;
 // ⚙️ AUDIO SETTINGS - TWEAK HERE
 // 调整这些值可改变风声的音量与可听范围
 // ============================================
-export const AUDIO_SETTINGS = {
+// 本文件内部使用，无需导出（未导出可避免 react-refresh 边界告警）
+const AUDIO_SETTINGS = {
     volume: 2.5,
     distance: 2,
     rolloff: 0.8

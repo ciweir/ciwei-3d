@@ -88,7 +88,6 @@ const GlobalOverlay = () => {
 
 const ContentCard = ({ content, isOpen, onClose, isMobile }) => {
     const { openReadingRoom } = useScene();
-    if (!content) return null;
 
     const label = content.platformConfig?.label || content.category || '作品';
 

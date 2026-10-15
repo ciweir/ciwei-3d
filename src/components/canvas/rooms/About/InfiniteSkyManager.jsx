@@ -21,7 +21,8 @@ const _tempVec3 = new THREE.Vector3();
 
 import { useAudio } from '../../../../context/AudioManager';
 
-export const BALLOON_AUDIO_SETTINGS = {
+// 本文件内部使用，无需导出
+const BALLOON_AUDIO_SETTINGS = {
     volume: 1.0,
     distance: 2,
     rolloff: 2
