@@ -17,13 +17,12 @@ export const initAudio = () => {
     if (!bgMusicAudio) {
         // We use the file provided by the user in public/sounds/
         bgMusicAudio = new Audio('/sounds/cfl_turningpages-belem-breeze-487596.ogg');
-        bgMusicAudio.preload = 'auto'; // Force browser to fetch data immediately
+        // 方案 B：延后加载。不设 'auto'、不主动 load()，避免开发期/预热期
+        // 就抢先抓取约 1.8MB 音频而触发 ERR_ABORTED 噪声；改由 play() 触发取回。
+        bgMusicAudio.preload = 'none';
         bgMusicAudio.loop = true;
         bgMusicAudio.volume = 0.3; // Default volume for background cozy music
         bgMusicAudio.muted = isMuted; // Apply synced mute state
-
-        // Trigger background load
-        bgMusicAudio.load();
     }
 };
 
