@@ -229,8 +229,15 @@ const useInfiniteCamera = ({
         targetParallax.current.y = -(clampedBeta / 45) * parallaxIntensity * 0.5;
     }, [parallaxIntensity]);
 
+    // 防止重复申请权限（多次手势会重复挂载 deviceorientation 监听）
+    const gyroRequested = useRef(false);
+
     // Request gyroscope permission (iOS 13+)
+    // iOS 要求在「用户手势」上下文中调用 requestPermission()，否则必然被拒绝
     const requestGyroscopePermission = useCallback(async () => {
+        if (gyroRequested.current) return;
+        gyroRequested.current = true;
+
         if (typeof DeviceOrientationEvent !== 'undefined' &&
             typeof DeviceOrientationEvent.requestPermission === 'function') {
             try {
@@ -275,14 +282,22 @@ const useInfiniteCamera = ({
             }
         });
 
-        // Try to enable gyroscope (will work on Android, need permission on iOS)
-        requestGyroscopePermission();
+        // iOS 13+ 必须在「用户手势」上下文中申请陀螺仪权限：
+        // mount 阶段自动申请必然失败，改为监听首个手势（点击/触摸/按键）时一次性申请。
+        // Android 等无需授权的浏览器同样在首个手势后挂载监听，无副作用。
+        const requestOnFirstGesture = () => { requestGyroscopePermission(); };
+        window.addEventListener('pointerdown', requestOnFirstGesture, { once: true });
+        window.addEventListener('touchstart', requestOnFirstGesture, { once: true });
+        window.addEventListener('keydown', requestOnFirstGesture, { once: true });
 
         return () => {
             scrollObserver.kill();
             window.removeEventListener('mousemove', handleMouseMove);
             window.removeEventListener('keydown', handleKeyDown);
             window.removeEventListener('deviceorientation', handleDeviceOrientation);
+            window.removeEventListener('pointerdown', requestOnFirstGesture);
+            window.removeEventListener('touchstart', requestOnFirstGesture);
+            window.removeEventListener('keydown', requestOnFirstGesture);
         };
     }, [handleWheel, handleMouseMove, handleKeyDown, handleTouchStart, handleTouchMove, handleDeviceOrientation, requestGyroscopePermission]);
 
