@@ -111,6 +111,7 @@ const EntranceDoors = ({
     // 'idle' 睁眼 / 'blink' 闭眼 / 'meow' 闭眼张嘴
     const [catExpression, setCatExpression] = useState('idle');
     const meowTimerRef = useRef();
+    const catBubbleRef = useRef(); // 「喵～」气泡
 
     // --- Cat Blink（自动眨眼）---
     // 每 2.5–6s 随机眨一次，闭眼约 140ms。
@@ -134,15 +135,30 @@ const EntranceDoors = ({
     }, []);
 
     // --- Cat Meow（点击喵叫）---
-    // 上游只提供了姿态帧、没有喵叫音频，故为无声的「闭眼张嘴」姿态。
+    // 上游只提供了姿态帧、没有喵叫音频，故为无声的「闭眼张嘴」姿态 + 「喵～」气泡。
     const handleCatClick = (e) => {
         e.stopPropagation(); // 猫在门前，阻止点击穿透到开门逻辑
         if (meowTimerRef.current) clearTimeout(meowTimerRef.current);
         setCatExpression('meow');
+
+        // 气泡弹出（与橡皮鸭同一套 gsap 缩放手法）
+        if (catBubbleRef.current) {
+            gsap.killTweensOf(catBubbleRef.current.scale);
+            gsap.fromTo(catBubbleRef.current.scale,
+                { x: 0, y: 0, z: 0 },
+                { x: 1, y: 1, z: 1, duration: 0.25, ease: 'back.out(1.7)' }
+            );
+        }
+
         meowTimerRef.current = setTimeout(() => {
             setCatExpression('idle');
             meowTimerRef.current = null;
-        }, 900);
+            if (catBubbleRef.current) {
+                gsap.to(catBubbleRef.current.scale, {
+                    x: 0, y: 0, z: 0, duration: 0.18, ease: 'power2.in'
+                });
+            }
+        }, 1200);
     };
 
     useEffect(() => () => clearTimeout(meowTimerRef.current), []);
@@ -1073,6 +1089,29 @@ const EntranceDoors = ({
                     <circleGeometry args={[0.020, 32]} />
                     <meshBasicMaterial color="black" />
                 </mesh>
+
+                {/* 「喵～」气泡：z 略微前移，确保盖住身后的门/树 */}
+                <group ref={catBubbleRef} position={[0.02, 1.12, 0.6]} scale={[0, 0, 0]}>
+                    <mesh>
+                        <planeGeometry args={[1.1, 0.75]} />
+                        <meshBasicMaterial color="#e0e0e0"
+                            map={speechBubbleTexture}
+                            transparent={true}
+                            alphaTest={0.01}
+                            depthWrite={false}
+                        />
+                    </mesh>
+                    <Text
+                        position={[0, 0.02, 0.01]}
+                        fontSize={0.14}
+                        color="#1a1a1a"
+                        anchorX="center"
+                        anchorY="middle"
+                        font={FONT_URL}
+                    >
+                        喵～
+                    </Text>
+                </group>
             </group>
 
         </group>
