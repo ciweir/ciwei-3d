@@ -74,6 +74,9 @@ const EntranceDoors = ({
     const bricksTexture = useTexture('/textures/entrance/wall_bricks_2.webp');
     const stonePathTexture = useTexture('/textures/entrance/stone-path.webp');
     const catFrontBodyTexture = useTexture('/textures/entrance/cat_front_body.webp');
+    // 猫的两帧表情（回收自上游素材）：眨眼=闭眼、喵叫=闭眼+张嘴
+    const catBlinkTexture = useTexture('/textures/entrance/cat_blink.webp');
+    const catMeowTexture = useTexture('/textures/entrance/cat_meow_body.webp');
     const windowSketchTexture = useTexture('/textures/entrance/window_sketch.webp');
     const avatarWindowTexture = useTexture('/textures/entrance/avatar_window.webp');
     const treeTexture = useTexture('/textures/entrance/tree_sketch.webp');
@@ -87,6 +90,7 @@ const EntranceDoors = ({
     const leftPupilRef = useRef();
     const rightPupilRef = useRef();
     const catGroupRef = useRef(); // To get world position for tracking
+    const treeSwayRef = useRef(); // 树：以基部为支点的轻微摆动
     const bugRef = useRef();
 
     // Bug Click Animation State
@@ -102,6 +106,46 @@ const EntranceDoors = ({
     const [isDuckSpeaking, setIsDuckSpeaking] = useState(false);
     const [duckQuote, setDuckQuote] = useState('');
     const speechBubbleRef = useRef();
+
+    // --- Cat Expression State ---
+    // 'idle' 睁眼 / 'blink' 闭眼 / 'meow' 闭眼张嘴
+    const [catExpression, setCatExpression] = useState('idle');
+    const meowTimerRef = useRef();
+
+    // --- Cat Blink（自动眨眼）---
+    // 每 2.5–6s 随机眨一次，闭眼约 140ms。
+    // 用函数式更新，保证与「喵叫」互不抢占（非 idle 时跳过本次眨眼）。
+    useEffect(() => {
+        let closeTimer, openTimer;
+        const loop = () => {
+            closeTimer = setTimeout(() => {
+                setCatExpression(prev => (prev === 'idle' ? 'blink' : prev));
+                openTimer = setTimeout(() => {
+                    setCatExpression(prev => (prev === 'blink' ? 'idle' : prev));
+                    loop();
+                }, 140);
+            }, 2500 + Math.random() * 3500);
+        };
+        loop();
+        return () => {
+            clearTimeout(closeTimer);
+            clearTimeout(openTimer);
+        };
+    }, []);
+
+    // --- Cat Meow（点击喵叫）---
+    // 上游只提供了姿态帧、没有喵叫音频，故为无声的「闭眼张嘴」姿态。
+    const handleCatClick = (e) => {
+        e.stopPropagation(); // 猫在门前，阻止点击穿透到开门逻辑
+        if (meowTimerRef.current) clearTimeout(meowTimerRef.current);
+        setCatExpression('meow');
+        meowTimerRef.current = setTimeout(() => {
+            setCatExpression('idle');
+            meowTimerRef.current = null;
+        }, 900);
+    };
+
+    useEffect(() => () => clearTimeout(meowTimerRef.current), []);
 
     // Rubber Duck Debugging Quotes
     const duckQuotes = [
@@ -496,6 +540,12 @@ const EntranceDoors = ({
             // Amplitude: 0.05 radians (approx 3 degrees)
             // Speed: 1.5
             mousePivotRef.current.rotation.x = Math.sin(clock.elapsedTime * 1.5) * 0.05;
+        }
+
+        // --- Tree Sway（树：基部为支点的轻微摆动）---
+        if (treeSwayRef.current) {
+            const t = clock.elapsedTime;
+            treeSwayRef.current.rotation.z = Math.sin(t * 0.8) * 0.025 + Math.sin(t * 2.1) * 0.006;
         }
 
         // --- Bug Animation ---
@@ -949,16 +999,18 @@ const EntranceDoors = ({
 
             {/* TREE & MOUSE (Left Side) */}
             <group position={[-2.9, floorY + 2.7, 1]}>
-                {/* Tree */}
-                <mesh position={[0, 0, 0]}>
-                    <planeGeometry args={[6, 8]} />
-                    <meshBasicMaterial color="#e0e0e0"
-                        map={treeTexture}
-                        transparent={true}
-                        alphaTest={0.01}
-                        depthWrite={false}
-                    />
-                </mesh>
+                {/* Tree（以基部为支点摆动：外层 group 下移 4、网格上抬 4，净位置不变） */}
+                <group ref={treeSwayRef} position={[0, -4, 0]}>
+                    <mesh position={[0, 4, 0]}>
+                        <planeGeometry args={[6, 8]} />
+                        <meshBasicMaterial color="#e0e0e0"
+                            map={treeTexture}
+                            transparent={true}
+                            alphaTest={0.01}
+                            depthWrite={false}
+                        />
+                    </mesh>
+                </group>
                 {/* Mouse Hanging - Pivot Group for swinging */}
                 {/* Pivot is moved UP by ~2.0 to be near the top of the string/branch */}
                 {/* Original Mesh Y was 0.02. New Pivot Y is 0.02 + 2.0 = 2.02 */}
@@ -979,22 +1031,31 @@ const EntranceDoors = ({
                 </group>
             </group>
 
-            {/* CAT SKETCH (Front Facing) */}
-            <group position={[-1.5, floorY + 0.6, 0.8]} ref={catGroupRef}>
+            {/* CAT SKETCH (Front Facing) — 点击喵叫；三帧共用同一网格，仅切换贴图 */}
+            <group
+                position={[-1.5, floorY + 0.6, 0.8]}
+                ref={catGroupRef}
+                onClick={handleCatClick}
+                onPointerEnter={() => { document.body.style.cursor = 'pointer'; }}
+                onPointerLeave={() => { document.body.style.cursor = 'auto'; }}
+            >
                 {/* Body */}
                 <mesh>
                     <planeGeometry args={[1.5, 1.5]} />
                     <meshBasicMaterial color="#e0e0e0"
-                        map={catFrontBodyTexture}
+                        map={catExpression === 'meow' ? catMeowTexture
+                            : catExpression === 'blink' ? catBlinkTexture
+                                : catFrontBodyTexture}
                         transparent={true}
                         alphaTest={0.01}
                         depthWrite={false}
                     />
                 </mesh>
 
-                {/* Left Pupil */}
+                {/* Left Pupil（眨眼/喵叫帧本身已画闭眼，故此时隐藏瞳孔） */}
                 <mesh
                     ref={leftPupilRef}
+                    visible={catExpression === 'idle'}
                     position={[-0.063, 0.27, -0.02]} // Behind cat
                 >
                     <circleGeometry args={[0.020, 32]} />
@@ -1006,6 +1067,7 @@ const EntranceDoors = ({
                 {/* Right Pupil */}
                 <mesh
                     ref={rightPupilRef}
+                    visible={catExpression === 'idle'}
                     position={[0.0615, 0.27, -0.02]} // Behind cat
                 >
                     <circleGeometry args={[0.020, 32]} />
