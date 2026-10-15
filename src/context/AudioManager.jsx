@@ -84,7 +84,9 @@ export const AudioProvider = ({ children }) => {
             'otwarciedrzwi': '/sounds/otwarciedrzwi.mp3',   // 开门
             'zamknieciedrzwi': '/sounds/zamknieciedrzwi.mp3', // 关门
             'pencil': '/sounds/papersound.mp3',   // 预加载沙沙声 → 纸张摩擦（原作者未提供 pencil.mp3，一直 404）
-            'tear': '/sounds/cfl_turningpages-belem-breeze-487596.ogg' // 撕纸转场 → 翻页纸声（同上）
+            // 撕纸转场 → 纸张摩擦声：原先与 BGM 共用同一个 1.79MB 的 .ogg，
+            // 预载退出时会抢占该大文件、且请求被中断即出现 ERR_ABORTED 噪声，故改用 145KB 短音效。
+            'tear': '/sounds/papersound.mp3'
         };
         const path = soundPaths[soundName] || `/sounds/${soundName}.mp3`;
 
