@@ -1,7 +1,7 @@
 import { useEffect, useRef, useMemo } from 'react';
 import gsap from 'gsap';
-import { useScene } from '../../context/SceneContext';
-import { useAudio } from '../../context/AudioManager';
+import { useScene } from '../../context/useScene';
+import { useAudio } from '../../context/useAudio';
 import '../../styles/Preloader.scss'; // Reuse preloader styles
 
 /**

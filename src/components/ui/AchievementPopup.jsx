@@ -1,6 +1,7 @@
 import React from 'react';
-import { useAchievements, ACHIEVEMENTS } from '../../context/AchievementsContext';
-import { useAudio } from '../../context/AudioManager';
+import { useAchievements } from '../../context/useAchievements';
+import { ACHIEVEMENTS } from '../../context/achievementsData';
+import { useAudio } from '../../context/useAudio';
 import { isTouchDevice } from '../../utils/deviceDetect';
 import { toggleMute as toggleBgmMute, getIsMuted as getBgmMuted, setMusicVolume } from '../../utils/audioManager';
 import '../../styles/AchievementPopup.scss';

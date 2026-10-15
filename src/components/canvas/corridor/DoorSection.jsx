@@ -5,8 +5,8 @@ import * as THREE from 'three';
 import gsap from 'gsap';
 import RoomInterior from './RoomInterior';
 import '../shaders/RevealMaterial'; // Registers alpha-discard reveal shader
-import { useScene } from '../../../context/SceneContext';
-import { useAudio } from '../../../context/AudioManager';
+import { useScene } from '../../../context/useScene';
+import { useAudio } from '../../../context/useAudio';
 import { isTouchDevice } from '../../../utils/deviceDetect';
 
 // Constants from CorridorSegment

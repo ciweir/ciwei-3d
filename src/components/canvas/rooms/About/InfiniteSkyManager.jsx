@@ -19,7 +19,7 @@ const _tempVec3 = new THREE.Vector3();
  * Includes Story Milestones that loop with the content!
  */
 
-import { useAudio } from '../../../../context/AudioManager';
+import { useAudio } from '../../../../context/useAudio';
 
 // 本文件内部使用，无需导出
 const BALLOON_AUDIO_SETTINGS = {

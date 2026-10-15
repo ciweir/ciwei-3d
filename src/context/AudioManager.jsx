@@ -1,6 +1,7 @@
-import { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
+import { createContext, useState, useEffect, useRef, useCallback } from 'react';
 
-const AudioContext = createContext({
+// 导出 context 对象供 useAudio.js 使用；本文件只导出组件与 context 对象
+export const AudioContext = createContext({
     isMuted: false,
     toggleMute: () => { },
     play: () => { },
@@ -9,8 +10,6 @@ const AudioContext = createContext({
     globalVolume: 0.5,
     setGlobalVolume: () => { },
 });
-
-export const useAudio = () => useContext(AudioContext);
 
 export const AudioProvider = ({ children }) => {
     // Persist mute preference

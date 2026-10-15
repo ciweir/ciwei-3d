@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { useScene } from '../../context/SceneContext';
+import { useScene } from '../../context/useScene';
 import gsap from 'gsap';
 import { TextPlugin } from 'gsap/TextPlugin';
 import ciweiProjects from '../../data/ciwei-projects.json';

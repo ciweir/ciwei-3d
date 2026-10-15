@@ -1,28 +1,20 @@
-import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import { createContext, useState, useEffect, useCallback, useRef } from 'react';
 import posthog from 'posthog-js';
+import { ACHIEVEMENTS } from './achievementsData';
 
 /* 默认值：多个 Canvas 子树内的组件会直接解构本 context 的属性
    （例如 useInfiniteCamera 里的 unlockAchievement）。R3F 的上下文桥接
    在首帧可能尚未就绪，此时 useContext 返回 undefined 会抛 TypeError。
    给出 no-op 默认值，使桥接缺失时优雅降级，而不是让整棵子树崩溃。 */
 const NOOP = () => {};
-const AchievementsContext = createContext({
+// 导出 context 对象供 useAchievements.js 使用；本文件只导出组件与 context 对象
+export const AchievementsContext = createContext({
     completed: [],
     activePopup: null,
     showTutorial: false,
     unlockAchievement: NOOP,
     hidePopup: NOOP,
 });
-
-export const ACHIEVEMENTS = {
-    // 中文化（2026-10-12）：操作说明要看得懂，成就名保留一点游戏感
-    corridor_enter: { id: 'corridor_enter', label: '点击一扇门进入', title: '探索者' },
-    corridor_explore: { id: 'corridor_explore', label: '滚动滚轮，沿走廊前行', title: '漫游者' },
-    about_fly: { id: 'about_fly', label: '滚动滚轮，飞过我的故事', title: '行者' },
-    studio_interact: { id: 'studio_interact', label: '拖动旋转，浏览内容', title: '导演' },
-    gallery_inspect: { id: 'gallery_inspect', label: '点击作品，查看详情', title: '鉴赏家' },
-    contact_choose: { id: 'contact_choose', label: '找到一种联系方式', title: '社交达人' }
-};
 
 export const AchievementsProvider = ({ children }) => {
     // Synchronous ref to prevent double-firing on rapid events (like wheel scroll)
@@ -190,5 +182,3 @@ export const AchievementsProvider = ({ children }) => {
         </AchievementsContext.Provider>
     );
 };
-
-export const useAchievements = () => useContext(AchievementsContext);

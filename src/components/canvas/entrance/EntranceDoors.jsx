@@ -5,7 +5,7 @@ import * as THREE from 'three';
 import gsap from 'gsap';
 import '../shaders/RevealMaterial'; // Registers alpha-discard reveal shader
 import { playBackgroundMusic } from '../../../utils/audioManager';
-import { useAchievements } from '../../../context/AchievementsContext';
+import { useAchievements } from '../../../context/useAchievements';
 import { isTouchDevice } from '../../../utils/deviceDetect';
 
 // Use same font as App.jsx preload (Inter) - works reliably

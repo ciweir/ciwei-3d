@@ -1,15 +1,7 @@
-import { createContext, useContext, useState, useCallback, useMemo, useRef } from 'react';
+import { createContext, useState, useCallback, useMemo, useRef } from 'react';
 import { getInitialRoomFromUrl } from '../hooks/useDocumentMeta';
 
 const SceneContext = createContext(null);
-
-export const useScene = () => {
-    const context = useContext(SceneContext);
-    if (!context) {
-        throw new Error('useScene must be used within a SceneProvider');
-    }
-    return context;
-};
 
 export const SceneProvider = ({ children }) => {
     // Deep linking: check if URL points to a specific room on first load

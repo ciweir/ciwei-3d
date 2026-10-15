@@ -1,5 +1,6 @@
 import React from 'react';
-import { useAchievements, ACHIEVEMENTS } from '../../context/AchievementsContext';
+import { useAchievements } from '../../context/useAchievements';
+import { ACHIEVEMENTS } from '../../context/achievementsData';
 import '../../styles/AchievementsPanel.scss';
 
 const AchievementsPanel = ({ isOpen, onClose }) => {

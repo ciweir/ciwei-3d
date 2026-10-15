@@ -1,4 +1,4 @@
-import { useScene } from '../../context/SceneContext';
+import { useScene } from '../../context/useScene';
 import { useGalleryProjects, useStudioContent, useAwards } from '../../hooks/useSanityData';
 import '../../styles/ScreenReaderOverlay.scss';
 

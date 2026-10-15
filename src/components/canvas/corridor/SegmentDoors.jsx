@@ -3,7 +3,7 @@ import { useFrame, useThree } from '@react-three/fiber';
 import { useTexture, PositionalAudio } from '@react-three/drei';
 import * as THREE from 'three';
 import gsap from 'gsap';
-import { useAudio } from '../../../context/AudioManager';
+import { useAudio } from '../../../context/useAudio';
 
 // Global settings for automatic segment doors audio
 const SEGMENT_DOOR_AUDIO_SETTINGS = {

@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import gsap from 'gsap';
-import { useScene } from '../../context/SceneContext';
-import { useAudio } from '../../context/AudioManager';
+import { useScene } from '../../context/useScene';
+import { useAudio } from '../../context/useAudio';
 import { setMusicVolume, getMusicVolume } from '../../utils/audioManager';
-import { useAchievements } from '../../context/AchievementsContext';
+import { useAchievements } from '../../context/useAchievements';
 import AchievementPopup from './AchievementPopup';
 import AchievementsPanel from './AchievementsPanel';
 import '../../styles/NavigationUI.scss';

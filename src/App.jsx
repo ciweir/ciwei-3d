@@ -5,10 +5,13 @@ import * as THREE from 'three';
 
 import Preloader from './components/dom/Preloader';
 import PaperTransition from './components/dom/PaperTransition';
-import { AudioProvider, useAudio } from './context/AudioManager';
+import { AudioProvider } from './context/AudioManager';
+import { useAudio } from './context/useAudio';
 import { initAudio } from './utils/audioManager';
-import { PerformanceProvider, usePerformance } from './context/PerformanceContext';
-import { SceneProvider, useScene } from './context/SceneContext';
+import { PerformanceProvider } from './context/PerformanceContext';
+import { usePerformance } from './context/usePerformance';
+import { SceneProvider } from './context/SceneContext';
+import { useScene } from './context/useScene';
 import NavigationUI from './components/ui/NavigationUI';
 import GlobalOverlay from './components/ui/GlobalOverlay';
 import ReadingRoom from './components/ui/ReadingRoom';

@@ -1,7 +1,7 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useState, useEffect } from "react";
 
-// Performance Tiers
-export const TIERS = {
+// Performance Tiers（仅本文件内部使用，无需导出）
+const TIERS = {
   HIGH: "HIGH",
   MEDIUM: "MEDIUM",
   LOW: "LOW",
@@ -38,15 +38,8 @@ const SETTINGS = {
   },
 };
 
-const PerformanceContext = createContext(null);
-
-export const usePerformance = () => {
-  const context = useContext(PerformanceContext);
-  if (!context) {
-    throw new Error("usePerformance must be used within a PerformanceProvider");
-  }
-  return context;
-};
+// 导出 context 对象供 usePerformance.js 使用；本文件只导出组件与 context 对象
+export const PerformanceContext = createContext(null);
 
 export const PerformanceProvider = ({ children }) => {
   const [tier, setTier] = useState(TIERS.HIGH); // Default to HIGH, degrade if needed

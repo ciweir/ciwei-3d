@@ -5,7 +5,7 @@ import { Observer } from 'gsap/all';
 gsap.registerPlugin(Observer);
 import { useThree, useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { useAchievements } from '../context/AchievementsContext';
+import { useAchievements } from '../context/useAchievements';
 
 // Door positions for auto-glance
 const DOOR_POSITIONS = [

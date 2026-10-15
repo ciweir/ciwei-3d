@@ -8,7 +8,7 @@ import TeleportRoom from './corridor/TeleportRoom';
 import RoomWarmup from './corridor/RoomWarmup';
 import useInfiniteCamera from '../../hooks/useInfiniteCamera';
 import SignSystem from './entrance/SignSystem';
-import { useScene } from '../../context/SceneContext';
+import { useScene } from '../../context/useScene';
 
 // Positioning:
 // - Segment -1's SegmentDoors are at Z=15

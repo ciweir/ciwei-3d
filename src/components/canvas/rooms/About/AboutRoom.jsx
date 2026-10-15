@@ -5,9 +5,9 @@ import * as THREE from 'three';
 import PaperAirplane from './PaperAirplane';
 import InfiniteSkyManager from './InfiniteSkyManager';
 import StoryMilestone from './StoryMilestone';
-import { useScene } from '../../../../context/SceneContext';
-import { useAchievements } from '../../../../context/AchievementsContext';
-import { useAudio } from '../../../../context/AudioManager';
+import { useScene } from '../../../../context/useScene';
+import { useAchievements } from '../../../../context/useAchievements';
+import { useAudio } from '../../../../context/useAudio';
 
 // Chunk length for looping flight effect (matches SkyChunk)
 const CHUNK_LENGTH = 40;

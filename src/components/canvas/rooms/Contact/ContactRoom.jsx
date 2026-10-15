@@ -4,10 +4,10 @@ import { Text, PositionalAudio } from '@react-three/drei';
 import * as THREE from 'three';
 import MessagePaper from './MessagePaper';
 import SocialBarrel from './SocialBarrel';
-import { useScene } from '../../../../context/SceneContext';
+import { useScene } from '../../../../context/useScene';
 import GalleryClouds from '../Gallery/GalleryClouds';
-import { useAchievements } from '../../../../context/AchievementsContext';
-import { useAudio } from '../../../../context/AudioManager';
+import { useAchievements } from '../../../../context/useAchievements';
+import { useAudio } from '../../../../context/useAudio';
 
 // ============================================
 // ============================================

@@ -4,13 +4,13 @@ import { Text, useTexture, Float, PositionalAudio } from '@react-three/drei';
 import * as THREE from 'three';
 import gsap from 'gsap';
 import { Observer } from 'gsap/all';
-import { useScene } from '../../../../context/SceneContext';
+import { useScene } from '../../../../context/useScene';
 
 gsap.registerPlugin(Observer);
-import { useAchievements } from '../../../../context/AchievementsContext';
+import { useAchievements } from '../../../../context/useAchievements';
 import PaperMaterial from './PaperMaterial';
 import GalleryClouds from './GalleryClouds';
-import { useAudio } from '../../../../context/AudioManager';
+import { useAudio } from '../../../../context/useAudio';
 import { usePaintMaterial } from './usePaintMaterial';
 import { useGalleryProjects } from '../../../../hooks/useSanityData';
 

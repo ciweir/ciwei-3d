@@ -1,6 +1,6 @@
 import { memo, useEffect, useRef } from 'react';
 import { useThree } from '@react-three/fiber';
-import { useScene } from '../../../context/SceneContext';
+import { useScene } from '../../../context/useScene';
 
 // Door positions (Global Z for Segment 0)
 // Calculation: 10 (Start Z) + Relative Z + 2 (Door Offset)

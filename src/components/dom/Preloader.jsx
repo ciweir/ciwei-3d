@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import * as THREE from 'three';
 import gsap from 'gsap';
-import { useAudio } from '../../context/AudioManager';
+import { useAudio } from '../../context/useAudio';
 
 // Reusable SVG Line Component (now accepts ref)
 const TearLineSVG = ({ svgPathData, pathLength, strokeDashoffset, pathRef }) => (
