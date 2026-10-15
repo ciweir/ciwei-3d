@@ -1015,7 +1015,10 @@ const EntranceDoors = ({
 
             {/* TREE & MOUSE (Left Side) */}
             <group position={[-2.9, floorY + 2.7, 1]}>
-                {/* Tree（以基部为支点摆动：外层 group 下移 4、网格上抬 4，净位置不变） */}
+                {/* 树与悬挂的鼠标同属一棵会摆动的树：鼠标 pivot 必须嵌套在 treeSway 内，
+                    否则树动了、绳子和鼠标不跟（视觉脱节）。
+                    外层支点下移 4，故树网格上抬 +4、鼠标 pivot 的局部 Y 由 -0.436 改为 3.564，
+                    静止（rotation.z=0）时净世界坐标与原实现完全一致。 */}
                 <group ref={treeSwayRef} position={[0, -4, 0]}>
                     <mesh position={[0, 4, 0]}>
                         <planeGeometry args={[6, 8]} />
@@ -1026,24 +1029,23 @@ const EntranceDoors = ({
                             depthWrite={false}
                         />
                     </mesh>
-                </group>
-                {/* Mouse Hanging - Pivot Group for swinging */}
-                {/* Pivot is moved UP by ~2.0 to be near the top of the string/branch */}
-                {/* Original Mesh Y was 0.02. New Pivot Y is 0.02 + 2.0 = 2.02 */}
-                {/* Mouse Hanging - Pivot Group for swinging */}
-                {/* Pivot: 421, 597px. Offset relative to center: X=0.351, Y=-0.456 */}
-                {/* Group Position shift: (-0.01, 0.02) + (0.351, -0.456) = (0.341, -0.436) */}
-                <group ref={mousePivotRef} position={[0.341, 0.02 - 0.456, 0]}>
-                    {/* Mesh moves opposite to pivot offset to keep visual position */}
-                    <mesh position={[-0.351, 0.456, 0]}>
-                        <planeGeometry args={[6, 8]} />
-                        <meshBasicMaterial color="#e0e0e0"
-                            map={mouseTexture}
-                            transparent={true}
-                            alphaTest={0.01}
-                            depthWrite={false}
-                        />
-                    </mesh>
+
+                    {/* Mouse Hanging - Pivot Group for swinging */}
+                    {/* Pivot: 421, 597px. Offset relative to center: X=0.351, Y=-0.456 */}
+                    {/* Group Position shift: (-0.01, 0.02) + (0.351, -0.456) = (0.341, -0.436) */}
+                    {/* 嵌套进 treeSway 后 Y 再加 4 → 3.564 */}
+                    <group ref={mousePivotRef} position={[0.341, 3.564, 0]}>
+                        {/* Mesh moves opposite to pivot offset to keep visual position */}
+                        <mesh position={[-0.351, 0.456, 0]}>
+                            <planeGeometry args={[6, 8]} />
+                            <meshBasicMaterial color="#e0e0e0"
+                                map={mouseTexture}
+                                transparent={true}
+                                alphaTest={0.01}
+                                depthWrite={false}
+                            />
+                        </mesh>
+                    </group>
                 </group>
             </group>
 
@@ -1107,7 +1109,7 @@ const EntranceDoors = ({
                         color="#1a1a1a"
                         anchorX="center"
                         anchorY="middle"
-                        font={FONT_URL}
+                        font="/fonts/MeowSubset.ttf"
                     >
                         喵～
                     </Text>
