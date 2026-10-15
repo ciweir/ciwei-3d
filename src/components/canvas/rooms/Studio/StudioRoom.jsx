@@ -12,6 +12,7 @@ import { useAudio } from '../../../../context/useAudio';
 import { useStudioContent } from '../../../../hooks/useSanityData';
 import '../../shaders/RevealMaterial';
 import { isTouchDevice } from '../../../../utils/deviceDetect';
+import { COLOR_DEFAULT } from '../../../../utils/colorTexture';
 import { usePaintMaterial } from '../Gallery/usePaintMaterial';
 
 // ============================================
@@ -755,7 +756,7 @@ const MonitorBlock = memo(({ item, meshRef, isSelected, onMonitorClick, disabled
     const updatePaintState = useCallback(() => {
         if (!faceConfig) return;
 
-        const shouldPaint = !isTouch && (isHoveredRef.current || isSelected);
+        const shouldPaint = !isTouch && (COLOR_DEFAULT || isHoveredRef.current || isSelected);
         const targetProgress = shouldPaint ? 1.0 : 0.0;
         const duration = shouldPaint ? 0.8 : 0.5;
 

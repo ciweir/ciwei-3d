@@ -6,6 +6,7 @@ import gsap from 'gsap';
 import SkyChunk, { CHUNK_LENGTH, ROOM_Z } from './SkyChunk';
 import '../../shaders/RevealBasicMaterial'; // Registers brush-stroke reveal for BasicMaterial
 import { isTouchDevice } from '../../../../utils/deviceDetect';
+import { paintedSrc } from '../../../../utils/colorTexture';
 import { BALLOON_CONFIG, balloonSketchUrl, balloonPaintedUrl } from '../../../../data/balloonConfig';
 
 // Reusable Vector3 to avoid allocations in event handlers
@@ -141,7 +142,7 @@ const InfiniteSkyManager = ({ scrollProgressRef }) => {
  */
 const IntroMilestone = ({ z, scrollProgressRef }) => {
     // Load avatar texture
-    const avatarTexture = useLoader(THREE.TextureLoader, '/textures/about/awatarnachmurce.webp');
+    const avatarTexture = useLoader(THREE.TextureLoader, paintedSrc('/textures/about/awatarnachmurce.webp'));
     // Refs for all animated elements
     const groupRef = useRef();
     const titleRef = useRef();
@@ -300,8 +301,8 @@ const JourneyMilestone = ({ z, scrollProgressRef }) => {
     const freelanceRef = useRef();
 
     // Load textures
-    const uoTexture = useLoader(THREE.TextureLoader, '/textures/about/uowyspa.webp');
-    const freelanceTexture = useLoader(THREE.TextureLoader, '/textures/about/freelancewyspa.webp');
+    const uoTexture = useLoader(THREE.TextureLoader, paintedSrc('/textures/about/uowyspa.webp'));
+    const freelanceTexture = useLoader(THREE.TextureLoader, paintedSrc('/textures/about/freelancewyspa.webp'));
 
     // Texture settings
     uoTexture.colorSpace = THREE.SRGBColorSpace;
@@ -465,10 +466,10 @@ const SkillBalloon = ({ config, revealFactorRef, spreadFactorRef, timeRef }) => 
 
     // 构建期生成的 webp（pipeline/make-balloons.mjs）：素描版 + 上色版
     // 两版同一随机种子绘制，线稿与色块严格对齐，供 reveal 揭示
-    const texture = useLoader(THREE.TextureLoader, balloonSketchUrl(config));
+    const texture = useLoader(THREE.TextureLoader, paintedSrc(balloonSketchUrl(config)));
     const paintedTexture = useLoader(
         THREE.TextureLoader,
-        isTouch ? balloonSketchUrl(config) : balloonPaintedUrl(config)
+        paintedSrc(isTouch ? balloonSketchUrl(config) : balloonPaintedUrl(config))
     );
     texture.colorSpace = THREE.SRGBColorSpace;
     paintedTexture.colorSpace = THREE.SRGBColorSpace;

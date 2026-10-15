@@ -1,6 +1,7 @@
 import { useMemo, memo, Suspense, useEffect } from 'react';
 import { Text } from '@react-three/drei';
-import { useTexture } from '@react-three/drei';
+// 全站彩色：桌面端自动取 _painted 彩色版（见 utils/colorTexture.js）
+import { useColorTexture as useTexture } from '../../../utils/colorTexture';
 import * as THREE from 'three';
 
 // Eagerly import room components - textures are preloaded during the preloader phase

@@ -14,7 +14,8 @@ import { useAudio } from '../../../../context/useAudio';
 // 🌊 CONTACT ROOM v2 - MESSAGE IN A BOTTLE
 // Immersive experience: write message, roll into bottle, throw
 // ============================================
-import { useTexture } from '@react-three/drei';
+// 全站彩色：桌面端自动取 _painted 彩色版（见 utils/colorTexture.js）
+import { useColorTexture as useTexture } from '../../../../utils/colorTexture';
 import { usePaintMaterial } from '../Gallery/usePaintMaterial';
 
 const WAVE_LAYERS = 4;

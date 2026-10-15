@@ -1,6 +1,7 @@
 import { useMemo, useRef } from 'react';
 import { useLoader, useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
+import { paintedSrc } from '../../../../utils/colorTexture';
 
 // Available cloud textures
 const CLOUD_TEXTURES = [
@@ -83,7 +84,7 @@ const StaticCloud = ({ position, scale, opacity, textureIndex, driftSpeed, initi
     const totalDistance = startX - endX;
 
     // Load the specific cloud texture
-    const texture = useLoader(THREE.TextureLoader, CLOUD_TEXTURES[textureIndex]);
+    const texture = useLoader(THREE.TextureLoader, paintedSrc(CLOUD_TEXTURES[textureIndex]));
 
     // LEGACY FIX: Use original aspect ratios to prevent stretching after POT conversion
     const legacyCloudAspects = {

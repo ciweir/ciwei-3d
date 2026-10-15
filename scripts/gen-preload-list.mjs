@@ -78,6 +78,12 @@ const G = {
 // 各组统一剔除回退副本
 for (const key of Object.keys(G)) G[key] = preferWebp(G[key]);
 
+/* 已有彩色版清单：供 utils/colorTexture.js 判断某线稿是否已配对彩色版，
+   没有配对的（如头像逐帧、covers）原样保留，避免切色后 404 */
+const PAINTED_TEXTURES = uniq(
+  Object.values(G).flat().filter((u) => u.includes('_painted.webp'))
+);
+
 /* About 核心集：原作者意图是「头像 + 云」常驻预载，证书等重资产不进开机加载。
    原先靠 .slice(0,10) 实现，实际顺序会把证书排在最前——这里显式定义。 */
 const aboutAvatar = `${PUB}/textures/about/awatarnachmurce.webp`;
@@ -114,6 +120,7 @@ ${arr('CONTACT_TEXTURES', G.CONTACT_TEXTURES, '联系房间贴图')}
 ${arr('ABOUT_TEXTURES', G.ABOUT_TEXTURES, '关于房间贴图（含云）')}
 ${arr('ABOUT_CORE_TEXTURES', ABOUT_CORE_TEXTURES, '关于房间核心集：头像 + 云（常驻预载）')}
 ${arr('STUDIO_TEXTURES', G.STUDIO_TEXTURES, '工作室房间贴图')}
+${arr('PAINTED_TEXTURES', PAINTED_TEXTURES, '已存在的彩色版（_painted）：供运行期判断能否把线稿切成彩色')}
 /**
  * 按设备是否支持 hover 过滤贴图清单：
  * 触摸设备跳过 _painted（彩色）版本，只加载素描版，节省移动端内存。

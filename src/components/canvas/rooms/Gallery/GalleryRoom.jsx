@@ -1,6 +1,8 @@
 import { useRef, useState, useMemo, useEffect, forwardRef, useImperativeHandle, memo } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { Text, useTexture, Float, PositionalAudio } from '@react-three/drei';
+import { Text, Float, PositionalAudio } from '@react-three/drei';
+// 全站彩色：桌面端自动取 _painted 彩色版（见 utils/colorTexture.js）
+import { useColorTexture as useTexture, paintedSrc, COLOR_DEFAULT } from '../../../../utils/colorTexture';
 import * as THREE from 'three';
 import gsap from 'gsap';
 import { Observer } from 'gsap/all';
@@ -372,7 +374,7 @@ const GalleryRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
         const thresholdMat = new THREE.MeshBasicMaterial({
             color: '#e0e0e0',
             map: (() => {
-                const t = new THREE.TextureLoader().load('/textures/corridor/texturadoprogow.webp');
+                const t = new THREE.TextureLoader().load(paintedSrc('/textures/corridor/texturadoprogow.webp'));
                 t.colorSpace = THREE.SRGBColorSpace;
                 t.wrapS = t.wrapT = THREE.RepeatWrapping;
                 t.repeat.set(15 / 2.524, 1);
@@ -1205,10 +1207,12 @@ const ProjectCard = memo(forwardRef(({ index, project, clothespinTexture, curren
             >
                 <mesh>
                     <planeGeometry args={[1.5, 2, 16, 16]} />
+                    {/* 全站彩色：桌面端卡片正面直接挂彩色版
+                        （悬停揭示因此退化为「刷完 → 活」的视频切换，其余逻辑不变） */}
                     <PaperMaterial
                         ref={materialRef}
                         color="#ffffff"
-                        map={project.frontTexture}
+                        map={COLOR_DEFAULT ? (project.paintedTexture || project.frontTexture) : project.frontTexture}
                         mapBack={project.backTexture}
                         mapPainted={useVideo && videoTexture ? videoTexture : project.paintedTexture}
                         side={THREE.DoubleSide}
