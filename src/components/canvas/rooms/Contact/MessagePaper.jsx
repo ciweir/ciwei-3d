@@ -212,7 +212,7 @@ const scoreWord = (word) => {
 };
 
 // Main content analyzer — scores every word and computes an aggregate
-const analyzeContentAI = (text, isSubject = false) => {
+const analyzeContentSpam = (text, isSubject = false) => {
     if (!text || text.trim().length < (isSubject ? 2 : 3)) return { isSpam: true, reason: 'Message too short' };
 
     const cleaned = text.trim();
@@ -413,12 +413,12 @@ const MessagePaper = ({ position = [0, 0.05, 2], onSend }) => {
                 return;
             }
 
-            // --- 2. Modern 2026 AI Content Verification ---
-            const subjectAnalysis = analyzeContentAI(subject, true);
-            const messageAnalysis = analyzeContentAI(message, false);
+            // --- 2. Local content heuristics (gibberish / spam wording scoring) ---
+            const subjectAnalysis = analyzeContentSpam(subject, true);
+            const messageAnalysis = analyzeContentSpam(message, false);
 
             if (subjectAnalysis.isSpam || messageAnalysis.isSpam) {
-                setErrors({ message: 'Our AI flagged this as spam. Please write clearly.' });
+                setErrors({ message: 'This looks like spam. Please write clearly.' });
                 setIsSubmitting(false);
                 return;
             }
