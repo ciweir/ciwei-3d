@@ -70,7 +70,7 @@ const C = {
   sage: hex('#7FAF9F'),
   plant: hex('#6E8F6A'), plantD: hex('#527050'), plantL: hex('#93B08C'),
   cream: hex('#E8DFCF'), creamD: hex('#CFC2AC'), creamL: hex('#F2ECDE'),
-  device: hex('#5A626B'), deviceD: hex('#42484F'),
+  device: hex('#5C6E7A'), deviceD: hex('#3E4A52'), screen: hex('#AFC4D0'),
   lamp: hex('#E7C078'), cloudW: hex('#D6E1EA'), cloudB: hex('#AFC3D2'),
 };
 
@@ -121,7 +121,7 @@ function resolveSpec(rel) {
   if (at('molo', 'beczka'))
     return spec([C.wood, C.cream, C.woodD, C.gold]);                        // 码头/木桶
   if (at('monitor', 'tv_', 'phone_', 'openliveproject'))
-    return spec([C.device, C.deviceD, C.slate, C.gold], { cells: 3 });      // 设备外壳
+    return spec([C.screen, C.device, C.deviceD, C.gold], { cells: 3 });     // 设备：机身冷蓝、边框深
   if (at('wall', 'ceil', 'floor', 'podlog', 'brick', 'stone', 'textur',
          'pustatabliczka', 'ramkanazdjecied', 'ramkanazdjeciem', 'rysuneknaobraz', 'paper-texture'))
     return spec([C.stone, C.stoneL, C.stoneD, C.stone], { region: false, cells: 3, grain: 0.1 }); // 面层/纸
