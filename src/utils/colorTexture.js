@@ -12,6 +12,7 @@
  * paintedSrc() 只在彩色版确实存在时才替换，因此头像逐帧（avatar_anim）、
  * 作品卡 covers、以及任何未配对的贴图都会原样返回，不会产生 404。
  */
+import { useMemo } from 'react';
 import { useTexture } from '@react-three/drei';
 import { isTouchDevice } from './deviceDetect';
 import { PAINTED_TEXTURES } from '../config/texturePreloadList';
@@ -32,16 +33,22 @@ export const paintedSrc = (src) => {
 /**
  * useTexture 的彩色化包装：入参形态与 drei 的 useTexture 一致
  * （字符串 / 字符串数组 / { key: url } 对象），内部按 paintedSrc 改写。
+ *
+ * ⚠️ 必须 memo 化：数组/对象入参若每次渲染都新建，
+ *    R3F 的 useLoader 会以新 key 判定缓存未命中并反复挂起（Suspense 永不 resolve），
+ *    导致 Canvas 子树永不 commit、场景#空、useFrame 不执行。
  */
 export const useColorTexture = (input, ...rest) => {
-  const resolved =
-    typeof input === 'string'
-      ? paintedSrc(input)
-      : Array.isArray(input)
-        ? input.map(paintedSrc)
-        : input && typeof input === 'object'
-          ? Object.fromEntries(Object.keys(input).map((key) => [key, paintedSrc(input[key])]))
-          : input;
+  const resolved = useMemo(() => {
+    if (typeof input === 'string') return paintedSrc(input);
+    if (Array.isArray(input)) return input.map(paintedSrc);
+    if (input && typeof input === 'object') {
+      const mapped = {};
+      for (const key of Object.keys(input)) mapped[key] = paintedSrc(input[key]);
+      return mapped;
+    }
+    return input;
+  }, [input]);
   return useTexture(resolved, ...rest);
 };
 
