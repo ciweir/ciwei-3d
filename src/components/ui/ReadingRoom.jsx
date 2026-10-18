@@ -12,7 +12,8 @@ import ProjectVideo from './ProjectVideo';
  * - 真分段：段落文本按空行拆成独立 <p>，段间距 1.4em（不再是 pre-wrap 一大块）；
  * - 导语：description 一句话置于标题下，大字号提亮——先给结论再展开；
  * - 清晰度：正文 17px / 行高 2 / #D8D2C4（对比度 ≈ 11:1）/ 字距 0.015em；
- * - 阅读宽度：660px（中文一行 ≈ 36 字的舒适宽度）。
+ *   移动端根字号会缩到 14px，正文用 clamp 保证不低于 16px；
+ * - 阅读宽度：660px 容器 / 612px 正文宽（中文一行 ≈ 36 字的舒适宽度）。
  */
 const ReadingRoom = () => {
     const { readingProject, closeReadingRoom } = useScene();
@@ -82,7 +83,7 @@ const ReadingRoom = () => {
                 {/* 导语：一句话说清这部片子（大字号 · 提亮） */}
                 {p.description && (
                     <p style={{
-                        fontSize: '1.25rem', lineHeight: 1.85, color: '#EDE8DE',
+                        fontSize: 'clamp(18px, 1.25rem, 20px)', lineHeight: 1.85, color: '#EDE8DE',
                         margin: '0 0 2.2rem', fontWeight: 500,
                         borderLeft: '2px solid #4a453b', paddingLeft: '1rem',
                     }}>
@@ -134,7 +135,7 @@ const ReadingRoom = () => {
                         </div>
                         {paras(text).map((para, j) => (
                             <p key={j} style={{
-                                fontSize: '1.0625rem', lineHeight: 2, letterSpacing: '0.015em',
+                                fontSize: 'clamp(16px, 1.0625rem, 17px)', lineHeight: 2, letterSpacing: '0.015em',
                                 color: '#D8D2C4', margin: '0 0 1.4em',
                             }}>
                                 {para}
@@ -151,7 +152,7 @@ const ReadingRoom = () => {
                         </h2>
                         <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
                             {p.results.map((r, i) => (
-                                <li key={i} style={{ lineHeight: 1.9, color: '#D8D2C4', fontSize: '1.0625rem', marginBottom: '0.6rem' }}>
+                                <li key={i} style={{ lineHeight: 1.9, color: '#D8D2C4', fontSize: 'clamp(16px, 1.0625rem, 17px)', marginBottom: '0.6rem' }}>
                                     — {typeof r === 'string' ? r : r.value || r.label || ''}
                                 </li>
                             ))}

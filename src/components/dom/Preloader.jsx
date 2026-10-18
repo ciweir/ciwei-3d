@@ -85,7 +85,7 @@ const percentageStyle = {
   transform: 'translateY(-50%)',
   textAlign: 'center',
   zIndex: 20,
-  fontFamily: "'Inter', sans-serif",
+  fontFamily: "'Cabin Sketch', 'PingFang SC', 'Microsoft YaHei', sans-serif",
   fontSize: '2rem',
   fontWeight: 'bold',
   mixBlendMode: 'multiply',

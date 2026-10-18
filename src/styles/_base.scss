@@ -5,6 +5,15 @@
 @use 'variables' as *;
 @use 'mixins' as *;
 
+// 本地可变字体：wght 100–900，供 3D Text 与 DOM 阅读室/UI 共用
+@font-face {
+    font-family: 'Noto Sans SC';
+    src: url('/fonts/NotoSansSC.ttf') format('truetype');
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: swap;
+}
+
 // CSS Reset
 *,
 *::before,

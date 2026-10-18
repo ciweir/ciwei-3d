@@ -34,12 +34,12 @@ $color-gray: $ink;
 
 // ── 字体 ─────────────────────────────────────────────────────
 // 英文装饰字体无中文字形：中文文案必须显式指定 $font-cjk，否则会回退成系统字体。
-$font-title: 'Gloria Hallelujah', cursive;   // 英文装饰标题
-$font-handwritten: 'Caveat', cursive;        // 手写批注
-$font-primary: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+$font-title: 'Cabin Sketch', cursive;        // 本地手绘装饰标题
+$font-handwritten: 'Rubik Scribble', cursive; // 本地手写批注
+$font-primary: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
 $font-cjk: 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans SC', sans-serif; // 中文字形（系统栈）
-// 注意：/fonts/NotoSansSC.ttf 是按 3D 已知文案裁剪的窄子集（pipeline/chars.txt），
-// 仅供 canvas 内的 <Text> 使用；不可作为通用 CSS 字体，否则会逐字回退。
+// 注意：/fonts/NotoSansSC.ttf 是可变字体子集（wght 100–900，当前 1321 字形），
+// 同时供 canvas <Text> 与 DOM 阅读室/UI 使用；改文案后仍需重跑子集化。
 
 // ── 断点 ─────────────────────────────────────────────────────
 $breakpoint-mobile: 480px;
