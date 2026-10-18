@@ -1,9 +1,9 @@
 import { useEffect } from 'react';
 import '../../styles/BootFallback.scss';
 import ciweiProjects from '../../data/ciwei-projects.json';
-import { SITE } from '../../config/site-config';
+import { SITE, SOCIAL } from '../../config/site-config';
 
-const EMAIL = '26397767570@qq.com';
+const EMAIL = SOCIAL.email || '26397767570@qq.com';
 
 const groups = [];
 for (const project of ciweiProjects) {

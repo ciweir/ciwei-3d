@@ -61,8 +61,9 @@ export function getInitialRoomFromUrl() {
 }
 
 export function useDocumentMeta() {
-    const { currentRoom, teleportTo, hasEntered } = useScene();
+    const { currentRoom, teleportTo, hasEntered, requestExit } = useScene();
     const isHandlingPopState = useRef(false);
+    const historyReady = useRef(false);
     const lastPushedRoom = useRef(undefined); // Track what we last pushed to avoid duplicates
 
     // Update document meta and URL when room changes
@@ -96,9 +97,18 @@ export function useDocumentMeta() {
         }
 
         // Push to browser history (only if not handling a popstate event and room actually changed)
-        if (!isHandlingPopState.current && lastPushedRoom.current !== currentRoom) {
-            // Use replaceState for the very first load, pushState for subsequent navigations
-            if (lastPushedRoom.current === undefined) {
+        const currentPath = window.location.pathname.replace(/\/+$/, '') || '/';
+
+        if (!historyReady.current) {
+            // 首屏保留 URL：深链 /gallery 不能被改写成 /
+            historyReady.current = true;
+            lastPushedRoom.current = currentRoom;
+        } else if (!isHandlingPopState.current && lastPushedRoom.current !== currentRoom) {
+            if (currentRoom === null && lastPushedRoom.current !== null) {
+                // 应用内返回走廊：替换当前房间 entry，避免浏览器后退又回到房间
+                window.history.replaceState({ room: null }, '', '/');
+            } else if (currentPath === meta.path) {
+                // 深链进入：URL 已是目标路径，不新增历史记录
                 window.history.replaceState({ room: currentRoom }, '', meta.path);
             } else {
                 window.history.pushState({ room: currentRoom }, '', meta.path);
@@ -117,11 +127,9 @@ export function useDocumentMeta() {
             lastPushedRoom.current = targetRoom;
 
             if (targetRoom === null) {
-                // Going back to corridor — we don't teleport, just need to trigger exit
-                // The SceneContext requestExit will handle the animation
-                // For now, we update meta immediately
-                const meta = ROOM_META['null'];
-                document.title = meta.title;
+                // 浏览器后退到走廊：走门/房间的退出动画，而不是只改标题
+                document.title = ROOM_META['null'].title;
+                if (currentRoom !== null) requestExit();
             } else if (hasEntered) {
                 // Teleport to the target room
                 teleportTo(targetRoom);
@@ -130,5 +138,5 @@ export function useDocumentMeta() {
 
         window.addEventListener('popstate', handlePopState);
         return () => window.removeEventListener('popstate', handlePopState);
-    }, [teleportTo, hasEntered]);
+    }, [currentRoom, teleportTo, hasEntered, requestExit]);
 }

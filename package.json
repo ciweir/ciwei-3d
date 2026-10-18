@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "lint": "eslint .",
+    "lint": "eslint src",
+    "audit:assets": "node scripts/audit-assets.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

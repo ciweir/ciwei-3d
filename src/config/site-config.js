@@ -37,7 +37,8 @@ export const SOCIAL = {
     youtube: '',    // 例 'https://www.youtube.com/@ciwei'
     bcc: '',        // 必剪（如启用）
     linkedin: '',   // 如有英文/出海用途
-    email: '',      // 例 'hi@ciwei.tv'（用于 mailto，非 URL）
+    vimeo: '',      // 例 'https://vimeo.com/ciwei'
+    email: '26397767570@qq.com', // 用于 mailto，非 URL
 };
 
 /* 从 SOCIAL 提取可用于 JSON-LD sameAs 的 URL 列表（email 除外） */

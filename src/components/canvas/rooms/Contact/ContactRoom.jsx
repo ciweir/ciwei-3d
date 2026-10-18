@@ -8,6 +8,7 @@ import { useScene } from '../../../../context/useScene';
 import GalleryClouds from '../Gallery/GalleryClouds';
 import { useAchievements } from '../../../../context/useAchievements';
 import { useAudio } from '../../../../context/useAudio';
+import { SOCIAL } from '../../../../config/site-config';
 
 // ============================================
 // ============================================
@@ -249,8 +250,7 @@ const ContactRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
     }, [hasSignaledReady.current, showRoom, camera]);
 
     const handleMailSelect = () => {
-        // 邮件兜底跳转：
-        window.location.href = 'mailto:26397767570@qq.com'; // 此唯邮箱（占位社交链接见下方木桶注释）
+        if (SOCIAL.email) window.location.href = `mailto:${SOCIAL.email}`;
 
         /* 
         setShowSelection(false);
@@ -357,6 +357,13 @@ const ContactRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
         return () => window.removeEventListener('resize', checkMobile);
     }, []);
 
+    const socialBarrels = [
+        { key: 'linkedin', label: '领英', url: SOCIAL.linkedin, position: isMobile ? [-1.2, 0.5, -10] : [-3, 0.5, -10], rotation: [0, 0.2, 0] },
+        { key: 'bilibili', label: 'B 站', url: SOCIAL.bilibili, position: isMobile ? [-1.5, -0.3, -7] : [-5, -0.3, -8], rotation: [0, 0.3, 0] },
+        { key: 'vimeo', label: 'Vimeo', url: SOCIAL.vimeo, position: isMobile ? [1.2, 0.5, -10] : [3, 0.5, -10], rotation: [0, -0.2, 0] },
+        { key: 'xiaohongshu', label: '小红书', url: SOCIAL.xiaohongshu, position: isMobile ? [1.5, -0.3, -7] : [5, -0.3, -8], rotation: [0, -0.3, 0] },
+    ].filter((item) => item.url);
+
     return (
         <group ref={groupRef} position={[0, -0.7, -5]}>
             {!isWarmup && (
@@ -399,46 +406,18 @@ const ContactRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
             </group>
 
             {/* 🛢️ SOCIAL BARRELS (Floating in water) */}
-            {/* LINKEDIN */}
-            <SocialBarrel
-                position={isMobile ? [-1.2, 0.5, -10] : [-3, 0.5, -10]}
-                rotation={[0, 0.2, 0]}
-                texturePath="/textures/contact/beczka.webp"
-                label="领英"
-                onClick={() => window.open('https://www.linkedin.com/in/your-handle', '_blank')} // ⚠️ 占位：补此唯真实 LinkedIn
-                paintOnBeforeCompile={onBeforeCompile}
-                paintUniforms={uniformsData}
-            />
-            {/* GITHUB */}
-            <SocialBarrel
-                position={isMobile ? [-1.5, -0.3, -7] : [-5, -0.3, -8]}
-                rotation={[0, 0.3, 0]}
-                texturePath="/textures/contact/beczka.webp"
-                label="B 站"
-                onClick={() => window.open('https://space.bilibili.com/your-id', '_blank')} // ⚠️ 占位：补此唯真实 Bilibili 空间
-                paintOnBeforeCompile={onBeforeCompile}
-                paintUniforms={uniformsData}
-            />
-            {/* FACEBOOK */}
-            <SocialBarrel
-                position={isMobile ? [1.2, 0.5, -10] : [3, 0.5, -10]}
-                rotation={[0, -0.2, 0]}
-                texturePath="/textures/contact/beczka.webp"
-                label="Vimeo"
-                onClick={() => window.open('https://vimeo.com/your-id', '_blank')} // ⚠️ 占位：补此唯真实 Vimeo
-                paintOnBeforeCompile={onBeforeCompile}
-                paintUniforms={uniformsData}
-            />
-            {/* INSTAGRAM */}
-            <SocialBarrel
-                position={isMobile ? [1.5, -0.3, -7] : [5, -0.3, -8]}
-                rotation={[0, -0.3, 0]}
-                texturePath="/textures/contact/beczka.webp"
-                label="小红书"
-                onClick={() => window.open('https://www.xiaohongshu.com/user/your-id', '_blank')} // ⚠️ 占位：补此唯真实小红书
-                paintOnBeforeCompile={onBeforeCompile}
-                paintUniforms={uniformsData}
-            />
+            {socialBarrels.map(({ key, label, url, position, rotation }) => (
+                <SocialBarrel
+                    key={key}
+                    position={position}
+                    rotation={rotation}
+                    texturePath="/textures/contact/beczka.webp"
+                    label={label}
+                    onClick={() => window.open(url, '_blank', 'noopener,noreferrer')}
+                    paintOnBeforeCompile={onBeforeCompile}
+                    paintUniforms={uniformsData}
+                />
+            ))}
             {/* MAIL (Triggers animation) */}
             <SocialBarrel
                 position={isMobile ? [0, -0.7, -6] : [0, -0.7, -7]}

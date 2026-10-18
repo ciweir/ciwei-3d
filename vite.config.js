@@ -5,24 +5,27 @@ import { generateSeoHtml } from './seo-plugin.js';
 
 const START_PAGE_PATHS = new Set(['/start', '/start/']);
 
-function rewriteStartPage(req, _res, next) {
-  const [pathname, query = ''] = req.url.split('?');
+function redirectStartPage(req, res, next) {
+  const [pathname] = req.url.split('?');
 
   if (START_PAGE_PATHS.has(pathname)) {
-    req.url = `/start/index.html${query ? `?${query}` : ''}`;
+    res.statusCode = 302;
+    res.setHeader('Location', '/');
+    res.end();
+    return;
   }
 
   next();
 }
 
-function serveStaticStartPage() {
+function redirectStartPagePlugin() {
   return {
-    name: 'serve-static-start-page',
+    name: 'redirect-start-page',
     configureServer(server) {
-      server.middlewares.use(rewriteStartPage);
+      server.middlewares.use(redirectStartPage);
     },
     configurePreviewServer(server) {
-      server.middlewares.use(rewriteStartPage);
+      server.middlewares.use(redirectStartPage);
     }
   };
 }
@@ -34,5 +37,5 @@ function serveStaticStartPage() {
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [serveStaticStartPage(), react(), viteCompression(), generateSeoHtml()]
+  plugins: [redirectStartPagePlugin(), react(), viteCompression(), generateSeoHtml()]
 })
