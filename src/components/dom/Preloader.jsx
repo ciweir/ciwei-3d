@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
-import * as THREE from 'three';
 import gsap from 'gsap';
 import { useAudio } from '../../context/useAudio';
 
@@ -95,46 +94,8 @@ const percentageStyle = {
   overflow: 'visible'
 };
 
-const Preloader = ({ onComplete, ready }) => {
+const Preloader = ({ onComplete, ready, progress = 0, active = true }) => {
   const [isDone, setIsDone] = useState(false);
-
-  // Custom throttled progress state to prevent React 'Maximum update depth exceeded'
-  const [realProgress, setRealProgress] = useState(0);
-  const [active, setActive] = useState(true);
-
-  useEffect(() => {
-    let t = 0;
-    const origOnStart = THREE.DefaultLoadingManager.onStart;
-    const origOnProgress = THREE.DefaultLoadingManager.onProgress;
-    const origOnLoad = THREE.DefaultLoadingManager.onLoad;
-
-    THREE.DefaultLoadingManager.onStart = (url, loaded, total) => {
-      setActive(true);
-      origOnStart?.(url, loaded, total);
-    };
-
-    THREE.DefaultLoadingManager.onProgress = (url, loaded, total) => {
-      cancelAnimationFrame(t);
-      t = requestAnimationFrame(() => {
-        setRealProgress((loaded / total) * 100);
-      });
-      origOnProgress?.(url, loaded, total);
-    };
-
-    THREE.DefaultLoadingManager.onLoad = () => {
-      cancelAnimationFrame(t);
-      setRealProgress(100);
-      setActive(false);
-
-      origOnLoad?.();
-    };
-
-    return () => {
-      THREE.DefaultLoadingManager.onStart = origOnStart;
-      THREE.DefaultLoadingManager.onProgress = origOnProgress;
-      THREE.DefaultLoadingManager.onLoad = origOnLoad;
-    };
-  }, []);
 
   const { play } = useAudio();
   // Track audio handle to stop loop
@@ -202,17 +163,15 @@ const Preloader = ({ onComplete, ready }) => {
   useEffect(() => {
     let newTarget = 0;
     if (active) {
-      newTarget = (realProgress / 100) * 85;
+      newTarget = (progress / 100) * 85;
+    } else if (ready) {
+      newTarget = 100;
     } else {
-      if (ready) {
-        newTarget = 100;
-      } else {
-        newTarget = 90;
-      }
+      newTarget = 90;
     }
 
     setTargetProgress(prev => Math.max(prev, newTarget));
-  }, [realProgress, active, ready]);
+  }, [progress, active, ready]);
 
   // Handle Pencil Sound & Exit checking dynamically
   const checkProgressTriggers = (val) => {

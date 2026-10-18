@@ -37,5 +37,32 @@ function redirectStartPagePlugin() {
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [redirectStartPagePlugin(), react(), viteCompression(), generateSeoHtml()]
+  plugins: [redirectStartPagePlugin(), react(), viteCompression(), generateSeoHtml()],
+  build: {
+    modulePreload: false,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('preload-helper')) {
+            return 'vite-helper';
+          }
+          if (
+            id.includes('node_modules/react/') ||
+            id.includes('node_modules/react-dom/') ||
+            id.includes('node_modules/scheduler/')
+          ) {
+            return 'react-vendor';
+          }
+          if (
+            id.includes('node_modules/three/') ||
+            id.includes('node_modules/@react-three/') ||
+            id.includes('node_modules/troika')
+          ) {
+            return 'scene-vendor';
+          }
+        }
+      }
+    }
+  }
 })
+

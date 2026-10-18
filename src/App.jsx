@@ -1,9 +1,4 @@
 import { useState, Suspense, useEffect, useCallback, lazy } from 'react';
-import { Canvas, useThree } from '@react-three/fiber';
-import { Preload, Text, PerformanceMonitor } from '@react-three/drei';
-// 全站彩色：桌面端自动取 _painted 彩色版（见 utils/colorTexture.js）
-import { useColorTexture as useTexture } from './utils/colorTexture';
-import * as THREE from 'three';
 
 import Preloader from './components/dom/Preloader';
 import SceneErrorBoundary from './components/dom/SceneErrorBoundary';
@@ -35,21 +30,15 @@ if (POSTHOG_KEY) {
   });
 }
 
-// Lazy load the heavy 3D experience
-const Experience = lazy(() => import('./components/canvas/Experience'));
+// Lazy load the whole 3D scene (three/drei stays out of the initial bundle)
+const SceneCanvas = lazy(() => import('./components/canvas/SceneCanvas'));
 
 import './styles/main.scss';
 
 // --- CONDITIONAL ASSET PRELOADING ---
 // On high-end devices, preloads everything for zero stutter.
 // On mobile/low-end devices, only preloads core textures to prevent Out Of Memory crashes.
-import { 
-  ENTRANCE_TEXTURES, 
-  CORRIDOR_TEXTURES, 
-  UI_TEXTURES,
-  IMAGE_ASSETS,
-  filterTexturesByDevice
-} from './config/texturePreloadList';
+import { IMAGE_ASSETS, filterTexturesByDevice } from './config/texturePreloadList';
 
 // Standard Browser-level Image Preloader (for <img> tags)
 const preloadBrowserImage = (path) => {
@@ -64,20 +53,8 @@ const preloadBrowserImage = (path) => {
 // Laptops with touch screens (which also have a mouse/trackpad) will return true here.
 const supportsHover = typeof window !== 'undefined' && window.matchMedia('(hover: hover)').matches;
 
-// Trigger Three.js preloads at module level (as standard for Drei)
-/* === 预载策略 ===
-   核心集 = 入口 + 走廊 + 头像动画 + 图片。
-   深层房间（画廊 / 联系 / 工作室 / 关于）进入或预热时加载，不进开机预载。
-   清单由 scripts/gen-preload-list.mjs 扫描磁盘生成（占位块不计入），
-   因此项数会随资产补齐自动增长。 */
-
-const CORE_TEXTURES = [...ENTRANCE_TEXTURES, ...CORRIDOR_TEXTURES, ...UI_TEXTURES, ...IMAGE_ASSETS];
-const filteredCore = filterTexturesByDevice(CORE_TEXTURES, supportsHover);
-
-filteredCore.forEach(path => useTexture.preload(path));
-
-// 中文化（2026-10-12）：英文字体（Inter woff 外网 + 无中文字形）→ 本地 Noto Sans SC
-const FONT_URL = '/fonts/NotoSansSC.ttf';
+// 3D 核心贴图预载在懒加载的 SceneCanvas 内，避免把 three/drei 拉进主包。
+// 图片类资产仍在这里用浏览器 Image 预载（用于 DOM <img>）。
 
 // Helper component to handle global audio enable on interaction
 const GlobalAudioEnabler = () => {
@@ -93,23 +70,6 @@ const GlobalAudioEnabler = () => {
       window.removeEventListener('keydown', handleInteraction);
     };
   }, [enableAudio]);
-  return null;
-};
-
-// Scene background using corridor wall texture (static, no animation)
-const PaperSceneBackground = () => {
-  const { scene } = useThree();
-  const texture = useTexture('/textures/paper-texture.webp');
-
-  useEffect(() => {
-    texture.colorSpace = THREE.SRGBColorSpace;
-    scene.background = texture;
-
-    return () => {
-      scene.background = null;
-    };
-  }, [scene, texture]);
-
   return null;
 };
 
@@ -135,6 +95,8 @@ function DocumentMetaBridge() {
 function AppContent() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [sceneReady, setSceneReady] = useState(false);
+  const [sceneProgress, setSceneProgress] = useState(0);
+  const [sceneActive, setSceneActive] = useState(true);
 
   const force2D = typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('2d');
   const [webglAvailable] = useState(() => hasWebGL());
@@ -162,6 +124,11 @@ function AppContent() {
     });
   }, []);
 
+  const handleSceneProgress = useCallback(({ progress, active }) => {
+    setSceneProgress(progress);
+    setSceneActive(active);
+  }, []);
+
   const switchTo2D = useCallback(() => setBootMode('2d'), []);
   const retry3D = useCallback(() => {
     const url = new URL(window.location.href);
@@ -179,48 +146,19 @@ function AppContent() {
         <DocumentMetaBridge />
         <GlobalAudioEnabler />
         <div className="app">
-          {/* Full screen 3D Canvas */}
+          {/* Full screen 3D Canvas (lazy chunk) */}
           <div className="canvas-wrapper">
             <SceneErrorBoundary onError={switchTo2D}>
-              <Canvas
-              camera={{
-                position: [0, 0.2, 28],
-                fov: 60,
-                near: 0.1,
-                far: 150
-              }}
-              gl={{
-                antialias: settings.antialias,
-                alpha: false,
-                powerPreference: settings.powerPreference,
-                localClippingEnabled: true,
-                failIfMajorPerformanceCaveat: false
-              }}
-              dpr={settings.dpr}
-              shadows={settings.shadows}
-            >
-              <color attach="background" args={['#fafafa']} />
-              <fog attach="fog" args={['#fafafa', 15, 50]} />
-
-              {/* Scale performance down if fps drops */}
-              <PerformanceMonitor
-                onDecline={() => downgradeTier()}
-                flipflops={3}
-                onFallback={() => downgradeTier()}
-              />
-
-              {/* Advanced FPS & Performance Monitor */}
-              {/* <Perf position="top-left" minimal={false} /> */}
-
               <Suspense fallback={null}>
-                <Experience
+                <SceneCanvas
+                  settings={settings}
+                  tier={tier}
                   isLoaded={isLoaded}
                   onSceneReady={handleSceneReady}
-                  performanceTier={tier}
+                  downgradeTier={downgradeTier}
+                  onProgress={handleSceneProgress}
                 />
-                <Preload all />
               </Suspense>
-              </Canvas>
             </SceneErrorBoundary>
           </div>
 
@@ -238,6 +176,8 @@ function AppContent() {
           {/* 2D Preloader */}
           <Preloader
             ready={sceneReady}
+            progress={sceneProgress}
+            active={sceneActive}
             onComplete={() => setIsLoaded(true)}
           />
 
