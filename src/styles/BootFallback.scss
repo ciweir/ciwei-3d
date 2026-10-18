@@ -1,0 +1,292 @@
+@use 'variables' as *;
+
+.static-portfolio {
+    min-height: 100vh;
+    overflow-x: hidden;
+    color: $ink;
+    background-color: $paper-cream;
+    background-image:
+        linear-gradient(rgba(245, 240, 230, 0.82), rgba(245, 240, 230, 0.9)),
+        url('/textures/paper-texture.webp');
+    background-size: auto, 512px;
+    font-family: $font-cjk;
+
+    ::selection {
+        background: rgba(166, 124, 61, 0.35);
+    }
+}
+
+.sp-hero,
+.sp-groups,
+.sp-footer {
+    width: min(1120px, calc(100% - 48px));
+    margin: 0 auto;
+}
+
+.sp-hero {
+    padding: clamp(48px, 9vw, 112px) 0 clamp(40px, 7vw, 80px);
+}
+
+.sp-eyebrow {
+    margin: 0 0 18px;
+    font-size: 12px;
+    letter-spacing: 0.22em;
+    color: $text-meta;
+}
+
+.sp-title {
+    margin: 0;
+    font-size: clamp(3.4rem, 10vw, 7.5rem);
+    font-weight: 600;
+    line-height: 0.95;
+    letter-spacing: -0.04em;
+}
+
+.sp-role {
+    margin: 20px 0 0;
+    font-size: clamp(0.95rem, 1.6vw, 1.1rem);
+    letter-spacing: 0.08em;
+    color: $text-body;
+}
+
+.sp-intro {
+    max-width: 640px;
+    margin: 28px 0 0;
+    font-size: clamp(0.95rem, 1.5vw, 1.05rem);
+    line-height: 1.9;
+    color: $text-body;
+}
+
+.sp-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 32px;
+}
+
+.sp-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 11px 18px;
+    border: 1px solid $ink;
+    background: transparent;
+    color: $ink;
+    font: inherit;
+    font-size: 0.9rem;
+    letter-spacing: 0.06em;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+
+    &:hover,
+    &:focus-visible {
+        background: $ink;
+        color: $paper-cream;
+        outline: none;
+    }
+}
+
+.sp-button--ghost {
+    border-color: rgba(26, 26, 26, 0.35);
+}
+
+.sp-count {
+    margin: 28px 0 0;
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    color: $text-meta;
+}
+
+.sp-group {
+    padding: 0 0 clamp(36px, 6vw, 64px);
+}
+
+.sp-group-head {
+    display: grid;
+    grid-template-columns: 44px 1fr auto;
+    align-items: baseline;
+    gap: 14px;
+    padding: 0 0 14px;
+    border-bottom: 1px solid rgba(26, 26, 26, 0.22);
+}
+
+.sp-group-index {
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    color: $text-meta;
+}
+
+.sp-group-title {
+    margin: 0;
+    font-size: clamp(1.15rem, 2vw, 1.45rem);
+    font-weight: 600;
+    letter-spacing: 0.02em;
+}
+
+.sp-group-count {
+    font-size: 12px;
+    color: $text-meta;
+}
+
+.sp-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1.5fr) minmax(180px, 0.5fr);
+    gap: clamp(20px, 4vw, 64px);
+    padding: 24px 0;
+    border-bottom: 1px solid rgba(26, 26, 26, 0.12);
+}
+
+.sp-row-main {
+    min-width: 0;
+}
+
+.sp-row-title {
+    margin: 0;
+    font-size: clamp(1.15rem, 2.2vw, 1.6rem);
+    font-weight: 500;
+    line-height: 1.35;
+}
+
+.sp-row-desc {
+    max-width: 620px;
+    margin: 10px 0 0;
+    font-size: 0.92rem;
+    line-height: 1.9;
+    color: $text-body;
+}
+
+.sp-row-side {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+    padding-top: 4px;
+}
+
+.sp-row-meta {
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.7;
+    letter-spacing: 0.04em;
+    color: $text-meta;
+}
+
+.sp-row-link {
+    color: $ink;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-decoration: none;
+    border-bottom: 1px solid rgba(26, 26, 26, 0.45);
+    padding-bottom: 2px;
+
+    &:hover,
+    &:focus-visible {
+        color: #8a6428;
+        border-color: #8a6428;
+        outline: none;
+    }
+}
+
+.sp-footer {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 28px 0 56px;
+    border-top: 1px solid rgba(26, 26, 26, 0.22);
+    font-size: 12px;
+    line-height: 1.7;
+    color: $text-meta;
+
+    p {
+        margin: 0;
+    }
+}
+
+.boot-notice {
+    position: fixed;
+    z-index: 5000;
+    left: 50%;
+    bottom: 24px;
+    width: min(680px, calc(100vw - 32px));
+    transform: translateX(-50%);
+    padding: 16px 18px;
+    border: 1px solid $ink;
+    background: $paper-cream;
+    box-shadow: 6px 6px 0 rgba(26, 26, 26, 0.12);
+    font-family: $font-cjk;
+}
+
+.boot-notice__text {
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.7;
+    color: $text-body;
+}
+
+.boot-notice__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 14px;
+}
+
+.boot-notice__button {
+    padding: 8px 12px;
+    border: 1px solid rgba(26, 26, 26, 0.45);
+    background: transparent;
+    color: $ink;
+    font: inherit;
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+
+    &:hover,
+    &:focus-visible {
+        background: $ink;
+        color: $paper-cream;
+        outline: none;
+    }
+}
+
+.boot-notice__button--primary {
+    border-color: $ink;
+    background: $ink;
+    color: $paper-cream;
+
+    &:hover,
+    &:focus-visible {
+        background: #8a6428;
+        border-color: #8a6428;
+    }
+}
+
+@media (max-width: 720px) {
+    .sp-hero,
+    .sp-groups,
+    .sp-footer {
+        width: calc(100% - 32px);
+    }
+
+    .sp-row {
+        grid-template-columns: 1fr;
+        gap: 14px;
+    }
+
+    .sp-row-side {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+    }
+
+    .sp-footer {
+        flex-direction: column;
+    }
+
+    .boot-notice {
+        bottom: 12px;
+        padding: 14px;
+    }
+}

@@ -6,6 +6,9 @@ import { useColorTexture as useTexture } from './utils/colorTexture';
 import * as THREE from 'three';
 
 import Preloader from './components/dom/Preloader';
+import SceneErrorBoundary from './components/dom/SceneErrorBoundary';
+import SlowBootNotice from './components/dom/SlowBootNotice';
+import StaticPortfolio from './components/dom/StaticPortfolio';
 import PaperTransition from './components/dom/PaperTransition';
 import { AudioProvider } from './context/AudioManager';
 import { useAudio } from './context/useAudio';
@@ -21,6 +24,7 @@ import ScreenReaderOverlay from './components/ui/ScreenReaderOverlay';
 import { useDocumentMeta } from './hooks/useDocumentMeta';
 import posthog from 'posthog-js';
 import { loadSanityData } from './hooks/useSanityData';
+import { hasWebGL } from './utils/webglSupport';
 
 // Initialize PostHog（仅在配置了 key 时；未配置不 init，避免无 token 控制台报错）
 const POSTHOG_KEY = import.meta.env.VITE_POSTHOG_KEY;
@@ -132,19 +136,42 @@ function AppContent() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [sceneReady, setSceneReady] = useState(false);
 
+  const force2D = typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('2d');
+  const [webglAvailable] = useState(() => hasWebGL());
+  const [bootMode, setBootMode] = useState(() => (force2D || !webglAvailable ? '2d' : '3d'));
+  const [slowBoot, setSlowBoot] = useState(false);
+
   // Use Performance Context
   const { settings, downgradeTier, tier } = usePerformance();
 
-  // Force initialize audio in the background on mount
+  // Force initialize audio in the background on mount (3D only)
   useEffect(() => {
-    initAudio();
-  }, []);
+    if (bootMode === '3d') initAudio();
+  }, [bootMode]);
+
+  // 启动 watchdog：场景长时间未就绪时给出 2D 出口，避免无限停在 90%
+  useEffect(() => {
+    if (bootMode !== '3d' || sceneReady) return undefined;
+    const timer = window.setTimeout(() => setSlowBoot(true), 20000);
+    return () => window.clearTimeout(timer);
+  }, [bootMode, sceneReady]);
 
   const handleSceneReady = useCallback(() => {
     requestAnimationFrame(() => {
       setSceneReady(true);
     });
   }, []);
+
+  const switchTo2D = useCallback(() => setBootMode('2d'), []);
+  const retry3D = useCallback(() => {
+    const url = new URL(window.location.href);
+    url.searchParams.delete('2d');
+    window.location.href = url.toString();
+  }, []);
+
+  if (bootMode === '2d') {
+    return <StaticPortfolio canRetry3D={webglAvailable} onRetry={retry3D} />;
+  }
 
   return (
     <AudioProvider>
@@ -154,7 +181,8 @@ function AppContent() {
         <div className="app">
           {/* Full screen 3D Canvas */}
           <div className="canvas-wrapper">
-            <Canvas
+            <SceneErrorBoundary onError={switchTo2D}>
+              <Canvas
               camera={{
                 position: [0, 0.2, 28],
                 fov: 60,
@@ -192,7 +220,8 @@ function AppContent() {
                 />
                 <Preload all />
               </Suspense>
-            </Canvas>
+              </Canvas>
+            </SceneErrorBoundary>
           </div>
 
           {/* Navigation UI - Hamburger, Map, Back, Audio */}
@@ -211,6 +240,14 @@ function AppContent() {
             ready={sceneReady}
             onComplete={() => setIsLoaded(true)}
           />
+
+          {slowBoot && !sceneReady && (
+            <SlowBootNotice
+              onContinue={() => setSlowBoot(false)}
+              onRetry={() => window.location.reload()}
+              onUse2D={switchTo2D}
+            />
+          )}
         </div>
       </SceneProvider>
     </AudioProvider>
