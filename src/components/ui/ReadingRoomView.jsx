@@ -1,15 +1,33 @@
-import { lazy, Suspense, useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useId, useRef, useState } from 'react';
 import ProjectVideo from './ProjectVideo';
 import SceneErrorBoundary from '../dom/SceneErrorBoundary';
 import { hasWebGL } from '../../utils/webglSupport';
 
 const ReadingRoomAtmosphere = lazy(() => import('./ReadingRoomAtmosphere'));
 
+const FOCUSABLE = [
+    'a[href]',
+    'button:not([disabled])',
+    'video[controls]',
+    'input:not([disabled])',
+    'select:not([disabled])',
+    'textarea:not([disabled])',
+    '[tabindex]:not([tabindex="-1"])',
+].join(', ');
+
+const isVisible = (el) => {
+    const style = window.getComputedStyle(el);
+    return el.getClientRects().length > 0 && style.visibility !== 'hidden' && style.display !== 'none';
+};
+
 const ReadingRoomView = ({ project, onClose }) => {
     const [use3D] = useState(() => hasWebGL());
     const [sceneOn, setSceneOn] = useState(false);
     const [sceneFailed, setSceneFailed] = useState(false);
     const showScene = use3D && !sceneFailed;
+    const dialogRef = useRef(null);
+    const restoreFocusRef = useRef(null);
+    const titleId = useId();
 
     useEffect(() => {
         if (!use3D) return undefined;
@@ -19,11 +37,69 @@ const ReadingRoomView = ({ project, onClose }) => {
     }, [use3D]);
 
     useEffect(() => {
+        const root = dialogRef.current;
+        const previous = document.activeElement;
+        restoreFocusRef.current = previous instanceof HTMLElement ? previous : null;
+        root?.focus({ preventScroll: true });
+
         const handleKey = (e) => {
-            if (e.key === 'Escape') onClose();
+            if (e.key === 'Escape') {
+                // 全屏视频里先让浏览器退出全屏，避免一次 Esc 同时关阅读室
+                if (document.fullscreenElement) return;
+                e.preventDefault();
+                onClose();
+                return;
+            }
+
+            if (e.key !== 'Tab' || !root) return;
+
+            const items = [...root.querySelectorAll(FOCUSABLE)].filter(isVisible);
+            if (!items.length) {
+                e.preventDefault();
+                root.focus({ preventScroll: true });
+                return;
+            }
+
+            const first = items[0];
+            const last = items[items.length - 1];
+            const active = document.activeElement;
+
+            if (active === root) {
+                e.preventDefault();
+                (e.shiftKey ? last : first).focus();
+            } else if (e.shiftKey) {
+                if (active === first || !root.contains(active)) {
+                    e.preventDefault();
+                    last.focus();
+                }
+            } else if (active === last || !root.contains(active)) {
+                e.preventDefault();
+                first.focus();
+            }
         };
+
         window.addEventListener('keydown', handleKey);
-        return () => window.removeEventListener('keydown', handleKey);
+        return () => {
+            window.removeEventListener('keydown', handleKey);
+
+            // 触发按钮在浮层收起后不可见，此时把焦点交给房间导航
+            const target = restoreFocusRef.current;
+            const canRestore = target
+                && target !== document.body
+                && !target.matches?.('[data-reading-trigger]')
+                && target.isConnected
+                && isVisible(target);
+
+            if (canRestore) {
+                target.focus({ preventScroll: true });
+                return;
+            }
+
+            const fallback = document.querySelector('.back-btn:not(.exiting), .hamburger-btn');
+            if (fallback && isVisible(fallback)) {
+                fallback.focus({ preventScroll: true });
+            }
+        };
     }, [onClose]);
 
     const p = project;
@@ -41,10 +117,12 @@ const ReadingRoomView = ({ project, onClose }) => {
 
     return (
         <div
+            ref={dialogRef}
             className={`reading-room ${showScene ? 'reading-room--atmosphere' : 'reading-room--flat'}`}
             role="dialog"
             aria-modal="true"
-            aria-label={`${p.title} · 阅读室`}
+            aria-labelledby={titleId}
+            tabIndex={-1}
         >
             {showScene && (
                 <div className="reading-room__scene" aria-hidden="true">
@@ -69,7 +147,7 @@ const ReadingRoomView = ({ project, onClose }) => {
             <div className="reading-room__sheet">
                 <article className="reading-room__pane">
                     <header>
-                        <h1 className="reading-room__title">{p.title}</h1>
+                        <h1 id={titleId} className="reading-room__title">{p.title}</h1>
                         <div className="reading-room__meta">
                             {p.client && <span>{p.client}</span>}
                             {p.year && <span> · {p.year}</span>}

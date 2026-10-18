@@ -603,7 +603,11 @@ const ContentCard = ({ content, isOpen, onClose, isMobile }) => {
                                 paddingTop: '1rem',
                                 ...getStaggerStyle(400)
                             }}>
-                                <button className="studio-action-button" onClick={() => openReadingRoom(content)}>
+                                <button
+                                    className="studio-action-button"
+                                    data-reading-trigger
+                                    onClick={() => openReadingRoom(content)}
+                                >
                                     进入阅读室 →
                                 </button>
                             </div>
