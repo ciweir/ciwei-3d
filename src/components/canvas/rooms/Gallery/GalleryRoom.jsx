@@ -687,9 +687,9 @@ const ProjectCard = memo(forwardRef(({ index, project, clothespinTexture, curren
         return sec === 60 ? `${m + 1}:00` : `${m}:${String(sec).padStart(2, '0')}`;
     })();
     const backMeta = [
-        project.client && `客户\u3000${project.client}`,
-        project.category && `分类\u3000${project.category}`,
-        durationLabel && `片长\u3000${durationLabel}`,
+        project.client && `客户  ${project.client}`,
+        project.category && `分类  ${project.category}`,
+        durationLabel && `片长  ${durationLabel}`,
     ].filter(Boolean);
     const [hovered, setHovered] = useState(false);
     const [btnHovered, setBtnHovered] = useState(false);

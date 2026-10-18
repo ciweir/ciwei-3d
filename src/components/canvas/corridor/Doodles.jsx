@@ -5,6 +5,13 @@ import { useColorTexture as useTexture } from '../../../utils/colorTexture';
 import * as THREE from 'three';
 import { usePerformance } from '../../../context/usePerformance';
 
+const DOODLE_TEXTURES = {
+    paperBall: '/textures/corridor/decorations/paper_ball.webp',
+    paperAirplane: '/textures/corridor/decorations/paper_airplane.webp',
+    pencil: '/textures/corridor/decorations/pencil.webp',
+    coffeeCup: '/textures/corridor/decorations/coffee_cup.webp',
+};
+
 /**
  * Doodles Component - Hand-drawn Sketch Elements
  * 
@@ -19,13 +26,8 @@ const Doodles = () => {
     const { tier } = usePerformance();
     const isLowTier = tier === 'LOW';
 
-    // Load all sketch textures
-    const textures = useTexture({
-        paperBall: '/textures/corridor/decorations/paper_ball.webp',
-        paperAirplane: '/textures/corridor/decorations/paper_airplane.webp',
-        pencil: '/textures/corridor/decorations/pencil.webp',
-        coffeeCup: '/textures/corridor/decorations/coffee_cup.webp',
-    });
+    // Load all sketch textures（对象必须是稳定引用，否则 useLoader 每帧挂起）
+    const textures = useTexture(DOODLE_TEXTURES);
 
     // Set color space for all textures
     Object.values(textures).forEach(tex => {

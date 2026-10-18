@@ -1,5 +1,5 @@
-import { useCallback } from 'react';
-import { useThree } from '@react-three/fiber';
+import { useCallback, useRef } from 'react';
+import { useThree, useFrame } from '@react-three/fiber';
 
 import InfiniteCorridorManager from './corridor/InfiniteCorridorManager';
 import EntranceDoors from './entrance/EntranceDoors';
@@ -25,7 +25,22 @@ const ENTRANCE_DOORS_Z = 22;
  * 2. Click doors -> they open + camera flies through
  * 3. Behind doors: infinite corridor with 「此唯」
  */
-const Experience = ({ onSceneReady, performanceTier }) => {
+const SceneReadyGate = ({ onReady }) => {
+    const frames = useRef(0);
+    const fired = useRef(false);
+
+    useFrame(() => {
+        if (fired.current) return;
+        if (++frames.current >= 2) {
+            fired.current = true;
+            onReady?.();
+        }
+    });
+
+    return null;
+};
+
+const Experience = ({ onSceneReady, performanceTier, isLoaded }) => {
     // Use SceneContext for room state
     const { hasEntered, markEntered, enterRoom, isTeleporting, isInRoom } = useScene();
 
@@ -64,11 +79,9 @@ const Experience = ({ onSceneReady, performanceTier }) => {
 
     return (
         <>
-            {/* === ROOM WARM-UP (pre-renders all rooms off-screen during preloader) === */}
-            {/* RoomWarmup mounts all 4 rooms 500 units below, compiles shaders via gl.compile(), 
-                then self-destructs and signals onSceneReady. This ensures both corridor segments
-                AND room shaders are pre-compiled before the user starts interacting. */}
-            <RoomWarmup onWarmupComplete={onSceneReady} isLowTier={isLowTier} />
+            {/* 首屏就绪只等入口/走廊提交；房间预热放到预载退出后，避免阻塞启动 */}
+            <SceneReadyGate onReady={onSceneReady} />
+            {isLoaded && <RoomWarmup onWarmupComplete={() => {}} isLowTier={isLowTier} />}
 
             {/* === GLOBAL LIGHTING === */}
             {/* <ambientLight intensity={isLowTier ? 2.5 : 2.2} /> */}

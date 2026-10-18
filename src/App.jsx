@@ -43,7 +43,6 @@ import {
   ENTRANCE_TEXTURES, 
   CORRIDOR_TEXTURES, 
   UI_TEXTURES,
-  ABOUT_CORE_TEXTURES,
   IMAGE_ASSETS,
   filterTexturesByDevice
 } from './config/texturePreloadList';
@@ -63,18 +62,15 @@ const supportsHover = typeof window !== 'undefined' && window.matchMedia('(hover
 
 // Trigger Three.js preloads at module level (as standard for Drei)
 /* === 预载策略 ===
-   核心集 = 入口 + 走廊 + 头像动画 + 图片（+ 关于房间的头像与云）。
-   深层房间（画廊 / 联系 / 工作室）进入时懒加载，不进开机预载。
+   核心集 = 入口 + 走廊 + 头像动画 + 图片。
+   深层房间（画廊 / 联系 / 工作室 / 关于）进入或预热时加载，不进开机预载。
    清单由 scripts/gen-preload-list.mjs 扫描磁盘生成（占位块不计入），
    因此项数会随资产补齐自动增长。 */
 
 const CORE_TEXTURES = [...ENTRANCE_TEXTURES, ...CORRIDOR_TEXTURES, ...UI_TEXTURES, ...IMAGE_ASSETS];
 const filteredCore = filterTexturesByDevice(CORE_TEXTURES, supportsHover);
-// About 常驻预载：头像 + 云（证书等重资产不进开机加载）
-const filteredAboutCore = filterTexturesByDevice(ABOUT_CORE_TEXTURES, supportsHover);
 
 filteredCore.forEach(path => useTexture.preload(path));
-filteredAboutCore.forEach(path => useTexture.preload(path));
 
 // 中文化（2026-10-12）：英文字体（Inter woff 外网 + 无中文字形）→ 本地 Noto Sans SC
 const FONT_URL = '/fonts/NotoSansSC.ttf';
@@ -170,7 +166,7 @@ function AppContent() {
                 alpha: false,
                 powerPreference: settings.powerPreference,
                 localClippingEnabled: true,
-                failIfMajorPerformanceCaveat: true
+                failIfMajorPerformanceCaveat: false
               }}
               dpr={settings.dpr}
               shadows={settings.shadows}

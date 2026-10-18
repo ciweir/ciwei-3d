@@ -1,6 +1,10 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
+import { configureTextBuilder } from 'troika-three-text'
 import App from './App.jsx'
+
+// 文本排版放主线程：避免生产构建下 worker 序列化/字体 URL 解析导致的启动挂起
+configureTextBuilder({ useWorker: false })
 
 // --- 控制台签名（评审彩蛋）---
 if (typeof window !== 'undefined') {

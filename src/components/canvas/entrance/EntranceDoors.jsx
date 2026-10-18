@@ -169,14 +169,14 @@ const EntranceDoors = ({
     const duckQuotes = [
         "Have you tried console.log()?",
         "Did you clear the cache?",
-        "It works on my machine! 🤷",
+        "It works on my machine!",
         "Have you turned it off and on again?",
         "Maybe it's a CSS issue?",
         "Check for missing semicolons!",
         "Did you read the error message?",
         "Have you tried Stack Overflow?",
         "Is it plugged in?",
-        "Works in production! 🚀",
+        "Works in production!",
     ];
 
     // Bug Click Handler
@@ -1112,6 +1112,7 @@ const EntranceDoors = ({
                         anchorX="center"
                         anchorY="middle"
                         font="/fonts/MeowSubset.ttf"
+                        characters="喵～"
                     >
                         喵～
                     </Text>

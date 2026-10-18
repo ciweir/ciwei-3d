@@ -479,10 +479,15 @@ export const PAINTED_TEXTURES = [
  * @returns {string[]} 过滤后的清单
  */
 export const filterTexturesByDevice = (list, usePainted) => {
+    const painted = new Set(PAINTED_TEXTURES);
     return list.filter((path) => {
-        // 素描版：桌面与移动端都需要，始终保留
-        if (!path.includes('_painted.webp')) return true;
-        // 彩色版：仅支持 hover 的设备保留
-        return usePainted;
+        if (!path.startsWith('/textures/')) return true;
+        if (path.endsWith('_painted.webp')) return usePainted;
+        if (!usePainted) return true;
+        // 桌面端 colorTexture 会把线稿/底图映射到彩色版；有配对时只预载彩色版
+        const cand = path.endsWith('_sketch.webp')
+            ? path.replace(/_sketch.webp$/i, '_painted.webp')
+            : path.replace(/.webp$/i, '_painted.webp');
+        return !painted.has(cand);
     });
 };
