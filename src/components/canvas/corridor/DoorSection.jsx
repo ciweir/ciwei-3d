@@ -162,8 +162,6 @@ const DoorSection = ({
         // FIX: Added (currentRoom === doorId) check to ensure we only reset the OLD room
         // FIX: Added (teleportPhase === 'teleporting') to wait for curtain to close
         if (isTeleporting && teleportPhase === 'teleporting' && isInsideRoom && currentRoom === doorId) {
-            // console.log(`[DoorSection ${label}] Silent Reset triggered by teleport (Old Room)`);
-
             // 1. Reset Internal State immediately
             setIsOpen(false);
             setIsInsideRoom(false);

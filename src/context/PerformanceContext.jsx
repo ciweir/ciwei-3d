@@ -69,9 +69,6 @@ export const PerformanceProvider = ({ children }) => {
       
       // Removed small screen heuristic because modern phones have CSS width < 430px (e.g. iPhone 15 Pro Max is 430px)
 
-      // console.log(
-      //   `[Performance] Detected Tier: ${detectedTier} | Cores: ${navigator.hardwareConcurrency} | Mobile: ${isMobile}`
-      // );
       setTier(detectedTier);
       setIsDetecting(false);
     };

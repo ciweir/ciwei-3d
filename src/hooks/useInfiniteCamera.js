@@ -247,7 +247,7 @@ const useInfiniteCamera = ({
                     window.addEventListener('deviceorientation', handleDeviceOrientation);
                 }
             } catch {
-                // console.log('Gyroscope permission denied');
+                // permission denied
             }
         } else {
             // Non-iOS or older browsers - just add listener

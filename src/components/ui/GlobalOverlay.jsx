@@ -64,7 +64,6 @@ const GlobalOverlay = () => {
 
     // 不用 "return null"，让高开销的模糊滤镜和 SVG 一直挂在 DOM
     // 避免首次调用时卡顿。
-    // if (!isVisible && !overlayContent && !cachedContent) return null;
 
     // DUMMY RENDER MOCK - Pre-render the heaviest layout (certificate_grid) invisibly 
     // to calculate CSS layout costs on page load, NOT on first click.

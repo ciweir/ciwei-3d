@@ -71,7 +71,6 @@ const Experience = ({ onSceneReady, performanceTier, isLoaded }) => {
     // Handle door enter from inside corridor
     const handleDoorEnter = useCallback((doorId) => {
         enterRoom(doorId);
-        // console.log('Entering:', doorId);
     }, [enterRoom]);
 
     // Optimization: Low tier has simpler lighting

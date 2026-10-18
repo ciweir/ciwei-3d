@@ -172,8 +172,6 @@ const PaperTransition = () => {
 
     // 组件始终留在 DOM（不 "return null"），
     // 避免复杂 SVG 路径首次加载时卡顿。
-    // if (!teleportPhase) return null;
-
     return (
         <div
             className="preloader"

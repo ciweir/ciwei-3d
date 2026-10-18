@@ -485,7 +485,6 @@ const ContactRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
                 <MessagePaper
                     position={[0, 0.07, 2]}
                     onSend={() => {
-                        // console.log('📬 Contact form submitted:', data);
                         unlockAchievement('contact_submit');
                     }}
                 />

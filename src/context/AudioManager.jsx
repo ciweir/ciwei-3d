@@ -108,9 +108,6 @@ export const AudioProvider = ({ children }) => {
         }
         activeSounds.current[soundName] = audio;
 
-        // Simulation log
-        // console.log(`[Audio] Playing ${soundName} (loop: ${loop}, vol: ${audio.volume.toFixed(2)})`);
-
         // Attempt to play
         const playPromise = audio.play();
 
