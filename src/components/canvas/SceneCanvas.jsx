@@ -3,6 +3,7 @@ import { configureTextBuilder } from 'troika-three-text';
 import { Canvas } from '@react-three/fiber';
 import { Preload, PerformanceMonitor, useProgress } from '@react-three/drei';
 import Experience from './Experience';
+import { useScene } from '../../context/useScene';
 import { useColorTexture as useTexture } from '../../utils/colorTexture';
 import {
     ENTRANCE_TEXTURES,
@@ -37,44 +38,49 @@ const SceneCanvas = ({
     onSceneReady,
     downgradeTier,
     onProgress,
-}) => (
-    <Canvas
-        camera={{
-            position: [0, 0.2, 28],
-            fov: 60,
-            near: 0.1,
-            far: 150,
-        }}
-        gl={{
-            antialias: settings.antialias,
-            alpha: false,
-            powerPreference: settings.powerPreference,
-            localClippingEnabled: true,
-            failIfMajorPerformanceCaveat: false,
-        }}
-        dpr={settings.dpr}
-        shadows={settings.shadows}
-    >
-        <color attach="background" args={['#fafafa']} />
-        <fog attach="fog" args={['#fafafa', 15, 50]} />
+}) => {
+    const { readingProject } = useScene();
 
-        <PerformanceMonitor
-            onDecline={() => downgradeTier()}
-            flipflops={3}
-            onFallback={() => downgradeTier()}
-        />
+    return (
+        <Canvas
+            camera={{
+                position: [0, 0.2, 28],
+                fov: 60,
+                near: 0.1,
+                far: 150,
+            }}
+            gl={{
+                antialias: settings.antialias,
+                alpha: false,
+                powerPreference: settings.powerPreference,
+                localClippingEnabled: true,
+                failIfMajorPerformanceCaveat: false,
+            }}
+            dpr={settings.dpr}
+            shadows={settings.shadows}
+            frameloop={readingProject ? 'never' : 'always'}
+        >
+            <color attach="background" args={['#fafafa']} />
+            <fog attach="fog" args={['#fafafa', 15, 50]} />
 
-        <SceneLoadingProgress onProgress={onProgress} />
-
-        <Suspense fallback={null}>
-            <Experience
-                isLoaded={isLoaded}
-                onSceneReady={onSceneReady}
-                performanceTier={tier}
+            <PerformanceMonitor
+                onDecline={() => downgradeTier()}
+                flipflops={3}
+                onFallback={() => downgradeTier()}
             />
-            <Preload all />
-        </Suspense>
-    </Canvas>
-);
+
+            <SceneLoadingProgress onProgress={onProgress} />
+
+            <Suspense fallback={null}>
+                <Experience
+                    isLoaded={isLoaded}
+                    onSceneReady={onSceneReady}
+                    performanceTier={tier}
+                />
+                <Preload all />
+            </Suspense>
+        </Canvas>
+    );
+};
 
 export default SceneCanvas;

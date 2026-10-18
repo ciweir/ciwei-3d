@@ -15,11 +15,13 @@ import { useScene } from './context/useScene';
 import NavigationUI from './components/ui/NavigationUI';
 import GlobalOverlay from './components/ui/GlobalOverlay';
 import ReadingRoom from './components/ui/ReadingRoom';
+import ReadingRoomPage from './components/ui/ReadingRoomPage';
 import ScreenReaderOverlay from './components/ui/ScreenReaderOverlay';
 import { useDocumentMeta } from './hooks/useDocumentMeta';
 import posthog from 'posthog-js';
 import { loadSanityData } from './hooks/useSanityData';
 import { hasWebGL } from './utils/webglSupport';
+import { getReadingSlugFromUrl } from './utils/readingRoute';
 
 // Initialize PostHog（仅在配置了 key 时；未配置不 init，避免无 token 控制台报错）
 const POSTHOG_KEY = import.meta.env.VITE_POSTHOG_KEY;
@@ -75,19 +77,24 @@ const GlobalAudioEnabler = () => {
 
 // Bridge component to use hooks inside SceneProvider
 // Handles dynamic meta tags + deep link auto-teleport
-function DocumentMetaBridge() {
+function DocumentMetaBridge({ ready }) {
   useDocumentMeta();
 
-  const { initialRoom, deeplinkHandled, hasEntered, teleportTo } = useScene();
+  const { initialRoom, deeplinkHandled, teleportTo, markEntered } = useScene();
 
-  // Deep linking: if user lands on e.g. /gallery, auto-teleport after scene loads
+  // Deep linking: e.g. /gallery or /read/... closing back to /gallery lands inside the room
   useEffect(() => {
-    if (initialRoom && hasEntered && !deeplinkHandled.current) {
-      deeplinkHandled.current = true;
-      // Small delay to let the corridor render first
-      setTimeout(() => teleportTo(initialRoom), 300);
-    }
-  }, [initialRoom, hasEntered, teleportTo, deeplinkHandled]);
+    if (!initialRoom || !ready || deeplinkHandled.current) return undefined;
+    deeplinkHandled.current = true;
+
+    const timer = window.setTimeout(() => {
+      // 先完成“进门”状态，否则传送后房间 UI 与退回按钮仍处于入口模式
+      markEntered();
+      teleportTo(initialRoom);
+    }, 500);
+
+    return () => window.clearTimeout(timer);
+  }, [initialRoom, ready, teleportTo, markEntered, deeplinkHandled]);
 
   return null;
 }
@@ -100,7 +107,11 @@ function AppContent() {
 
   const force2D = typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('2d');
   const [webglAvailable] = useState(() => hasWebGL());
-  const [bootMode, setBootMode] = useState(() => (force2D || !webglAvailable ? '2d' : '3d'));
+  const readingSlug = getReadingSlugFromUrl();
+  const [bootMode, setBootMode] = useState(() => {
+    if (readingSlug) return 'read';
+    return force2D || !webglAvailable ? '2d' : '3d';
+  });
   const [slowBoot, setSlowBoot] = useState(false);
 
   // Use Performance Context
@@ -136,6 +147,10 @@ function AppContent() {
     window.location.href = url.toString();
   }, []);
 
+  if (bootMode === 'read') {
+    return <ReadingRoomPage slug={readingSlug} />;
+  }
+
   if (bootMode === '2d') {
     return <StaticPortfolio canRetry3D={webglAvailable} onRetry={retry3D} />;
   }
@@ -143,7 +158,7 @@ function AppContent() {
   return (
     <AudioProvider>
       <SceneProvider>
-        <DocumentMetaBridge />
+        <DocumentMetaBridge ready={isLoaded} />
         <GlobalAudioEnabler />
         <div className="app">
           {/* Full screen 3D Canvas (lazy chunk) */}
