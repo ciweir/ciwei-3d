@@ -228,9 +228,12 @@ const ContentCard = ({ content, isOpen, onClose, isMobile }) => {
     // --- 卡片样式配置（位置）---
     // 用 % 或 vw/vh 做流式响应式。
     const cardStyle = isMobile ? {
-        // 移动端：卡片在底部
-        width: '90%',
-        maxHeight: '60vh',
+        // 移动端：底部纸张卡片；限制在视口内并允许纵向滚动，避免按钮被纸面裁掉
+        width: 'min(92vw, 420px)',
+        maxWidth: 'calc(100vw - 24px)',
+        maxHeight: 'calc(100dvh - 12rem)',
+        overflowX: 'hidden',
+        overflowY: 'auto',
         bottom: '10rem', // 流体：用户指定
         left: '50%',
         transform: isOpen ? 'translate(-50%, 0) rotate(-1deg)' : 'translate(-50%, 120%) rotate(10deg)',
