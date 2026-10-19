@@ -114,6 +114,16 @@ function AppContent() {
   });
   const [slowBoot, setSlowBoot] = useState(false);
 
+  // 海报仅服务 3D 首屏；2D/WebGL 兜底时立即撤下
+  useEffect(() => {
+    if (bootMode === '3d') return undefined;
+    const poster = document.getElementById('boot-poster');
+    if (!poster) return undefined;
+    poster.classList.add('is-hidden');
+    const timer = window.setTimeout(() => poster.remove(), 500);
+    return () => window.clearTimeout(timer);
+  }, [bootMode]);
+
   // Use Performance Context
   const { settings, downgradeTier, tier } = usePerformance();
 

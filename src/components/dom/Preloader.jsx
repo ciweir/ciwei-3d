@@ -264,6 +264,11 @@ const Preloader = ({ onComplete, ready, progress = 0, active = true }) => {
 
     const tl = gsap.timeline({
       onComplete: () => {
+        const bootPoster = document.getElementById('boot-poster');
+        if (bootPoster) {
+          bootPoster.classList.add('is-hidden');
+          window.setTimeout(() => bootPoster.remove(), 600);
+        }
         setIsDone(true);
         onComplete?.();
       }
@@ -303,7 +308,7 @@ const Preloader = ({ onComplete, ready, progress = 0, active = true }) => {
   const percentageText = `${Math.round(safeProgress)}%`;
 
   return (
-    <div className="preloader" ref={containerRef}>
+    <div className="preloader preloader--boot-poster" ref={containerRef}>
       {/* LEFT HALF */}
       <div
         className="preloader__half preloader__half--left"

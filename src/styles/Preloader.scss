@@ -67,4 +67,12 @@
         z-index: 20;
         mix-blend-mode: multiply; // Make it look written on paper
     }
+
+    // 首屏海报模式：静帧入口透出，百分比/撕纸线作为加载层
+    &--boot-poster {
+        .preloader__half {
+            background: transparent;
+            filter: none;
+        }
+    }
 }
