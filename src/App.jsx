@@ -16,8 +16,9 @@ import NavigationUI from './components/ui/NavigationUI';
 import GlobalOverlay from './components/ui/GlobalOverlay';
 import ReadingRoom from './components/ui/ReadingRoom';
 import ReadingRoomPage from './components/ui/ReadingRoomPage';
+import EntranceLanding from './components/ui/EntranceLanding';
 import ScreenReaderOverlay from './components/ui/ScreenReaderOverlay';
-import { useDocumentMeta } from './hooks/useDocumentMeta';
+import { useDocumentMeta, getInitialRoomFromUrl } from './hooks/useDocumentMeta';
 import posthog from 'posthog-js';
 import { loadSanityData } from './hooks/useSanityData';
 import { hasWebGL } from './utils/webglSupport';
@@ -113,6 +114,18 @@ function AppContent() {
     return force2D || !webglAvailable ? '2d' : '3d';
   });
   const [slowBoot, setSlowBoot] = useState(false);
+  // 首屏 2D 入口：3D 只在点击门后挂载；深链/预览钩子视为已请求
+  const [sceneRequested, setSceneRequested] = useState(() => {
+    if (getInitialRoomFromUrl()) return true;
+    const params = new URLSearchParams(window.location.search);
+    return params.has('preview') || Boolean(window.sessionStorage.getItem('ciwei-preview'));
+  });
+  const [entryFromLanding, setEntryFromLanding] = useState(false);
+
+  const request3D = useCallback(() => {
+    setEntryFromLanding(true);
+    setSceneRequested(true);
+  }, []);
 
   // 海报仅服务 3D 首屏；2D/WebGL 兜底时立即撤下
   useEffect(() => {
@@ -134,10 +147,26 @@ function AppContent() {
 
   // 启动 watchdog：场景长时间未就绪时给出 2D 出口，避免无限停在 90%
   useEffect(() => {
-    if (bootMode !== '3d' || sceneReady) return undefined;
+    if (bootMode !== '3d' || !sceneRequested || sceneReady) return undefined;
     const timer = window.setTimeout(() => setSlowBoot(true), 20000);
     return () => window.clearTimeout(timer);
-  }, [bootMode, sceneReady]);
+  }, [bootMode, sceneRequested, sceneReady]);
+
+  // 从 2D 入口点击进入：场景就绪后自动推门，避免让用户再点一次
+  // 入场/门动画可能仍在进行，重复派发几次，由 EntranceDoors 的 isOpen/isAnimating 守卫去重
+  useEffect(() => {
+    if (!isLoaded || !entryFromLanding) return undefined;
+    let attempts = 0;
+    const timer = window.setInterval(() => {
+      window.dispatchEvent(new CustomEvent('ciwei:auto-enter'));
+      attempts += 1;
+      if (attempts >= 8) {
+        window.clearInterval(timer);
+        setEntryFromLanding(false);
+      }
+    }, 900);
+    return () => window.clearInterval(timer);
+  }, [isLoaded, entryFromLanding]);
 
   const handleSceneReady = useCallback(() => {
     requestAnimationFrame(() => {
@@ -171,47 +200,53 @@ function AppContent() {
         <DocumentMetaBridge ready={isLoaded} />
         <GlobalAudioEnabler />
         <div className="app">
-          {/* Full screen 3D Canvas (lazy chunk) */}
-          <div className="canvas-wrapper">
-            <SceneErrorBoundary onError={switchTo2D}>
-              <Suspense fallback={null}>
-                <SceneCanvas
-                  settings={settings}
-                  tier={tier}
-                  isLoaded={isLoaded}
-                  onSceneReady={handleSceneReady}
-                  downgradeTier={downgradeTier}
-                  onProgress={handleSceneProgress}
-                />
-              </Suspense>
-            </SceneErrorBoundary>
-          </div>
-
-          {/* Navigation UI - Hamburger, Map, Back, Audio */}
-          {isLoaded && (
+          {!sceneRequested ? (
+            <EntranceLanding onEnter={request3D} />
+          ) : (
             <>
-              <NavigationUI />
-              <GlobalOverlay />
-              <ReadingRoom />
-              <PaperTransition />
-              <ScreenReaderOverlay />
+              {/* Full screen 3D Canvas (lazy chunk) */}
+              <div className="canvas-wrapper">
+                <SceneErrorBoundary onError={switchTo2D}>
+                  <Suspense fallback={null}>
+                    <SceneCanvas
+                      settings={settings}
+                      tier={tier}
+                      isLoaded={isLoaded}
+                      onSceneReady={handleSceneReady}
+                      downgradeTier={downgradeTier}
+                      onProgress={handleSceneProgress}
+                    />
+                  </Suspense>
+                </SceneErrorBoundary>
+              </div>
+
+              {/* Navigation UI - Hamburger, Map, Back, Audio */}
+              {isLoaded && (
+                <>
+                  <NavigationUI />
+                  <GlobalOverlay />
+                  <ReadingRoom />
+                  <PaperTransition />
+                  <ScreenReaderOverlay />
+                </>
+              )}
+
+              {/* 2D Preloader */}
+              <Preloader
+                ready={sceneReady}
+                progress={sceneProgress}
+                active={sceneActive}
+                onComplete={() => setIsLoaded(true)}
+              />
+
+              {slowBoot && !sceneReady && (
+                <SlowBootNotice
+                  onContinue={() => setSlowBoot(false)}
+                  onRetry={() => window.location.reload()}
+                  onUse2D={switchTo2D}
+                />
+              )}
             </>
-          )}
-
-          {/* 2D Preloader */}
-          <Preloader
-            ready={sceneReady}
-            progress={sceneProgress}
-            active={sceneActive}
-            onComplete={() => setIsLoaded(true)}
-          />
-
-          {slowBoot && !sceneReady && (
-            <SlowBootNotice
-              onContinue={() => setSlowBoot(false)}
-              onRetry={() => window.location.reload()}
-              onUse2D={switchTo2D}
-            />
           )}
         </div>
       </SceneProvider>

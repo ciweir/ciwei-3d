@@ -225,7 +225,7 @@ const Preloader = ({ onComplete, ready, progress = 0, active = true }) => {
 
         const safeProgress = Math.min(100, Math.max(0, val));
         const strokeDashoffset = 120 - (120 * safeProgress) / 100;
-        const percentageText = `${Math.round(safeProgress)}%`;
+        const percentageText = safeProgress >= 99.5 ? '布景中' : `${Math.round(safeProgress)}%`;
 
         // Direct DOM manipulation - BYPASS React Render!
         if (textLeftRef.current) textLeftRef.current.innerText = percentageText;
@@ -305,7 +305,7 @@ const Preloader = ({ onComplete, ready, progress = 0, active = true }) => {
   // Initialize values
   const safeProgress = Math.min(100, Math.max(0, displayProgressRef.current));
   const strokeDashoffset = pathLength - (pathLength * safeProgress) / 100;
-  const percentageText = `${Math.round(safeProgress)}%`;
+  const percentageText = safeProgress >= 99.5 ? '布景中' : `${Math.round(safeProgress)}%`;
 
   return (
     <div className="preloader preloader--boot-poster" ref={containerRef}>

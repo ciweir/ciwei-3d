@@ -369,6 +369,24 @@ const EntranceDoors = ({
         }, 0.3);
     };
 
+    // 首屏 2D 入口点击后，3D 就绪时自动推门
+    useEffect(() => {
+        let timer;
+        const handleAutoEnter = () => {
+            clearTimeout(timer);
+            timer = setTimeout(() => {
+                if (!isOpen && !isAnimating) {
+                    handleClick({ stopPropagation: () => { } });
+                }
+            }, 700);
+        };
+        window.addEventListener('ciwei:auto-enter', handleAutoEnter);
+        return () => {
+            clearTimeout(timer);
+            window.removeEventListener('ciwei:auto-enter', handleAutoEnter);
+        };
+    }, [isOpen, isAnimating, handleClick]);
+
     // Handle hover - doors slightly open to indicate interactivity
     const handlePointerEnter = () => {
         if (isOpen || isAnimating || isMobile) return;
