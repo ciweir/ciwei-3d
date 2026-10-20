@@ -10,10 +10,12 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+.wrangler/
 *.local
 
-# 视频资产（体积大，不入版本；由 scripts/export-ciwei.mjs 从 CiWei 主站复制生成）
-public/media/
+# 视频资产：GitHub → Cloudflare Workers Builds 需要随仓库构建；
+# 本地仍可由 scripts/export-ciwei.mjs 从 CiWei 主站重新生成
+# （public/media/ 不再忽略）
 
 # 封面源图（可再生产物；由 scripts/export-ciwei.mjs 从 CiWei 主站复制，
 # 供 pipeline/make-covers.mjs 派生 webp 双版本）——磁盘保留，不入版本

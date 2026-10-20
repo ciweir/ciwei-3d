@@ -33,6 +33,7 @@
     "sass": "^1.97.1",
     "sharp": "^0.34.5",
     "vite": "^7.2.4",
-    "vite-plugin-compression": "^0.5.1"
+    "vite-plugin-compression": "^0.5.1",
+    "wrangler": "^4.151.2"
   }
 }
