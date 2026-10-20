@@ -5,7 +5,7 @@
  * 规则：小于 512 B 的文件视为占位块（256×256 纯米色），不纳入预加载。
  * 补齐贴图后重跑生成脚本，清单会自动收录新素材。
  *
- * 本次扫描结果：ENTRANCE_TEXTURES     49 项 ｜ CORRIDOR_TEXTURES     80 项 ｜ UI_TEXTURES     9 项 ｜ IMAGE_ASSETS     8 项 ｜ GALLERY_TEXTURES     57 项 ｜ CONTACT_TEXTURES     14 项 ｜ STUDIO_TEXTURES     28 项 ｜ ABOUT_TEXTURES     42 项
+ * 本次扫描结果：ENTRANCE_TEXTURES     49 项 ｜ CORRIDOR_TEXTURES     80 项 ｜ UI_TEXTURES     9 项 ｜ IMAGE_ASSETS     10 项 ｜ GALLERY_TEXTURES     63 项 ｜ CONTACT_TEXTURES     14 项 ｜ STUDIO_TEXTURES     28 项 ｜ ABOUT_TEXTURES     42 项
  */
 // 入口场景：共享贴图 + 入口门/道具
 export const ENTRANCE_TEXTURES = [
@@ -159,6 +159,8 @@ export const UI_TEXTURES = [
 
 // 标准 HTML 图片（<img> 预载）
 export const IMAGE_ASSETS = [
+    '/images/entrance-poster-mobile.webp',
+    '/images/entrance-poster.webp',
     '/images/ink-splash.webp',
     '/images/map.webp',
     '/images/map_about_painted.webp',
@@ -177,8 +179,12 @@ export const GALLERY_TEXTURES = [
     '/covers/bottle.webp',
     '/covers/bread-sketch.webp',
     '/covers/bread.webp',
+    '/covers/ciwei-ai-sketch.webp',
+    '/covers/ciwei-ai.webp',
     '/covers/cleanser-sketch.webp',
     '/covers/cleanser.webp',
+    '/covers/destined-sketch.webp',
+    '/covers/destined.webp',
     '/covers/deyunshe-sketch.webp',
     '/covers/deyunshe.webp',
     '/covers/double-eleven-sketch.webp',
@@ -209,6 +215,8 @@ export const GALLERY_TEXTURES = [
     '/covers/snack-mix.webp',
     '/covers/xiaomi-sketch.webp',
     '/covers/xiaomi.webp',
+    '/covers/zhian-ai-sketch.webp',
+    '/covers/zhian-ai.webp',
     '/textures/gallery/bird_gray.webp',
     '/textures/gallery/bird_gray_painted.webp',
     '/textures/gallery/css3logo_painted.webp',

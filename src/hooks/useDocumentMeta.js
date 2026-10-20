@@ -30,7 +30,7 @@ const ROOM_META = {
     gallery: {
         path: '/gallery',
         title: '画廊与作品 —— 此唯作品集',
-        description: '浏览此唯的 3D 作品画廊：19 个项目以手绘纸卡呈现，点击可查看详情。',
+        description: '浏览此唯的 3D 作品画廊：22 个项目以手绘纸卡呈现，点击可查看详情。',
     },
     studio: {
         path: '/studio',

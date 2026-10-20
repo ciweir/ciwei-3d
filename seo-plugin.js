@@ -16,7 +16,7 @@ import { SITE, socialUrls } from './src/config/site-config.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-/* 本地数据源：19 个项目 */
+/* 本地数据源：22 个项目 */
 function loadProjects() {
     const file = path.join(__dirname, 'src', 'data', 'ciwei-projects.json');
     return JSON.parse(readFileSync(file, 'utf8'));

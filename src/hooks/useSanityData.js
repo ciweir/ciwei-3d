@@ -4,7 +4,7 @@ import { STUDIO_SHOWCASE } from '../data/studio-showcase';
 
 /* 数据源说明（本地数据模式）
    --------------------------
-   19 个项目由 scripts/export-ciwei.mjs 从 src/data/placeholder.ts
+   22 个项目由 scripts/export-ciwei.mjs 从 src/data/placeholder.ts
    导出为 ciwei-projects.json，本文件只做装配与分发，不发网络请求。
 
    若将来恢复 Sanity CMS 模式：
