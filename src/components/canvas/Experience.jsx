@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react';
+import { Suspense, useCallback, useRef, useState } from 'react';
 import { useThree, useFrame } from '@react-three/fiber';
 
 import InfiniteCorridorManager from './corridor/InfiniteCorridorManager';
@@ -42,9 +42,11 @@ const SceneReadyGate = ({ onReady }) => {
 
 const Experience = ({ onSceneReady, performanceTier, isLoaded }) => {
     // Use SceneContext for room state
-    const { hasEntered, markEntered, enterRoom, isTeleporting, isInRoom } = useScene();
+    const { hasEntered, markEntered, enterRoom, isTeleporting, isInRoom, initialRoom } = useScene();
 
     const { camera } = useThree();
+    // 入口先渲染；走廊在推门/已进入时才挂载，避免首屏编译整条走廊
+    const [corridorRequested, setCorridorRequested] = useState(false);
 
     // Camera control - both scroll and parallax only work after entering
     // Disable during teleporting to prevent scroll interference
@@ -72,6 +74,10 @@ const Experience = ({ onSceneReady, performanceTier, isLoaded }) => {
     const handleDoorEnter = useCallback((doorId) => {
         enterRoom(doorId);
     }, [enterRoom]);
+
+    const handleEnterStart = useCallback(() => {
+        setCorridorRequested(true);
+    }, []);
 
     // Optimization: Low tier has simpler lighting
     const isLowTier = performanceTier === 'LOW';
@@ -103,6 +109,7 @@ const Experience = ({ onSceneReady, performanceTier, isLoaded }) => {
                 <EntranceDoors
                     position={[0, 0, ENTRANCE_DOORS_Z]}
                     onComplete={handleEntranceComplete}
+                    onEnterStart={handleEnterStart}
                 />
             )}
 
@@ -111,13 +118,26 @@ const Experience = ({ onSceneReady, performanceTier, isLoaded }) => {
                 <SignSystem position={[0, 0, ENTRANCE_DOORS_Z]} />
             )}
 
-            {/* === INFINITE CORRIDOR (segment -1 SegmentDoors hidden during entrance) === */}
-            <InfiniteCorridorManager
-                onDoorEnter={handleDoorEnter}
-                hideDoorsForSegments={hasEntered ? [] : [-1]} // Hide segment -1's doors until entered
-                clipSegmentNeg1={!hasEntered} // Clip segment -1 visualization until entered
-                setCameraOverride={setCameraOverride}
-            />
+            {/* === INFINITE CORRIDOR (deferred until door click / already inside) === */}
+            {(corridorRequested || hasEntered || Boolean(initialRoom)) && (
+                initialRoom ? (
+                    <InfiniteCorridorManager
+                        onDoorEnter={handleDoorEnter}
+                        hideDoorsForSegments={hasEntered ? [] : [-1]}
+                        clipSegmentNeg1={!hasEntered}
+                        setCameraOverride={setCameraOverride}
+                    />
+                ) : (
+                    <Suspense fallback={null}>
+                        <InfiniteCorridorManager
+                            onDoorEnter={handleDoorEnter}
+                            hideDoorsForSegments={hasEntered ? [] : [-1]}
+                            clipSegmentNeg1={!hasEntered}
+                            setCameraOverride={setCameraOverride}
+                        />
+                    </Suspense>
+                )
+            )}
 
             {/* === TELEPORT ROOM (renders room directly during teleportation) === */}
             <TeleportRoom />

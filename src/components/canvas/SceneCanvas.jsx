@@ -4,6 +4,7 @@ import { Canvas } from '@react-three/fiber';
 import { Preload, PerformanceMonitor, useProgress } from '@react-three/drei';
 import Experience from './Experience';
 import { useScene } from '../../context/useScene';
+import { getInitialRoomFromUrl } from '../../hooks/useDocumentMeta';
 import { useColorTexture as useTexture } from '../../utils/colorTexture';
 import {
     ENTRANCE_TEXTURES,
@@ -16,10 +17,16 @@ import {
 configureTextBuilder({ useWorker: false });
 
 const supportsHover = typeof window !== 'undefined' && window.matchMedia('(hover: hover)').matches;
-const CORE_TEXTURES = [...ENTRANCE_TEXTURES, ...CORRIDOR_TEXTURES, ...UI_TEXTURES];
-const filteredCore = filterTexturesByDevice(CORE_TEXTURES, supportsHover);
+const DEEP_LINK_ROOM = getInitialRoomFromUrl();
+// 深链保留旧的完整预载；首页入口只预载入口/UI，走廊进门时再编译
+const INITIAL_TEXTURES = [
+    ...ENTRANCE_TEXTURES,
+    ...(DEEP_LINK_ROOM ? CORRIDOR_TEXTURES : []),
+    ...UI_TEXTURES,
+];
+const filteredInitial = filterTexturesByDevice(INITIAL_TEXTURES, supportsHover);
 
-filteredCore.forEach((path) => useTexture.preload(path));
+filteredInitial.forEach((path) => useTexture.preload(path));
 
 const SceneLoadingProgress = ({ onProgress }) => {
     const { progress, active } = useProgress();
@@ -40,6 +47,13 @@ const SceneCanvas = ({
     onProgress,
 }) => {
     const { readingProject } = useScene();
+
+    // 入口先就绪；走廊纹理在预载退出后再拉，避免首屏进度等整条走廊
+    useEffect(() => {
+        if (!isLoaded) return;
+        const corridorTextures = filterTexturesByDevice(CORRIDOR_TEXTURES, supportsHover);
+        corridorTextures.forEach((path) => useTexture.preload(path));
+    }, [isLoaded]);
 
     return (
         <Canvas

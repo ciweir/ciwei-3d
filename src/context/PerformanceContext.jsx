@@ -1,4 +1,4 @@
-import { createContext, useState, useEffect } from "react";
+import { createContext, useState } from "react";
 
 // Performance Tiers（仅本文件内部使用，无需导出）
 const TIERS = {
@@ -38,43 +38,61 @@ const SETTINGS = {
   },
 };
 
+const rank = { LOW: 0, MEDIUM: 1, HIGH: 2 };
+
+const detectGpuTier = () => {
+  try {
+    const probe = document.createElement("canvas");
+    const gl = probe.getContext("webgl2") || probe.getContext("webgl");
+    if (!gl) return TIERS.LOW;
+
+    const debug = gl.getExtension("WEBGL_debug_renderer_info");
+    const renderer = String(
+      debug ? gl.getParameter(debug.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER) || ""
+    );
+    gl.getExtension("WEBGL_lose_context")?.loseContext();
+
+    if (/swiftshader|llvmpipe|software|basic render/i.test(renderer)) return TIERS.LOW;
+    // Apple Silicon 是集显但性能足够，保持 HIGH
+    if (/apple m\d/i.test(renderer)) return TIERS.HIGH;
+    if (/intel|uhd|iris|mali|adreno|powervr/i.test(renderer)) return TIERS.MEDIUM;
+  } catch {
+    // 探针失败时按中档处理，避免误伤可用的独显
+    return TIERS.MEDIUM;
+  }
+  return null;
+};
+
+const detectTier = () => {
+  let detectedTier = TIERS.HIGH;
+
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  // 深链进房间沿用旧的高档位与完整预热，避免房间上色卡在 0%
+  if (/^\/(gallery|about|studio|contact)\/?$/.test(window.location.pathname) && !isMobile) {
+    return TIERS.HIGH;
+  }
+  if (isMobile) detectedTier = TIERS.MEDIUM;
+
+  if (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4) {
+    detectedTier = isMobile ? TIERS.LOW : TIERS.MEDIUM;
+  }
+
+  if (navigator.deviceMemory && navigator.deviceMemory <= 4) {
+    detectedTier = TIERS.LOW;
+  }
+
+  const gpuTier = detectGpuTier();
+  if (gpuTier && rank[gpuTier] < rank[detectedTier]) detectedTier = gpuTier;
+
+  return detectedTier;
+};
+
 // 导出 context 对象供 usePerformance.js 使用；本文件只导出组件与 context 对象
 export const PerformanceContext = createContext(null);
 
 export const PerformanceProvider = ({ children }) => {
-  const [tier, setTier] = useState(TIERS.HIGH); // Default to HIGH, degrade if needed
-  const [isDetecting, setIsDetecting] = useState(true);
-
-  useEffect(() => {
-    const detectTier = () => {
-      let detectedTier = TIERS.HIGH;
-
-      // 1. Mobile Check
-      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-      if (isMobile) {
-        detectedTier = TIERS.MEDIUM;
-      }
-
-      // 2. Hardware Concurrency (CPU Cores)
-      // Low-end devices usually have 4 or fewer cores
-      if (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4) {
-        detectedTier = isMobile ? TIERS.LOW : TIERS.MEDIUM;
-      }
-
-      // 3. GPU/FPS Estimate (Simplistic)
-      // Override for very weak hardware or low RAM (<= 4GB)
-      if (navigator.deviceMemory && navigator.deviceMemory <= 4) {
-        detectedTier = TIERS.LOW;
-      }
-      
-      // Removed small screen heuristic because modern phones have CSS width < 430px (e.g. iPhone 15 Pro Max is 430px)
-
-      setTier(detectedTier);
-      setIsDetecting(false);
-    };
-
-    detectTier();
-  }, []);
+  // 同步探测，Canvas 首帧就拿到正确档位（不先用 HIGH 再降级）
+  const [tier, setTier] = useState(detectTier);
 
   // Function to manually downgrade tier (called by PerformanceMonitor)
   const downgradeTier = () => {
@@ -88,7 +106,7 @@ export const PerformanceProvider = ({ children }) => {
   const value = {
     tier,
     settings: SETTINGS[tier],
-    isDetecting,
+    isDetecting: false,
     downgradeTier,
   };
 

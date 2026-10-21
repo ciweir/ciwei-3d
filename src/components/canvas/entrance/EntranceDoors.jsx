@@ -25,6 +25,7 @@ const FONT_URL = '/fonts/NotoSansSC.ttf';
 const EntranceDoors = ({
     position = [0, 0, 22],
     onComplete,
+    onEnterStart,
     corridorHeight = 8, // Taller wall
     corridorWidth = 15 // Wider wall
 }) => {
@@ -316,6 +317,9 @@ const EntranceDoors = ({
     const handleClick = (e) => {
         e.stopPropagation();
         if (isOpen || isAnimating) return;
+
+        // 门开始推时再挂载走廊，避免首屏预载等待整条走廊
+        onEnterStart?.();
 
         // Reset cursor immediately on transition start
         document.body.style.cursor = "auto";
