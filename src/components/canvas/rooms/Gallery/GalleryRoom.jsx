@@ -1,6 +1,6 @@
-import { useRef, useState, useMemo, useEffect, forwardRef, useImperativeHandle, memo } from 'react';
-import { useFrame } from '@react-three/fiber';
-import { Text, Float, PositionalAudio } from '@react-three/drei';
+import React, { Suspense, useRef, useState, useMemo, useEffect, useLayoutEffect, useCallback, forwardRef, useImperativeHandle, memo } from 'react';
+import { Text as TroikaText } from 'troika-three-text';
+import { useThree, useFrame } from '@react-three/fiber';
 // 全站彩色：桌面端自动取 _painted 彩色版（见 utils/colorTexture.js）
 import { useColorTexture as useTexture, paintedSrc, COLOR_DEFAULT } from '../../../../utils/colorTexture';
 import * as THREE from 'three';
@@ -54,18 +54,54 @@ const BIRD_HEIGHT = 0.35;
 // 0.2 = 20% crop from the right (corridor side)
 const RIGHT_CROP_AMOUNT = 0.2;
 
+// 与 drei <Text> 相同的 troika 文本，但不走 suspend 字体预载。
+// 30 张卡 × 多处文字若逐个 suspend，进画廊会串行等字体约 8 秒（纸张一直不合）。
+const GalleryText = forwardRef(({ children, ...props }, ref) => {
+    const invalidate = useThree(({ invalidate }) => invalidate);
+    const [troikaMesh] = useState(() => new TroikaText());
+    const [nodes, text] = useMemo(() => {
+        const n = [];
+        let t = '';
+        React.Children.forEach(children, (child) => {
+            if (typeof child === 'string' || typeof child === 'number') t += child;
+            else n.push(child);
+        });
+        return [n, t];
+    }, [children]);
+
+    useLayoutEffect(() => {
+        troikaMesh.sync(() => invalidate());
+    });
+    useEffect(() => () => troikaMesh.dispose(), [troikaMesh]);
+
+    return (
+        <primitive
+            object={troikaMesh}
+            ref={ref}
+            text={text}
+            {...props}
+        >
+            {nodes}
+        </primitive>
+    );
+});
+GalleryText.displayName = 'GalleryText';
+
 const GalleryRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
     const { isTeleporting } = useScene();
     const { showTutorial, unlockAchievement, hidePopup } = useAchievements();
-    const { globalVolume, isMuted } = useAudio();
-    const effectiveVolume = isMuted ? 0 : AUDIO_SETTINGS.volume * globalVolume;
+    const { play, audioEnabled } = useAudio();
+    const playRef = useRef(play);
+    playRef.current = play;
 
-    const audioRef = useRef();
+    // 环境声改用 HTMLAudio（原 drei PositionalAudio 会用 useLoader 挂起整个房间，
+    // 深链进画廊时纸张要等音频解码完才打开）。
+    // 深链没有用户手势，首播可能被浏览器拦截；首次交互后 audioEnabled 变真，重试一次。
     useEffect(() => {
-        if (audioRef.current && audioRef.current.setVolume) {
-            audioRef.current.setVolume(effectiveVolume);
-        }
-    }, [effectiveVolume]);
+        if (isWarmup) return undefined;
+        const handle = playRef.current('szummiasta', { loop: true, volume: AUDIO_SETTINGS.volume });
+        return () => handle?.stop();
+    }, [isWarmup, audioEnabled]);
 
     const groupRef = useRef();
     const targetScroll = useRef(0);
@@ -163,6 +199,19 @@ const GalleryRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
             setTimeout(() => {
                 if (!isWarmup) showTutorial('gallery_inspect');
             }, 2000);
+
+            // 画廊可见后再分批补齐其余卡片，避免首帧一次性编译 30 张卡
+            if (!isWarmup && EXTRA_CARD_TOTAL > 0) {
+                let mounted = 0;
+                const step = () => {
+                    extraMountTimer.current = setTimeout(() => {
+                        mounted = Math.min(mounted + 6, EXTRA_CARD_TOTAL);
+                        setExtraMountedCount(mounted);
+                        if (mounted < EXTRA_CARD_TOTAL) step();
+                    }, mounted === 0 ? 1600 : 600);
+                };
+                step();
+            }
         }
     });
 
@@ -209,37 +258,46 @@ const GalleryRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
     /* 槽位数 = 卡片 + 隔断（分段后动态） */
     const PROJECT_COUNT = projectsWithDividers.length;
 
-    // Load all project front textures in a flat array（隔断用纸纹占位）
-    const textureUrls = projectsWithDividers.map(p => (p.isDivider ? '/textures/paper-texture.webp' : p.front));
-    const projectTextures = useTexture(textureUrls);
+    // 手机首屏只容得下一张卡：从第一张作品开始，避免停在不可点击的分类隔断
+    const didInitTouchScroll = useRef(false);
+    useEffect(() => {
+        if (canHover || didInitTouchScroll.current) return;
+        const firstProjectIndex = projectsWithDividers.findIndex((p) => !p.isDivider);
+        if (firstProjectIndex > 0) {
+            targetScroll.current = firstProjectIndex * GAP;
+            currentScroll.current = firstProjectIndex * GAP;
+        }
+        didInitTouchScroll.current = true;
+    }, [canHover, projectsWithDividers]);
 
-    // Load painted textures only on desktop, fallback to front if mobile/touch
-    const paintedUrls = projectsWithDividers.map(p => (p.isDivider ? '/textures/paper-texture.webp' : (canHover && p.painted) ? p.painted : p.front));
-    const paintedTextures = useTexture(paintedUrls);
+    // 首屏只挂载视野内的卡片（开头 6 张 + 环绕到左侧的末尾 3 张），
+    // 房间就绪后再分批补齐其余卡片：30 张卡的几何/材质/标题文字是首次编译的大头。
+    const initialCardSet = useMemo(() => {
+        const set = new Set();
+        for (let i = 0; i < Math.min(6, PROJECT_COUNT); i++) set.add(i);
+        for (let i = Math.max(0, PROJECT_COUNT - 3); i < PROJECT_COUNT; i++) set.add(i);
+        return set;
+    }, [PROJECT_COUNT]);
+    const [extraMountedCount, setExtraMountedCount] = useState(0);
+    const extraMountTimer = useRef(null);
+    const EXTRA_CARD_START = Math.min(6, PROJECT_COUNT);
+    const EXTRA_CARD_END = Math.max(EXTRA_CARD_START, PROJECT_COUNT - 3);
+    const EXTRA_CARD_TOTAL = EXTRA_CARD_END - EXTRA_CARD_START;
+    useEffect(() => () => {
+        if (extraMountTimer.current) clearTimeout(extraMountTimer.current);
+    }, []);
 
-    // Load the universal back texture and the button texture conditionally
+    // 封面贴图下沉到每张卡自己加载：房间就绪只等首批卡片，
+    // 不再被全部 44 张封面拖住（此前 63 张画廊贴图要全齐才渲染任何一张卡）。
     const backTextureRaw = useTexture(canHover ? '/textures/gallery/tylkartki_painted.webp' : '/textures/gallery/tylkartki.webp');
     const overlayTextureRaw = useTexture(canHover ? '/textures/gallery/przyciskdotylukartki_painted.webp' : '/textures/gallery/przyciskdotylukartki.webp');
 
-
-    // Construct the full list of projects (repeated) with textures attached
+    // Construct the full list of projects (repeated)
     const projects = useMemo(() => {
         return Array.from({ length: PROJECT_COUNT }).map((_, i) => {
             const projectIndex = i % projectsWithDividers.length;
             const projectData = projectsWithDividers[projectIndex];
 
-            // Extract front texture
-            const frontTex = projectTextures[projectIndex];
-            const paintedTex = paintedTextures[projectIndex];
-
-            // Configure textures
-            if (frontTex) {
-                frontTex.colorSpace = THREE.SRGBColorSpace;
-                // frontTex.encoding = THREE.sRGBEncoding;
-            }
-            if (paintedTex) {
-                paintedTex.colorSpace = THREE.SRGBColorSpace;
-            }
             if (backTextureRaw) {
                 backTextureRaw.colorSpace = THREE.SRGBColorSpace;
             }
@@ -259,14 +317,12 @@ const GalleryRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
             return {
                 ...projectData,
                 index: i,
-                frontTexture: frontTex,
-                paintedTexture: (paintedTex !== frontTex && canHover) ? paintedTex : null,
                 backTexture: backTextureRaw,
                 buttonTexture: overlayTextureRaw,
                 techStack: techStack
             };
         });
-    }, [projectTextures, backTextureRaw, overlayTextureRaw]);
+    }, [projectsWithDividers, backTextureRaw, overlayTextureRaw, canHover]);
 
     // Function to scroll to a specific project index
     const scrollToIndex = (index, onComplete) => {
@@ -419,18 +475,8 @@ const GalleryRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
 
     return (
         <group ref={groupRef}>
-            {!isWarmup && (
-                <PositionalAudio
-                    ref={audioRef}
-                    url="/sounds/szummiasta.mp3"
-                    distanceModel="exponential"
-                    refDistance={AUDIO_SETTINGS.distance}
-                    rolloffFactor={AUDIO_SETTINGS.rolloff}
-                    loop
-                    autoplay
-                    volume={effectiveVolume}
-                />
-            )}
+            {/* 房间本体独立 Suspense：任何一张卡/云/文字的异步依赖都不再拖住房间就绪 */}
+            <Suspense fallback={null}>
             <group position={[0, -0.7, -2]}>
                 {/* Floor */}
                 <mesh
@@ -480,28 +526,34 @@ const GalleryRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
                 <group position={[0, 1.6, -4]}>
                     <mesh geometry={ropeGeometry} material={materials.rope} />
 
-                    {/* Proj Cards */}
-                    {projects.map((project, i) => (
-                        <ProjectCard
-                            key={i}
-                            index={i}
-                            ref={el => cardRefs.current[i] = el}
-                            project={project}
-                            clothespinTexture={clothespinTexture}
-                            total={PROJECT_COUNT}
-                            currentScroll={currentScroll}
-                            materials={materials}
-                            curve={curve}
-                            isSelected={selectedCard === i}
-                            scrollToIndex={scrollToIndex}
-                            onClick={handleCardClick}
-                            isMobile={!canHover} // Use hover capability for mobile behavior logic
-                            isTransitioning={isTransitioning} // Pass down to lock out individual pointer events just in case
-                            paintProgress={uniformsData.uPaintProgress}
-                            roomOrigin={uniformsData.uRoomOrigin}
-                            skipVideo={isWarmup} // 预热期不建视频元素：离屏卸载会中断下载、污染浏览器缓存（ERR_CACHE_READ_FAILURE）
-                        />
-                    ))}
+                    {/* Proj Cards：每张卡独立 Suspense，单卡依赖（字体/视频/技术栈图标）不阻塞整个房间 */}
+                    {projects.map((project, i) => {
+                        const inExtraWindow = i >= EXTRA_CARD_START && i < EXTRA_CARD_END
+                            && (i - EXTRA_CARD_START) < extraMountedCount;
+                        if (!initialCardSet.has(i) && !inExtraWindow) return null;
+                        return (
+                        <Suspense key={i} fallback={null}>
+                            <ProjectCard
+                                index={i}
+                                ref={el => cardRefs.current[i] = el}
+                                project={project}
+                                clothespinTexture={clothespinTexture}
+                                total={PROJECT_COUNT}
+                                currentScroll={currentScroll}
+                                materials={materials}
+                                curve={curve}
+                                isSelected={selectedCard === i}
+                                scrollToIndex={scrollToIndex}
+                                onClick={handleCardClick}
+                                isMobile={!canHover} // Use hover capability for mobile behavior logic
+                                isTransitioning={isTransitioning} // Pass down to lock out individual pointer events just in case
+                                paintProgress={uniformsData.uPaintProgress}
+                                roomOrigin={uniformsData.uRoomOrigin}
+                                skipVideo={isWarmup} // 预热期不建视频元素：离屏卸载会中断下载、污染浏览器缓存（ERR_CACHE_READ_FAILURE）
+                            />
+                        </Suspense>
+                        );
+                    })}
                 </group>
 
                 {/* === SCENERY LAYERS === */}
@@ -572,8 +624,10 @@ const GalleryRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
                 {/* Flying Bird */}
                 <FlyingBird texture={birdTexture} />
 
-                {/* Clouds scattered above */}
-                <GalleryClouds count={65} seed={123} />
+                {/* Clouds scattered above（独立 Suspense：云贴图不阻塞房间就绪） */}
+                <Suspense fallback={null}>
+                    <GalleryClouds count={24} seed={123} />
+                </Suspense>
 
                 {/* Skybox/Environment */}
                 <mesh position={[0, 5, -20]}>
@@ -581,6 +635,7 @@ const GalleryRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
                     <meshBasicMaterial color="#f0f0f0" side={THREE.BackSide} transparent opacity={0.5} onBeforeCompile={onBeforeCompile} />
                 </mesh>
             </group>
+            </Suspense>
         </group>
     );
 };
@@ -693,20 +748,56 @@ const ProjectCard = memo(forwardRef(({ index, project, clothespinTexture, curren
     ].filter(Boolean);
     const [hovered, setHovered] = useState(false);
     const [btnHovered, setBtnHovered] = useState(false);
+    // 背面文字只在首次悬停/打开时创建：30 张卡一次性建 100+ 个 troika 文本，
+    // 首次进画廊要等它们逐个建网格，是房间就绪慢的另一主因。
+    const [detailsMounted, setDetailsMounted] = useState(false);
+    // 每张卡自己加载封面，房间不必等所有作品贴图
+    const frontTexture = useTexture(project.isDivider ? '/textures/paper-texture.webp' : project.front);
+    const paintedTextureRaw = useTexture(
+        project.isDivider
+            ? '/textures/paper-texture.webp'
+            : (!isMobile && project.painted ? project.painted : project.front)
+    );
+    const paintedTexture = project.isDivider ? null : paintedTextureRaw;
+    useMemo(() => {
+        if (frontTexture) frontTexture.colorSpace = THREE.SRGBColorSpace;
+        if (paintedTextureRaw) paintedTextureRaw.colorSpace = THREE.SRGBColorSpace;
+    }, [frontTexture, paintedTextureRaw]);
     const [isAnimating, setIsAnimating] = useState(false);  // True ONLY during flip animation
     const [, setIsScrolling] = useState(false);  // True during scroll phase
 
     /* === 1c 会动的画（2026-10-12）：hover 上色完成后，画"活"过来 ===
        实现：把 PaperMaterial 的 painted 槽位（mapPainted）在 hover 中途
        换成 VideoTexture——上色动画照走，完成瞬间画面已是流动的片子。
-       无 preview 的项目（13/19）自动退化为纯静态（videoTexture=null）。
-       skipVideo（预热期）不建元素：预热卸载会中断下载、污染浏览器 HTTP 缓存
-       （ERR_CACHE_READ_FAILURE），且预热只编译 shader 不需要视频。 */
+       2026-10-21：视频改为首次悬停才创建/下载。此前 9 条预览在房间挂载时
+       一起 preload=auto（约 5MB），与封面/首帧编译抢带宽，是进画廊慢的主因之一。 */
     const [useVideo, setUseVideo] = useState(false);
+    const [videoTexture, setVideoTexture] = useState(null);
     const videoElRef = useRef(null);
+    const videoTextureRef = useRef(null);
     const videoSwapTimer = useRef(null);
-    const videoTexture = useMemo(() => {
-        if (skipVideo || !project.preview) return null;
+    const hoveredRef = useRef(false);
+    const paintDoneRef = useRef(false);
+    const videoReadyRef = useRef(false);
+
+    const maybeSwitchToVideo = useCallback(() => {
+        const v = videoElRef.current;
+        if (!v || !hoveredRef.current || !paintDoneRef.current || !videoReadyRef.current) return;
+        setUseVideo(true);
+        v.play().catch(() => {});
+    }, []);
+
+    const handleVideoReady = useCallback(() => {
+        videoReadyRef.current = true;
+        maybeSwitchToVideo();
+    }, [maybeSwitchToVideo]);
+
+    const ensureVideo = useCallback(() => {
+        if (skipVideo || !project.preview) return;
+        if (videoElRef.current) {
+            videoReadyRef.current = videoElRef.current.readyState >= 2;
+            return;
+        }
         const v = document.createElement('video');
         v.src = project.preview;
         v.loop = true;
@@ -716,8 +807,12 @@ const ProjectCard = memo(forwardRef(({ index, project, clothespinTexture, curren
         videoElRef.current = v;
         const t = new THREE.VideoTexture(v);
         t.colorSpace = THREE.SRGBColorSpace;
-        return t;
-    }, [project.preview, skipVideo]);
+        videoTextureRef.current = t;
+        setVideoTexture(t);
+        v.addEventListener('loadeddata', handleVideoReady, { once: true });
+        v.load();
+    }, [project.preview, skipVideo, handleVideoReady]);
+
     /* 卸载清理：停播 + 释放（房间切换时防泄漏） */
     useEffect(() => () => {
         if (videoSwapTimer.current) clearTimeout(videoSwapTimer.current);
@@ -727,23 +822,19 @@ const ProjectCard = memo(forwardRef(({ index, project, clothespinTexture, curren
             v.removeAttribute('src');
             v.load();
         }
+        videoTextureRef.current?.dispose();
+        videoTextureRef.current = null;
     }, []);
 
     // Random sway properties
     const swaySpeed = useRef(Math.random() * 0.2 + 0.3); // Slower sway speed
     const swayOffset = useRef(Math.random() * 100);
 
-    // Audio Ref
-    const paperAudioRef = useRef();
-    const { globalVolume, isMuted } = useAudio();
+    // 纸张音效走全局 HTMLAudio，避免 drei PositionalAudio 在 30 张卡上逐个挂起
+    const { play } = useAudio();
 
     const playPaperSound = () => {
-        if (paperAudioRef.current) {
-            const vol = isMuted ? 0 : GALLERY_INTERACTION_AUDIO_SETTINGS.volume * globalVolume;
-            paperAudioRef.current.setVolume(vol);
-            if (paperAudioRef.current.isPlaying) paperAudioRef.current.stop();
-            paperAudioRef.current.play();
-        }
+        play('pencil', { volume: GALLERY_INTERACTION_AUDIO_SETTINGS.volume });
     };
 
     useImperativeHandle(ref, () => ({
@@ -758,7 +849,7 @@ const ProjectCard = memo(forwardRef(({ index, project, clothespinTexture, curren
                         resolve();
 
                         // Unpaint the card after it returns to the clothespin
-                        if (project.paintedTexture && materialRef.current) {
+                        if (paintedTexture && materialRef.current) {
                             gsap.to(materialRef.current, {
                                 uProgress: 0.0,
                                 duration: 0.5,
@@ -824,6 +915,7 @@ const ProjectCard = memo(forwardRef(({ index, project, clothespinTexture, curren
             });
         },
         openCard: () => {
+            setDetailsMounted(true);
             return new Promise((resolve) => {
                 setIsScrolling(true);
                 scrollToIndex(index, () => {
@@ -880,7 +972,7 @@ const ProjectCard = memo(forwardRef(({ index, project, clothespinTexture, curren
 
                         // Keep painted or finish painting to 1.0 when opened
                         // Running with gsap.to independently to avoid blocking the timeline duration
-                        if (project.paintedTexture) {
+                        if (paintedTexture) {
                             gsap.to(materialRef.current, {
                                 uProgress: 1.0,
                                 duration: 0.3,
@@ -972,28 +1064,27 @@ const ProjectCard = memo(forwardRef(({ index, project, clothespinTexture, curren
 
         // Custom GSAP Paint logic for texts
         // We delay the text reveal slightly so the card paints first (p > 0.4)
-        if (textRef.current && paintProgress) {
+        if (paintProgress) {
             const p = paintProgress.value;
             // Instantly reveal if we teleported
             const expectedOpacity = p >= 1.0 ? 1.0 : THREE.MathUtils.clamp((p - 0.3) * 2.0, 0.0, 1.0);
-            
-            if (textRef.current.fillOpacity !== expectedOpacity) {
-                const applyOpacity = (ref) => {
-                    if (ref.current) {
-                        ref.current.fillOpacity = expectedOpacity;
-                        if (ref.current.material) {
-                            ref.current.material.opacity = expectedOpacity;
-                            ref.current.material.transparent = true;
-                        }
-                    }
-                };
-                applyOpacity(textRef);
-                applyOpacity(detailsTextRef1);
-                applyOpacity(detailsTextRef2);
-                metaTextRefs.current.forEach(applyOpacity);
-                applyOpacity(techTextRef);
-                applyOpacity(openTextRef);
-            }
+
+            // 逐项判断：背面文字可能在翻开时才挂载，不能只看正面标题是否已更新
+            const applyOpacity = (ref) => {
+                const text = ref.current;
+                if (!text || text.fillOpacity === expectedOpacity) return;
+                text.fillOpacity = expectedOpacity;
+                if (text.material) {
+                    text.material.opacity = expectedOpacity;
+                    text.material.transparent = true;
+                }
+            };
+            applyOpacity(textRef);
+            applyOpacity(detailsTextRef1);
+            applyOpacity(detailsTextRef2);
+            metaTextRefs.current.forEach(applyOpacity);
+            applyOpacity(techTextRef);
+            applyOpacity(openTextRef);
         }
 
         // --- 让文字 Z 跟随纸面弯曲/波浪动画（正面）---
@@ -1112,7 +1203,7 @@ const ProjectCard = memo(forwardRef(({ index, project, clothespinTexture, curren
                     <meshBasicMaterial color="#f5efe0" transparent={true} />
                 </mesh>
                 {/* 类名（中文 · Noto Sans SC——沿用门牌语言） */}
-                <Text
+                <GalleryText
                     position={[0, -0.28, 0.01]}
                     fontSize={0.3}
                     color="#1a1a1a"
@@ -1121,9 +1212,9 @@ const ProjectCard = memo(forwardRef(({ index, project, clothespinTexture, curren
                     anchorY="middle"
                 >
                     {project.dividerLabel}
-                </Text>
+                </GalleryText>
                 {/* 数量副标 */}
-                <Text
+                <GalleryText
                     position={[0, -0.62, 0.01]}
                     fontSize={0.09}
                     color="#666666"
@@ -1132,7 +1223,7 @@ const ProjectCard = memo(forwardRef(({ index, project, clothespinTexture, curren
                     anchorY="middle"
                 >
                     {`${project.dividerCount || 0} 部作品`}
-                </Text>
+                </GalleryText>
                 {/* 地标线 */}
                 <mesh position={[0, -1.02, 0.01]}>
                     <planeGeometry args={[1.3, 0.025]} />
@@ -1150,9 +1241,10 @@ const ProjectCard = memo(forwardRef(({ index, project, clothespinTexture, curren
                 if (isMobile || isTransitioning) return;
                 e.stopPropagation();
                 setHovered(true);
+                setDetailsMounted(true);
 
                 // Brush reveal animation
-                if (materialRef.current && project.paintedTexture && !isSelected) {
+                if (materialRef.current && paintedTexture && !isSelected) {
                     gsap.to(materialRef.current, {
                         uProgress: 1.0,
                         duration: 0.8,
@@ -1161,11 +1253,15 @@ const ProjectCard = memo(forwardRef(({ index, project, clothespinTexture, curren
                     });
                 }
                 /* 1c：上色完成（800ms，与 uProgress 动画同步）时把 painted 槽位换成视频——"刷完 → 活" */
-                if (videoTexture && !isSelected) {
+                if (project.preview && !isSelected) {
+                    hoveredRef.current = true;
+                    paintDoneRef.current = false;
+                    videoReadyRef.current = false;
+                    ensureVideo();
                     if (videoSwapTimer.current) clearTimeout(videoSwapTimer.current);
                     videoSwapTimer.current = setTimeout(() => {
-                        setUseVideo(true);
-                        videoElRef.current?.play().catch(() => {});
+                        paintDoneRef.current = true;
+                        maybeSwitchToVideo();
                     }, 800);
                 }
             }}
@@ -1175,7 +1271,7 @@ const ProjectCard = memo(forwardRef(({ index, project, clothespinTexture, curren
                 setHovered(false);
 
                 // Reverse brush reveal animation ONLY if NOT selected
-                if (materialRef.current && project.paintedTexture && !isSelected) {
+                if (materialRef.current && paintedTexture && !isSelected) {
                     gsap.to(materialRef.current, {
                         uProgress: 0.0,
                         duration: 0.5,
@@ -1184,6 +1280,8 @@ const ProjectCard = memo(forwardRef(({ index, project, clothespinTexture, curren
                     });
                 }
                 /* 1c：还原静态 painted（视频停播 + 槽位换回） */
+                hoveredRef.current = false;
+                paintDoneRef.current = false;
                 if (videoSwapTimer.current) clearTimeout(videoSwapTimer.current);
                 videoElRef.current?.pause();
                 setUseVideo(false);
@@ -1212,9 +1310,9 @@ const ProjectCard = memo(forwardRef(({ index, project, clothespinTexture, curren
                     <PaperMaterial
                         ref={materialRef}
                         color="#ffffff"
-                        map={COLOR_DEFAULT ? (project.paintedTexture || project.frontTexture) : project.frontTexture}
+                        map={COLOR_DEFAULT ? (paintedTexture || frontTexture) : frontTexture}
                         mapBack={project.backTexture}
-                        mapPainted={useVideo && videoTexture ? videoTexture : project.paintedTexture}
+                        mapPainted={useVideo && videoTexture ? videoTexture : paintedTexture}
                         side={THREE.DoubleSide}
                         roughness={0.6}
                         paintProgress={paintProgress}
@@ -1223,6 +1321,8 @@ const ProjectCard = memo(forwardRef(({ index, project, clothespinTexture, curren
                 </mesh>
 
                 {/* === PRZYCISK: OPEN NA PLECACH KARTKI === */}
+                {detailsMounted && (
+                <>
                 <group
                     ref={buttonGroupRef}
                     position={[0, 0.75, 0]}
@@ -1240,7 +1340,7 @@ const ProjectCard = memo(forwardRef(({ index, project, clothespinTexture, curren
                     </mesh>
 
                     {/* Warstwa 2: 背面按钮文字（中文化） */}
-                    <Text
+                    <GalleryText
                         ref={openTextRef}
                         position={[0, 0, 0.01]}
                         fontSize={0.13}
@@ -1251,7 +1351,7 @@ const ProjectCard = memo(forwardRef(({ index, project, clothespinTexture, curren
                         fillOpacity={0} // Start hidden
                     >
                         打开作品
-                    </Text>
+                    </GalleryText>
 
                     {/* 层 3：覆盖整个按钮的隐形点击区——拦截所有事件 */}
                     <mesh
@@ -1290,7 +1390,7 @@ const ProjectCard = memo(forwardRef(({ index, project, clothespinTexture, curren
                     rotation={[Math.PI, 0, 0]}
                     visible={isSelected || isAnimating}
                 >
-                    <Text
+                    <GalleryText
                         ref={detailsTextRef1}
                         position={[0, 0.32, 0.01]}
                         fontSize={0.15}
@@ -1301,11 +1401,11 @@ const ProjectCard = memo(forwardRef(({ index, project, clothespinTexture, curren
                         fillOpacity={0}
                     >
                         项目详情
-                    </Text>
+                    </GalleryText>
 
                     {/* 整齐字段：同一左缘 x=-0.42、等行距 0.22，左对齐不自动换行 */}
                     {backMeta.map((line, i) => (
-                        <Text
+                        <GalleryText
                             key={line}
                             ref={(el) => { if (i === 0) detailsTextRef2.current = el; metaTextRefs.current[i] = el; }}
                             position={[-0.42, 0.06 - i * 0.22, 0.01]}
@@ -1318,7 +1418,7 @@ const ProjectCard = memo(forwardRef(({ index, project, clothespinTexture, curren
                             fillOpacity={0}
                         >
                             {line}
-                        </Text>
+                        </GalleryText>
                     ))}
                 </group>
 
@@ -1345,6 +1445,8 @@ const ProjectCard = memo(forwardRef(({ index, project, clothespinTexture, curren
                         })}
                     </group>
                 </group>
+                </>
+                )}
 
                 {/*
                   === 文字 / 项目标题 ===
@@ -1359,7 +1461,7 @@ const ProjectCard = memo(forwardRef(({ index, project, clothespinTexture, curren
                   color：文字颜色
                   font：可换成 /public/fonts/ 里的其他字体
                 */}
-                <Text
+                <GalleryText
                     ref={textRef}
                     position={[0, -2.4, 0]} // 1d（用户定调 2026-10-12）：标题移到卡片正下方——绳在上、卡在中、标签在下，不越晾衣绳
                     fontSize={0.18}
@@ -1370,16 +1472,8 @@ const ProjectCard = memo(forwardRef(({ index, project, clothespinTexture, curren
                     fillOpacity={0} // Start hidden
                 >
                     {project.title}
-                </Text>
+                </GalleryText>
 
-                <PositionalAudio
-                    ref={paperAudioRef}
-                    url="/sounds/papersound.mp3"
-                    distanceModel="exponential"
-                    rolloffFactor={GALLERY_INTERACTION_AUDIO_SETTINGS.rolloff}
-                    refDistance={GALLERY_INTERACTION_AUDIO_SETTINGS.distance}
-                    loop={false}
-                />
             </group>
         </group>
     );

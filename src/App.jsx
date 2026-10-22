@@ -138,7 +138,7 @@ function AppContent() {
   }, [bootMode]);
 
   // Use Performance Context
-  const { settings, downgradeTier, tier } = usePerformance();
+  const { settings, downgradeTier } = usePerformance();
 
   // Force initialize audio in the background on mount (3D only)
   useEffect(() => {
@@ -210,7 +210,6 @@ function AppContent() {
                   <Suspense fallback={null}>
                     <SceneCanvas
                       settings={settings}
-                      tier={tier}
                       isLoaded={isLoaded}
                       onSceneReady={handleSceneReady}
                       downgradeTier={downgradeTier}

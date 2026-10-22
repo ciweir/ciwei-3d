@@ -52,13 +52,14 @@ const InfiniteCorridorManager = ({
     onDoorEnter,
     hideDoorsForSegments = [], // Segments that should hide their SegmentDoors
     clipSegmentNeg1 = false, // Whether to clip segment -1 at EntranceDoors
-    setCameraOverride // Function to take over camera control
+    setCameraOverride, // Function to take over camera control
+    initialSegments = [0, 1] // 深链直接进房间时只编译所在段，避免首帧带上整条走廊
 }) => {
     const { camera } = useThree();
     // Pre-mount segments 0 and 1 so shaders compile during preloader.
     // Segment -1 is NOT pre-mounted to avoid visual collision with entrance doors.
     // It mounts dynamically when camera reaches entrance (behind camera = invisible stutter).
-    const [activeSegments, setActiveSegments] = useState([0, 1]);
+    const [activeSegments, setActiveSegments] = useState(initialSegments);
 
     // Calculate which segment the camera is in
     const getSegmentFromZ = useCallback((z) => {

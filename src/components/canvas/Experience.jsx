@@ -5,7 +5,6 @@ import InfiniteCorridorManager from './corridor/InfiniteCorridorManager';
 import EntranceDoors from './entrance/EntranceDoors';
 import EmptyCorridor from './entrance/EmptyCorridor';
 import TeleportRoom from './corridor/TeleportRoom';
-import RoomWarmup from './corridor/RoomWarmup';
 import useInfiniteCamera from '../../hooks/useInfiniteCamera';
 import SignSystem from './entrance/SignSystem';
 import { useScene } from '../../context/useScene';
@@ -40,7 +39,7 @@ const SceneReadyGate = ({ onReady }) => {
     return null;
 };
 
-const Experience = ({ onSceneReady, performanceTier, isLoaded }) => {
+const Experience = ({ onSceneReady }) => {
     // Use SceneContext for room state
     const { hasEntered, markEntered, enterRoom, isTeleporting, isInRoom, initialRoom } = useScene();
 
@@ -79,14 +78,13 @@ const Experience = ({ onSceneReady, performanceTier, isLoaded }) => {
         setCorridorRequested(true);
     }, []);
 
-    // Optimization: Low tier has simpler lighting
-    const isLowTier = performanceTier === 'LOW';
+    // 深链直接进房间：入口不参与渲染，省掉 49 张门面贴图与首次编译
+    const showEntrance = !hasEntered && !initialRoom;
 
     return (
         <>
-            {/* 首屏就绪只等入口/走廊提交；房间预热放到预载退出后，避免阻塞启动 */}
+            {/* 首屏就绪只等当前场景提交；走廊贴图分批预取、房间封面由卡片按需加载（见 SceneCanvas / GalleryRoom） */}
             <SceneReadyGate onReady={onSceneReady} />
-            {isLoaded && <RoomWarmup onWarmupComplete={() => {}} isLowTier={isLowTier} />}
 
             {/* === GLOBAL LIGHTING === */}
             {/* <ambientLight intensity={isLowTier ? 2.5 : 2.2} /> */}
@@ -100,12 +98,12 @@ const Experience = ({ onSceneReady, performanceTier, isLoaded }) => {
             {/* <directionalLight position={[-5, 8, -10]} intensity={0.4} color="#ffffff" /> */}
 
             {/* === EMPTY CORRIDOR (provides context during entrance) === */}
-            {!hasEntered && (
+            {showEntrance && (
                 <EmptyCorridor camera={camera} />
             )}
 
             {/* === ENTRANCE DOORS (visible until entered) === */}
-            {!hasEntered && (
+            {showEntrance && (
                 <EntranceDoors
                     position={[0, 0, ENTRANCE_DOORS_Z]}
                     onComplete={handleEntranceComplete}
@@ -114,7 +112,7 @@ const Experience = ({ onSceneReady, performanceTier, isLoaded }) => {
             )}
 
             {/* Separate SignSystem to avoid fragment nesting issues if any */}
-            {!hasEntered && (
+            {showEntrance && (
                 <SignSystem position={[0, 0, ENTRANCE_DOORS_Z]} />
             )}
 
@@ -126,6 +124,7 @@ const Experience = ({ onSceneReady, performanceTier, isLoaded }) => {
                         hideDoorsForSegments={hasEntered ? [] : [-1]}
                         clipSegmentNeg1={!hasEntered}
                         setCameraOverride={setCameraOverride}
+                        initialSegments={[0]}
                     />
                 ) : (
                     <Suspense fallback={null}>
