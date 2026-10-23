@@ -1104,7 +1104,7 @@ const ProjectCard = memo(forwardRef(({ index, project, clothespinTexture, curren
             const totalWind = 0.02 + uWindStrength;
             const flutter = Math.sin(uTime * 2.0 + y * 2.0) * totalWind * (1.0 + Math.abs(uBend * 3.0));
 
-            textRef.current.position.z = bendAmount + flutter + 0.02;
+            textRef.current.position.z = bendAmount + flutter + 0.055;
 
             // 旋转文字以贴合曲面（dz/dy 导数）
             const dz_dy = 2.0 * y * uBend + 2.0 * Math.cos(uTime * 2.0 + y * 2.0) * totalWind * (1.0 + Math.abs(uBend * 3.0));
@@ -1514,11 +1514,11 @@ const ProjectCard = memo(forwardRef(({ index, project, clothespinTexture, curren
 
                 {/* 卡片内底部纸签：裁成照片下缘的说明条，保证每张卡都看得到标题 */}
                 <group visible={!isSelected && !isAnimating}>
-                    <mesh position={[0, -0.8, 0.012]}>
+                    <mesh position={[0, -0.8, 0.008]}>
                         <planeGeometry args={[1.5, 0.3]} />
                         <meshBasicMaterial color="#f5eedf" transparent opacity={0.94} />
                     </mesh>
-                    <mesh position={[0, -0.655, 0.016]}>
+                    <mesh position={[0, -0.655, 0.012]}>
                         <planeGeometry args={[1.5, 0.012]} />
                         <meshBasicMaterial color="#d8ccb6" transparent opacity={0.7} />
                     </mesh>
@@ -1538,7 +1538,7 @@ const ProjectCard = memo(forwardRef(({ index, project, clothespinTexture, curren
                     </GalleryText>
                     <GalleryText
                         ref={labelMetaTextRef}
-                        position={[0, -0.875, 0.022]}
+                        position={[0, -0.875, 0.06]}
                         fontSize={0.055}
                         color="#6b6254"
                         font="/fonts/NotoSansSC.ttf"

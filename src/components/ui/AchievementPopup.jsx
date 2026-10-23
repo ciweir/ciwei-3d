@@ -88,7 +88,7 @@ const AchievementPopup = () => {
                                     }
                                 }}
                             >
-                                {!isMuted ? " [🔊 开]" : " [🔇 关]"}
+                                {!isMuted ? " [开]" : " [关]"}
                             </button>
                         </span>
                     )}

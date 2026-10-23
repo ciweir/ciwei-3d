@@ -760,9 +760,14 @@
             font-size: 14px;
         }
 
-        .close-btn {
-            width: 28px;
-            height: 28px;
+        .map-header .close-btn {
+            width: 40px;
+            height: 40px;
+        }
+
+        .map-header .close-btn svg {
+            width: 22px;
+            height: 22px;
         }
     }
 

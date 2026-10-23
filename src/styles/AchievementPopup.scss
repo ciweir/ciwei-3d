@@ -190,6 +190,8 @@
     @media (max-width: 768px) {
         bottom: 24px;
         padding: 10px 16px;
+        width: max-content;
+        max-width: calc(100vw - 32px);
 
         .text-content {
             .title {
@@ -199,6 +201,10 @@
             .description {
                 font-size: 12px;
             }
+        }
+
+        &.interactive .text-content .description {
+            white-space: nowrap;
         }
     }
 }
