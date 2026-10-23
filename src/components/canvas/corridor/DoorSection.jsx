@@ -95,6 +95,7 @@ const DoorSection = ({
     // 加载等待提示延迟显示：快路径（纹理已缓存，房间百毫秒级就绪）不闪现，
     // 只有真正等超过 600ms 才出现，覆盖慢网络/首次加载
     const [showLoadingHint, setShowLoadingHint] = useState(false);
+    const galleryDoorEntryRef = useRef(false);
     const { camera } = useThree();
     const closeTimerRef = useRef(null);
     const loadTimeoutRef = useRef(null); // Ref for the room loading fallback timeout
@@ -405,6 +406,14 @@ const DoorSection = ({
             return;
         }
 
+        // 普通开门进画廊：提前通知首帧遮住房间编译等待（地图传送另有 teleportTo 路径）
+        galleryDoorEntryRef.current = !isTeleport && doorId === 'gallery';
+        if (galleryDoorEntryRef.current) {
+            window.dispatchEvent(new CustomEvent('ciwei:room-entry-start', {
+                detail: { roomId: 'gallery' }
+            }));
+        }
+
         // Reset cursor on transition
         document.body.style.cursor = "auto";
 
@@ -447,7 +456,8 @@ const DoorSection = ({
         // FAST TELEPORT: Use ultra-fast animation durations (almost instant)
         // The paper is closed so user won't see the fast motion
         const useFastMode = isTeleport && isFastTeleport;
-        const alignDuration = useFastMode ? 0.01 : 1.0;
+        const useQuickGalleryMode = !isTeleport && doorId === 'gallery';
+        const alignDuration = useFastMode ? 0.01 : useQuickGalleryMode ? 0.35 : 1.0;
 
         // Get door world position
         const doorWorldPos = new THREE.Vector3();
@@ -549,10 +559,12 @@ const DoorSection = ({
             openAudioRef.current.play();
         }
 
-        // FAST MODE: Ultra-fast durations for teleport entry
-        const handleDuration = fastMode ? 0.01 : 0.15;
-        const doorDuration = fastMode ? 0.01 : 0.7;
-        const flyDuration = fastMode ? 0.01 : 1.5;
+        // FAST MODE: Ultra-fast durations for teleport entry.
+        // 普通开门进画廊走 quick 模式：首帧已接管等待，保留短暂开门动作即可。
+        const quickGallery = !fastMode && galleryDoorEntryRef.current;
+        const handleDuration = fastMode ? 0.01 : quickGallery ? 0.1 : 0.15;
+        const doorDuration = fastMode ? 0.01 : quickGallery ? 0.3 : 0.7;
+        const flyDuration = fastMode ? 0.01 : quickGallery ? 0.6 : 1.5;
 
         // Animate handle down first
         if (handleRef.current) {

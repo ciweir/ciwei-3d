@@ -13,6 +13,7 @@ const RoomEntryPoster = () => {
     const { teleportTarget, teleportPhase, isTeleporting, currentRoom, readingProject } = useScene();
     const [phase, setPhase] = useState('hidden'); // hidden | visible | leaving
     const fallbackTimer = useRef(null);
+    const doorEntryTimer = useRef(null);
 
     useEffect(() => {
         if (readingProject) {
@@ -30,6 +31,21 @@ const RoomEntryPoster = () => {
         }
         return undefined;
     }, [teleportTarget, readingProject]);
+
+    // 普通“开门”进入画廊：延迟 380ms 淡入，先让用户看到门/走近动作，
+    // 再由首帧接管房间编译与开门等待。
+    useEffect(() => {
+        const handleRoomEntryStart = (event) => {
+            if (event.detail?.roomId !== 'gallery' || teleportTarget) return;
+            if (doorEntryTimer.current) clearTimeout(doorEntryTimer.current);
+            doorEntryTimer.current = setTimeout(() => setPhase('visible'), 380);
+        };
+        window.addEventListener('ciwei:room-entry-start', handleRoomEntryStart);
+        return () => {
+            window.removeEventListener('ciwei:room-entry-start', handleRoomEntryStart);
+            if (doorEntryTimer.current) clearTimeout(doorEntryTimer.current);
+        };
+    }, [teleportTarget]);
 
     // 兜底必须独立于 teleportTarget：进入过程中 target 会被提前清空
     useEffect(() => {
