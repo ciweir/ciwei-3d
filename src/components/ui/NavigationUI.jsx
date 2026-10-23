@@ -6,6 +6,14 @@ import { setMusicVolume, getMusicVolume } from '../../utils/audioManager';
 import { useAchievements } from '../../context/useAchievements';
 import AchievementPopup from './AchievementPopup';
 import AchievementsPanel from './AchievementsPanel';
+import {
+    SketchBackIcon,
+    SketchMenuIcon,
+    SketchAudioIcon,
+    SketchAudioMutedIcon,
+    SketchTrophyIcon,
+    SketchCloseIcon,
+} from './SketchIcons';
 import '../../styles/NavigationUI.scss';
 
 // Room data for the map - positions are percentages on the map image
@@ -227,9 +235,7 @@ const NavigationUI = () => {
                     onClick={handleBackClick}
                     aria-label="返回走廊"
                 >
-                    <svg viewBox="0 0 24 24" className="icon-back">
-                        <path d="M19 12H5M12 19l-7-7 7-7" />
-                    </svg>
+                    <SketchBackIcon />
                 </button>
             )}
 
@@ -243,11 +249,7 @@ const NavigationUI = () => {
                         aria-label="打开菜单"
                         aria-expanded={isMenuOpen}
                     >
-                        <div className="hamburger-icon">
-                            <span></span>
-                            <span></span>
-                            <span></span>
-                        </div>
+                        <SketchMenuIcon />
                     </button>
                     {/* Audio Toggle Button */}
                     <button
@@ -256,19 +258,7 @@ const NavigationUI = () => {
                         aria-label="音频设置"
                         aria-expanded={isAudioMenuOpen}
                     >
-                        {isMuted ? (
-                            <svg viewBox="0 0 24 24" className="icon-audio">
-                                <path d="M11 5L6 9H2v6h4l5 4V5z" />
-                                <line x1="23" y1="9" x2="17" y2="15" />
-                                <line x1="17" y1="9" x2="23" y2="15" />
-                            </svg>
-                        ) : (
-                            <svg viewBox="0 0 24 24" className="icon-audio">
-                                <path d="M11 5L6 9H2v6h4l5 4V5z" />
-                                <path d="M15 9a5 5 0 0 1 0 6" />
-                                <path d="M18 5a9 9 0 0 1 0 14" />
-                            </svg>
-                        )}
+                        {isMuted ? <SketchAudioMutedIcon /> : <SketchAudioIcon />}
                     </button>
                     {/* Achievements Toggle Button */}
                     <button
@@ -277,11 +267,7 @@ const NavigationUI = () => {
                         aria-label="成就"
                         aria-expanded={isAchievementsOpen}
                     >
-                        <svg viewBox="0 0 24 24" className="icon-trophy">
-                            <path d="M8 21h8M12 17v4M7 4h10M5 4h14v5a7 7 0 0 1-7 7 7 7 0 0 1-7-7z" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                            <path d="M5 9H3V6h2" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                            <path d="M19 9h2V6h-2" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
+                        <SketchTrophyIcon />
                     </button>
                 </div>
             )}
@@ -324,9 +310,7 @@ const NavigationUI = () => {
                                 onClick={() => setIsMenuOpen(false)}
                                 aria-label="关闭地图"
                             >
-                                <svg viewBox="0 0 24 24">
-                                    <path d="M18 6L6 18M6 6l12 12" />
-                                </svg>
+                                <SketchCloseIcon />
                             </button>
                         </div>
                         <div className="map-container">
@@ -438,9 +422,7 @@ const NavigationUI = () => {
                                 onClick={() => setIsAudioMenuOpen(false)}
                                 aria-label="关闭音频设置"
                             >
-                                <svg viewBox="0 0 24 24">
-                                    <path d="M18 6L6 18M6 6l12 12" />
-                                </svg>
+                                <SketchCloseIcon />
                             </button>
                         </div>
                         <div className="audio-sliders-container">

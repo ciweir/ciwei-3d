@@ -88,6 +88,11 @@
         stroke-linejoin: round;
         z-index: 1;
     }
+
+    // 手绘图标：线条略细，保留不规则的抖动
+    svg.icon-sketch {
+        stroke-width: 1.7;
+    }
 }
 
 // === BACK BUTTON ===
@@ -155,24 +160,6 @@
         transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
     }
 
-}
-
-// === HAMBURGER BUTTON ===
-.hamburger-btn {
-    .hamburger-icon {
-        display: flex;
-        flex-direction: column;
-        gap: 5px;
-        width: 20px;
-
-        span {
-            display: block;
-            height: 2px;
-            width: 100%;
-            background: $ink;
-            border-radius: 2px;
-        }
-    }
 }
 
 // === MAP PANEL ===
@@ -243,12 +230,12 @@
 
         h3 {
             margin: 0;
+            font-family: $font-display;
             font-size: 16px;
-            font-weight: 700;
+            font-weight: 600;
             letter-spacing: 2px;
             text-transform: uppercase;
             color: $ink;
-            font-family: 'Patrick Hand', cursive, sans-serif;
         }
 
         .close-btn {
@@ -272,6 +259,10 @@
                 stroke-linecap: round;
             }
 
+            svg.icon-sketch {
+                stroke-width: 1.6;
+            }
+
             &:hover {
                 opacity: 1;
                 transform: scale(1.1);
@@ -279,6 +270,16 @@
 
             &:active {
                 transform: scale(0.95);
+            }
+
+            &:focus {
+                outline: none;
+            }
+
+            &:focus-visible {
+                outline: 2px dashed rgba($ink, 0.55);
+                outline-offset: 3px;
+                border-radius: 50%;
             }
         }
     }
@@ -362,9 +363,10 @@
 
     .map-room-label {
         position: absolute;
-        font-family: 'Cabin Sketch', cursive, sans-serif;
+        font-family: $font-display;
         font-size: 1.2rem;
-        font-weight: 700;
+        font-weight: 600;
+        letter-spacing: 0.02em;
         color: $ink;
         pointer-events: none;
         z-index: 4;
@@ -553,6 +555,16 @@
 
             &:active {
                 transform: scale(0.95);
+            }
+
+            &:focus {
+                outline: none;
+            }
+
+            &:focus-visible {
+                outline: 2px dashed rgba($ink, 0.55);
+                outline-offset: 3px;
+                border-radius: 50%;
             }
         }
     }
