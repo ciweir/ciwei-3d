@@ -724,6 +724,7 @@ const ProjectCard = memo(forwardRef(({ index, project, clothespinTexture, curren
     const paperRef = useRef(); // Ref for the moving part (Paper)
     const materialRef = useRef();
     const textRef = useRef(); // Ref for the text that sticks to the paper
+    const labelMetaTextRef = useRef(); // 卡片下方纸签的“分类 · 年份”
     const buttonGroupRef = useRef(); // Ref for the interactive back button
     const detailsGroupRef = useRef(); // Ref for the project details on the back
     const techStackGroupRef = useRef(); // Ref for the tech stack section on the back
@@ -731,6 +732,8 @@ const ProjectCard = memo(forwardRef(({ index, project, clothespinTexture, curren
     const detailsTextRef2 = useRef();
     const metaTextRefs = useRef([]);
     const techTextRef = useRef();
+    const noteTextRef = useRef();
+    const noteMetaRef = useRef();
     const openTextRef = useRef();
 
     /* 2026-10-13：卡片背面整齐字段——片长由秒数格式化为 m:ss（不再从描述句里断行） */
@@ -1080,10 +1083,13 @@ const ProjectCard = memo(forwardRef(({ index, project, clothespinTexture, curren
                 }
             };
             applyOpacity(textRef);
+            applyOpacity(labelMetaTextRef);
             applyOpacity(detailsTextRef1);
             applyOpacity(detailsTextRef2);
             metaTextRefs.current.forEach(applyOpacity);
             applyOpacity(techTextRef);
+            applyOpacity(noteTextRef);
+            applyOpacity(noteMetaRef);
             applyOpacity(openTextRef);
         }
 
@@ -1197,15 +1203,37 @@ const ProjectCard = memo(forwardRef(({ index, project, clothespinTexture, curren
     if (project.isDivider) {
         return (
             <group ref={cardRef}>
-                {/* 竖立展板（世界纸色；手绘贴图阶段 4 补） */}
+                {/* 分类标签：横向纸牌 + 木夹 + 栏目小字，避免被误读成作品卡 */}
+                <mesh position={[0, -0.07, 0.15]} rotation={[0, 0, Math.PI]}>
+                    <planeGeometry args={[0.3, 0.2]} />
+                    <meshBasicMaterial color="#ffffff"
+                        map={clothespinTexture}
+                        transparent={true}
+                        alphaTest={0.1}
+                        side={THREE.DoubleSide}
+                    />
+                </mesh>
+                <mesh position={[0, -0.35, -0.03]}>
+                    <planeGeometry args={[1.76, 0.94]} />
+                    <meshBasicMaterial color="#1a1a1a" transparent opacity={0.16} />
+                </mesh>
                 <mesh position={[0, -0.35, -0.02]}>
-                    <planeGeometry args={[1.7, 1.15]} />
+                    <planeGeometry args={[1.7, 0.88]} />
                     <meshBasicMaterial color="#f5efe0" transparent={true} />
                 </mesh>
-                {/* 类名（中文 · Noto Sans SC——沿用门牌语言） */}
                 <GalleryText
-                    position={[0, -0.28, 0.01]}
-                    fontSize={0.3}
+                    position={[0, -0.04, 0.01]}
+                    fontSize={0.065}
+                    color="#8a7a5e"
+                    font="/fonts/NotoSansSC.ttf"
+                    anchorX="center"
+                    anchorY="middle"
+                >
+                    分 类
+                </GalleryText>
+                <GalleryText
+                    position={[0, -0.25, 0.01]}
+                    fontSize={0.25}
                     color="#1a1a1a"
                     font="/fonts/NotoSansSC.ttf"
                     anchorX="center"
@@ -1213,21 +1241,19 @@ const ProjectCard = memo(forwardRef(({ index, project, clothespinTexture, curren
                 >
                     {project.dividerLabel}
                 </GalleryText>
-                {/* 数量副标 */}
                 <GalleryText
-                    position={[0, -0.62, 0.01]}
-                    fontSize={0.09}
-                    color="#666666"
+                    position={[0, -0.48, 0.01]}
+                    fontSize={0.08}
+                    color="#4d4a43"
                     font="/fonts/NotoSansSC.ttf"
                     anchorX="center"
                     anchorY="middle"
                 >
                     {`${project.dividerCount || 0} 部作品`}
                 </GalleryText>
-                {/* 地标线 */}
-                <mesh position={[0, -1.02, 0.01]}>
-                    <planeGeometry args={[1.3, 0.025]} />
-                    <meshBasicMaterial color="#1a1a1a" transparent={true} opacity={0.7} />
+                <mesh position={[0, -0.69, 0.01]}>
+                    <planeGeometry args={[1.3, 0.022]} />
+                    <meshBasicMaterial color="#1a1a1a" transparent={true} opacity={0.6} />
                 </mesh>
             </group>
         );
@@ -1431,48 +1457,99 @@ const ProjectCard = memo(forwardRef(({ index, project, clothespinTexture, curren
                 >
                     {/* 1d：TECH STACK 标题移除——视频项目无技术栈（logo 组保留结构，techStack 空则不渲染） */}
 
-                    {/* 横向排列 logo 的容器 */}
-                    <group position={[0, -0.05, 0.01]}>
-                        {project.techStack && project.techStack.map((logoPath, idx) => {
-                            // 排列小方块（4 个居中）
-                            const spacing = 0.30;
-                            const startX = -((project.techStack.length - 1) * spacing) / 2;
-                            const xPos = startX + (idx * spacing);
-
-                            return (
-                                <TechStackLogo key={idx} path={logoPath} position={[xPos, 0, 0]} />
-                            );
-                        })}
-                    </group>
+                    {project.techStack && project.techStack.length > 0 ? (
+                        /* 有技术栈时保留原有 logo 排布 */
+                        <group position={[0, -0.05, 0.01]}>
+                            {project.techStack.map((logoPath, idx) => {
+                                const spacing = 0.30;
+                                const startX = -((project.techStack.length - 1) * spacing) / 2;
+                                const xPos = startX + (idx * spacing);
+                                return (
+                                    <TechStackLogo key={idx} path={logoPath} position={[xPos, 0, 0]} />
+                                );
+                            })}
+                        </group>
+                    ) : (
+                        /* 没有技术栈时，用一张项目便签填满四个空框，避免背面像未完成 */
+                        <group position={[0, -0.02, 0.005]}>
+                            <mesh>
+                                <planeGeometry args={[1.32, 0.44]} />
+                                <meshBasicMaterial color="#f7f0e1" transparent opacity={0.96} />
+                            </mesh>
+                            <mesh position={[0, 0.2, 0.002]}>
+                                <planeGeometry args={[0.3, 0.055]} />
+                                <meshBasicMaterial color="#e4d8bf" transparent opacity={0.85} />
+                            </mesh>
+                            <GalleryText
+                                ref={noteTextRef}
+                                position={[0, 0.02, 0.004]}
+                                fontSize={0.057}
+                                color="#4c4438"
+                                font="/fonts/NotoSansSC.ttf"
+                                anchorX="center"
+                                anchorY="middle"
+                                maxWidth={1.18}
+                                fillOpacity={0}
+                            >
+                                {project.description}
+                            </GalleryText>
+                            <GalleryText
+                                ref={noteMetaRef}
+                                position={[0, -0.17, 0.004]}
+                                fontSize={0.045}
+                                color="#7b705f"
+                                font="/fonts/NotoSansSC.ttf"
+                                anchorX="center"
+                                anchorY="middle"
+                                maxWidth={1.2}
+                                fillOpacity={0}
+                            >
+                                {[project.role?.join(' · '), project.year].filter(Boolean).join('   /   ')}
+                            </GalleryText>
+                        </group>
+                    )}
                 </group>
                 </>
                 )}
 
-                {/*
-                  === 文字 / 项目标题 ===
-                  这里可方便地调节每段文字的外观。
+                {/* 卡片内底部纸签：裁成照片下缘的说明条，保证每张卡都看得到标题 */}
+                <group visible={!isSelected && !isAnimating}>
+                    <mesh position={[0, -0.8, 0.012]}>
+                        <planeGeometry args={[1.5, 0.3]} />
+                        <meshBasicMaterial color="#f5eedf" transparent opacity={0.94} />
+                    </mesh>
+                    <mesh position={[0, -0.655, 0.016]}>
+                        <planeGeometry args={[1.5, 0.012]} />
+                        <meshBasicMaterial color="#d8ccb6" transparent opacity={0.7} />
+                    </mesh>
 
-                  position: [X, Y, Z]
-                  > X = 左右（0 = 中心）
-                  > Y = 上下（如 0.75 是卡片顶部，-0.75 底部）
-                  > Z 不要动——上面的脚本会自动计算，让文字跟随卡片波浪弯曲贴合！
-
-                  fontSize：字号（默认 0.15）
-                  color：文字颜色
-                  font：可换成 /public/fonts/ 里的其他字体
-                */}
-                <GalleryText
-                    ref={textRef}
-                    position={[0, -2.4, 0]} // 1d（用户定调 2026-10-12）：标题移到卡片正下方——绳在上、卡在中、标签在下，不越晾衣绳
-                    fontSize={0.18}
-                    color="#1c1c1c"
-                    font="/fonts/NotoSansSC.ttf"
-                    anchorX="center"
-                    anchorY="middle"
-                    fillOpacity={0} // Start hidden
-                >
-                    {project.title}
-                </GalleryText>
+                    <GalleryText
+                        ref={textRef}
+                        position={[0, -0.76, 0.022]}
+                        fontSize={0.115}
+                        color="#1c1c1c"
+                        font="/fonts/NotoSansSC.ttf"
+                        anchorX="center"
+                        anchorY="middle"
+                        maxWidth={1.38}
+                        fillOpacity={0}
+                    >
+                        {project.title}
+                    </GalleryText>
+                    <GalleryText
+                        ref={labelMetaTextRef}
+                        position={[0, -0.875, 0.022]}
+                        fontSize={0.05}
+                        color="#6b6254"
+                        font="/fonts/NotoSansSC.ttf"
+                        anchorX="center"
+                        anchorY="middle"
+                        maxWidth={1.4}
+                        fillOpacity={0}
+                    >
+                        {`${project.category} · ${project.year}`}
+                    </GalleryText>
+                </group>
 
             </group>
         </group>
