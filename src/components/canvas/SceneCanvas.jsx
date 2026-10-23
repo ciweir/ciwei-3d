@@ -113,38 +113,38 @@ const SceneCanvas = ({
     downgradeTier,
     onProgress,
 }) => {
-    const { readingProject, hasEntered } = useScene();
+    const { readingProject } = useScene();
 
-    // 入口先就绪；走廊纹理在预载退出后分批预取，避免一次性拉 80 张造成交互卡顿。
-    // 画廊封面已下沉到每张卡按需加载，这里不再整体预取。
+    // 入口可见后优先预取画廊首屏（共享贴图 + 9 张卡封面），让地图点击画廊时
+    // 不再临时下载；随后再分批预取走廊，避免 80 张一次性拉取造成卡顿。
     useEffect(() => {
         if (!isLoaded || DEEP_LINK_ROOM) return undefined;
-        const paths = filterTexturesByDevice(CORRIDOR_TEXTURES, supportsHover);
-        const idle = window.requestIdleCallback || ((cb) => window.setTimeout(cb, 600));
-        const cancelIdle = window.cancelIdleCallback || window.clearTimeout;
-        let index = 0;
-        let handle = null;
-        const run = () => {
-            paths.slice(index, index + 6).forEach((path) => useTexture.preload(path));
-            index += 6;
-            if (index < paths.length) handle = idle(run, { timeout: 800 });
-        };
-        handle = idle(run, { timeout: 800 });
-        return () => { if (handle !== null) cancelIdle(handle); };
-    }, [isLoaded]);
-
-    // 进入走廊后预取画廊首屏 9 张卡的封面（约 700KB），
-    // 让首次访问点开画廊时不再等这批贴图；深层卡片仍由各卡按需加载。
-    useEffect(() => {
-        if (!isLoaded || !hasEntered || DEEP_LINK_ROOM) return undefined;
         const idle = window.requestIdleCallback || ((cb) => window.setTimeout(cb, 300));
         const cancelIdle = window.cancelIdleCallback || window.clearTimeout;
-        const handle = idle(() => {
-            filterTexturesByDevice(buildInitialGalleryCovers(), supportsHover)
+        let corridorHandle = null;
+        let corridorIndex = 0;
+
+        const galleryPaths = filterTexturesByDevice(GALLERY_SHARED_TEXTURES, supportsHover);
+        galleryPaths.forEach((path) => useTexture.preload(path));
+
+        const corridorPaths = filterTexturesByDevice(CORRIDOR_TEXTURES, supportsHover);
+        const runCorridor = () => {
+            corridorPaths.slice(corridorIndex, corridorIndex + 6)
                 .forEach((path) => useTexture.preload(path));
-        }, { timeout: 1200 });
-        return () => cancelIdle(handle);
-    }, [isLoaded, hasEntered]);
+            corridorIndex += 6;
+            if (corridorIndex < corridorPaths.length) {
+                corridorHandle = idle(runCorridor, { timeout: 800 });
+            }
+        };
+        const corridorDelay = window.setTimeout(() => {
+            corridorHandle = idle(runCorridor, { timeout: 800 });
+        }, 1200);
+
+        return () => {
+            window.clearTimeout(corridorDelay);
+            if (corridorHandle !== null) cancelIdle(corridorHandle);
+        };
+    }, [isLoaded]);
 
     return (
         <Canvas

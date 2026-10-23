@@ -35,8 +35,10 @@ const TearLineSVG = ({ svgPathData }) => (
 const PaperTransition = () => {
     const {
         teleportPhase,
+        teleportTarget,
         startTeleportTransition,
-        finishPaperOpen
+        finishPaperOpen,
+        isFastTeleport
     } = useScene();
     const { play } = useAudio();
 
@@ -44,6 +46,8 @@ const PaperTransition = () => {
     const leftHalfRef = useRef(null);
     const rightHalfRef = useRef(null);
     const timelineRef = useRef(null);
+    const fastTeleportRef = useRef(false);
+    const galleryTeleportRef = useRef(false);
 
     // Generate tear path (same logic as Preloader)
     const tearPoints = useMemo(() => {
@@ -90,7 +94,25 @@ const PaperTransition = () => {
             timelineRef.current.kill();
         }
 
+        // 快速传送（地图/画廊点击）已有静态首帧兜底，纸张转场可以更短。
+        // signalRoomReady 会提前清掉 isFastTeleport，因此用 ref 记住本次传送模式。
         if (teleportPhase === 'closing') {
+            fastTeleportRef.current = isFastTeleport;
+            galleryTeleportRef.current = isFastTeleport && teleportTarget === 'gallery';
+        }
+        const fastMode = isFastTeleport || fastTeleportRef.current;
+        const skipPaper = galleryTeleportRef.current;
+        const closeDuration = fastMode ? 0.35 : 0.8;
+        const openDuration = fastMode ? 0.6 : 1.2;
+
+        if (teleportPhase === 'closing') {
+            // 快速传送（画廊）：静态首帧已经接管转场，直接开始相机传送，
+            // 不再播放纸张合上，避免额外约 1 秒等待。
+            if (skipPaper) {
+                startTeleportTransition();
+                return undefined;
+            }
+
             // Show container
             gsap.set(containerRef.current, { opacity: 1, display: 'block' });
 
@@ -111,14 +133,14 @@ const PaperTransition = () => {
             timelineRef.current.to(leftHalfRef.current, {
                 xPercent: 0,
                 rotation: 0,
-                duration: 0.8,
+                duration: closeDuration,
                 ease: "power2.inOut"
             }, 'close');
 
             timelineRef.current.to(rightHalfRef.current, {
                 xPercent: 0,
                 rotation: 0,
-                duration: 0.8,
+                duration: closeDuration,
                 ease: "power2.inOut"
             }, 'close');
         }
@@ -130,6 +152,12 @@ const PaperTransition = () => {
         }
 
         if (teleportPhase === 'opening') {
+            // 快速传送：房间已由首帧遮住，直接完成，等首帧淡出到 3D
+            if (skipPaper) {
+                finishPaperOpen();
+                return undefined;
+            }
+
             // Tear the paper apart
             timelineRef.current = gsap.timeline({
                 onComplete: () => {
@@ -142,14 +170,14 @@ const PaperTransition = () => {
             timelineRef.current.to(leftHalfRef.current, {
                 xPercent: -100,
                 rotation: -2,
-                duration: 1.2,
+                duration: openDuration,
                 ease: "power3.inOut"
             }, 'tear');
 
             timelineRef.current.to(rightHalfRef.current, {
                 xPercent: 100,
                 rotation: 2,
-                duration: 1.2,
+                duration: openDuration,
                 ease: "power3.inOut"
             }, 'tear');
 
@@ -168,7 +196,7 @@ const PaperTransition = () => {
                 timelineRef.current.kill();
             }
         };
-    }, [teleportPhase, startTeleportTransition, finishPaperOpen, play]);
+    }, [teleportPhase, teleportTarget, startTeleportTransition, finishPaperOpen, play, isFastTeleport]);
 
     // 组件始终留在 DOM（不 "return null"），
     // 避免复杂 SVG 路径首次加载时卡顿。

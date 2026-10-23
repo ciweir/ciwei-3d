@@ -14,6 +14,7 @@ import { SceneProvider } from './context/SceneContext';
 import { useScene } from './context/useScene';
 import NavigationUI from './components/ui/NavigationUI';
 import GlobalOverlay from './components/ui/GlobalOverlay';
+import RoomEntryPoster from './components/dom/RoomEntryPoster';
 import ReadingRoom from './components/ui/ReadingRoom';
 import ReadingRoomPage from './components/ui/ReadingRoomPage';
 import EntranceLanding from './components/ui/EntranceLanding';
@@ -226,6 +227,7 @@ function AppContent() {
                   <GlobalOverlay />
                   <ReadingRoom />
                   <PaperTransition />
+                  <RoomEntryPoster />
                   <ScreenReaderOverlay />
                 </>
               )}
