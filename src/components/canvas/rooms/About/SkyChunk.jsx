@@ -1,7 +1,7 @@
 import { useMemo, useRef } from 'react';
-import { useFrame, useThree, useLoader } from '@react-three/fiber';
+import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
-import { paintedSrc } from '../../../../utils/colorTexture';
+import { useColorTexture } from '../../../../utils/colorTexture';
 
 /**
  * SkyChunk Component
@@ -103,7 +103,7 @@ const Cloud = ({
     const basePosition = useRef(position);
 
     // Load the specific cloud texture
-    const texture = useLoader(THREE.TextureLoader, paintedSrc(CLOUD_TEXTURES[textureIndex]));
+    const texture = useColorTexture(CLOUD_TEXTURES[textureIndex]);
 
     // LEGACY FIX: Use original aspect ratios to prevent stretching after POT conversion
     const legacyCloudAspects = {

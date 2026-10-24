@@ -30,6 +30,16 @@ export const SketchAudioMutedIcon = () => (
     </svg>
 );
 
+export const SketchPaletteIcon = () => (
+    <svg viewBox="0 0 24 24" className="icon-palette icon-sketch" aria-hidden="true">
+        <path d="M12.2 3.4 C7.2 3.2 3.6 6.7 3.5 11.6 C3.4 16.4 7.1 20.1 12.1 20.2 C13.9 20.2 14.6 19.1 14.2 18.1 C13.8 17.0 14.6 16.1 15.9 16.1 C18.6 16.2 20.7 14.1 20.5 11.3 C20.3 6.9 16.7 3.6 12.2 3.4 Z" />
+        <circle cx="8.0" cy="8.3" r="1.0" />
+        <circle cx="12.3" cy="6.6" r="1.0" />
+        <circle cx="16.2" cy="8.7" r="1.0" />
+        <circle cx="7.3" cy="12.7" r="1.0" />
+    </svg>
+);
+
 export const SketchTrophyIcon = () => (
     <svg viewBox="0 0 24 24" className="icon-trophy icon-sketch" aria-hidden="true">
         <path d="M7.2 4.1 C9.8 4.0 13.9 4.2 16.9 4.0" />

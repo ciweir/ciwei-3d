@@ -93,6 +93,11 @@
     svg.icon-sketch {
         stroke-width: 1.7;
     }
+
+    // 上色开启：调色盘内部铺一层淡墨，按钮仍保持纸张质感
+    &.color-btn.is-on svg.icon-palette {
+        fill: rgba($ink, 0.3);
+    }
 }
 
 // === BACK BUTTON ===

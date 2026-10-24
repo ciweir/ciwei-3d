@@ -7,6 +7,7 @@ import { useScene } from '../../context/useScene';
 import { getInitialRoomFromUrl } from '../../hooks/useDocumentMeta';
 import ciweiProjects from '../../data/ciwei-projects.json';
 import { useColorTexture as useTexture } from '../../utils/colorTexture';
+import { getColorEnabled } from '../../utils/colorMode';
 import {
     ENTRANCE_TEXTURES,
     CORRIDOR_TEXTURES,
@@ -21,7 +22,6 @@ import {
 // 文本排版放主线程：避免生产构建下 worker 序列化/字体 URL 解析导致的启动挂起
 configureTextBuilder({ useWorker: false });
 
-const supportsHover = typeof window !== 'undefined' && window.matchMedia('(hover: hover)').matches;
 const DEEP_LINK_ROOM = getInitialRoomFromUrl();
 // 画廊额外依赖：隔断纸纹 + GalleryClouds 的 8 张云（不在生成器的 GALLERY 分组里）
 const GALLERY_EXTRA_TEXTURES = [
@@ -92,7 +92,7 @@ const INITIAL_TEXTURES = DEEP_LINK_ROOM
         ...UI_TEXTURES,
     ]
     : [...ENTRANCE_TEXTURES, ...UI_TEXTURES];
-const filteredInitial = filterTexturesByDevice(INITIAL_TEXTURES, supportsHover);
+const filteredInitial = filterTexturesByDevice(INITIAL_TEXTURES, getColorEnabled());
 
 filteredInitial.forEach((path) => useTexture.preload(path));
 
@@ -124,10 +124,10 @@ const SceneCanvas = ({
         let corridorHandle = null;
         let corridorIndex = 0;
 
-        const galleryPaths = filterTexturesByDevice(GALLERY_SHARED_TEXTURES, supportsHover);
+        const galleryPaths = filterTexturesByDevice(GALLERY_SHARED_TEXTURES, getColorEnabled());
         galleryPaths.forEach((path) => useTexture.preload(path));
 
-        const corridorPaths = filterTexturesByDevice(CORRIDOR_TEXTURES, supportsHover);
+        const corridorPaths = filterTexturesByDevice(CORRIDOR_TEXTURES, getColorEnabled());
         const runCorridor = () => {
             corridorPaths.slice(corridorIndex, corridorIndex + 6)
                 .forEach((path) => useTexture.preload(path));

@@ -1,56 +1,232 @@
 /**
- * 全站彩色模式（桌面端默认彩色）
+ * 彩色/线稿贴图选择
  * ---------------------------------------------------------------
- * 现状：贴图成对存在 —— `<name>.webp` / `<name>_sketch.webp`（线稿）
- *       与 `<name>_painted.webp`（彩色）。但绝大多数材质只挂了线稿，
- *       彩色版仅在悬停/入场揭示时才短暂出现，于是整站看起来仍是铅笔稿。
- *
- * 策略：桌面端（支持 hover）把线稿「透明地」换成彩色版，触摸设备维持线稿
- *       —— 与 texturePreloadList.filterTexturesByDevice 的内存策略一致
- *       （手机跳过 _painted，省内存）。
- *
- * paintedSrc() 只在彩色版确实存在时才替换，因此头像逐帧（avatar_anim）、
- * 作品卡 covers、以及任何未配对的贴图都会原样返回，不会产生 404。
+ * 桌面端默认彩色，触屏设备默认线稿；移动端右上角的“上色”按钮可以随时切换。
+ * 切换时不重挂场景：初始贴图仍由 drei 的 useTexture 提供，另一套贴图在
+ * 后台按需加载，加载完成后替换材质，避免整屏闪烁。
  */
-import { useMemo } from 'react';
-import { useTexture } from '@react-three/drei';
-import { isTouchDevice } from './deviceDetect';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useTexture as useDreiTexture } from '@react-three/drei';
+import * as THREE from 'three';
 import { PAINTED_TEXTURES } from '../config/texturePreloadList';
+import { getColorEnabled, useColorEnabled } from './colorMode';
 
 const PAINTED_SET = new Set(PAINTED_TEXTURES);
 
-/** 是否默认显示彩色版（桌面端为真，触摸设备为假） */
-export const COLOR_DEFAULT = !isTouchDevice();
-
-/** 线稿 URL → 彩色版 URL；无对应彩色版、已是对彩色版、非 .webp（含 data: 占位）时原样返回 */
+/** 线稿 URL → 彩色版 URL；无对应彩色版时原样返回 */
 export const paintedSrc = (src) => {
-  if (!COLOR_DEFAULT || typeof src !== 'string') return src;
-  if (!src.endsWith('.webp') || src.endsWith('_painted.webp')) return src;
-  const cand = src.replace(/_sketch\.webp$/i, '.webp').replace(/\.webp$/i, '_painted.webp');
-  return PAINTED_SET.has(cand) ? cand : src;
+    if (typeof src !== 'string') return src;
+    if (!src.endsWith('.webp') || src.endsWith('_painted.webp')) return src;
+    const cand = src.replace(/_sketch\.webp$/i, '.webp').replace(/\.webp$/i, '_painted.webp');
+    return PAINTED_SET.has(cand) ? cand : src;
+};
+
+export const resolveTextureSrc = (src, colorEnabled = getColorEnabled()) =>
+    colorEnabled ? paintedSrc(src) : src;
+
+const mapInput = (input, mapper) => {
+    if (typeof input === 'string') return mapper(input);
+    if (Array.isArray(input)) return input.map(mapper);
+    if (input && typeof input === 'object') {
+        const mapped = {};
+        for (const key of Object.keys(input)) mapped[key] = mapper(input[key]);
+        return mapped;
+    }
+    return input;
+};
+
+const sameInput = (a, b) => {
+    if (a === b) return true;
+    if (Array.isArray(a) && Array.isArray(b)) {
+        return a.length === b.length && a.every((item, i) => item === b[i]);
+    }
+    if (a && b && typeof a === 'object' && typeof b === 'object') {
+        const keys = Object.keys(a);
+        return keys.length === Object.keys(b).length && keys.every((key) => a[key] === b[key]);
+    }
+    return false;
+};
+
+/* === 按需加载：最多 6 个并发，避免一次点“上色”把移动网络打满 === */
+const textureCache = new Map();
+let activeLoads = 0;
+const loadQueue = [];
+
+const pumpQueue = () => {
+    while (activeLoads < 6 && loadQueue.length > 0) {
+        const job = loadQueue.shift();
+        activeLoads += 1;
+        job().finally(() => {
+            activeLoads -= 1;
+            pumpQueue();
+        });
+    }
+};
+
+const loadRawTexture = (url) =>
+    new Promise((resolve, reject) => {
+        new THREE.TextureLoader().load(url, resolve, undefined, reject);
+    });
+
+const loadTexture = (url) => {
+    if (!url) return Promise.resolve(null);
+    if (textureCache.has(url)) return textureCache.get(url);
+    const promise = new Promise((resolve, reject) => {
+        loadQueue.push(() => loadRawTexture(url).then(resolve, reject));
+        pumpQueue();
+    }).catch((error) => {
+        textureCache.delete(url);
+        throw error;
+    });
+    textureCache.set(url, promise);
+    return promise;
+};
+
+const copyTextureSettings = (texture, base) => {
+    if (!texture) return texture;
+    texture.colorSpace = THREE.SRGBColorSpace;
+    if (base) {
+        texture.colorSpace = base.colorSpace;
+        texture.flipY = base.flipY;
+        texture.wrapS = base.wrapS;
+        texture.wrapT = base.wrapT;
+        texture.minFilter = base.minFilter;
+        texture.magFilter = base.magFilter;
+        texture.anisotropy = base.anisotropy;
+        texture.generateMipmaps = base.generateMipmaps;
+        texture.repeat.copy(base.repeat);
+        texture.offset.copy(base.offset);
+        texture.center.copy(base.center);
+        texture.rotation = base.rotation;
+    }
+    texture.needsUpdate = true;
+    return texture;
+};
+
+const loadForInput = async (altInput, baseInput, base) => {
+    if (typeof altInput === 'string') {
+        if (altInput === baseInput) return base;
+        const texture = await loadTexture(altInput);
+        return copyTextureSettings(texture, base);
+    }
+    if (Array.isArray(altInput)) {
+        const result = await Promise.all(
+            altInput.map((url, i) => loadForInput(url, baseInput?.[i], base?.[i]))
+        );
+        return result;
+    }
+    if (altInput && typeof altInput === 'object') {
+        const result = {};
+        await Promise.all(
+            Object.keys(altInput).map(async (key) => {
+                result[key] = await loadForInput(altInput[key], baseInput?.[key], base?.[key]);
+            })
+        );
+        return result;
+    }
+    return base;
 };
 
 /**
- * useTexture 的彩色化包装：入参形态与 drei 的 useTexture 一致
- * （字符串 / 字符串数组 / { key: url } 对象），内部按 paintedSrc 改写。
- *
- * ⚠️ 必须 memo 化：数组/对象入参若每次渲染都新建，
- *    R3F 的 useLoader 会以新 key 判定缓存未命中并反复挂起（Suspense 永不 resolve），
- *    导致 Canvas 子树永不 commit、场景#空、useFrame 不执行。
+ * 颜色模式感知的 useTexture：
+ * - 首次渲染加载当前模式对应的贴图（保持首屏速度）
+ * - 模式切换后异步加载另一套贴图，加载完成前继续用旧贴图
  */
 export const useColorTexture = (input, ...rest) => {
-  const resolved = useMemo(() => {
-    if (typeof input === 'string') return paintedSrc(input);
-    if (Array.isArray(input)) return input.map(paintedSrc);
-    if (input && typeof input === 'object') {
-      const mapped = {};
-      for (const key of Object.keys(input)) mapped[key] = paintedSrc(input[key]);
-      return mapped;
-    }
-    return input;
-  }, [input]);
-  return useTexture(resolved, ...rest);
+    const colorEnabled = useColorEnabled();
+    const initialEnabled = useRef(colorEnabled);
+    const baseInput = useMemo(
+        () => mapInput(input, (src) => resolveTextureSrc(src, initialEnabled.current)),
+        [input]
+    );
+    const base = useDreiTexture(baseInput, ...rest);
+    const altInput = useMemo(
+        () => mapInput(input, (src) => resolveTextureSrc(src, colorEnabled)),
+        [input, colorEnabled]
+    );
+    const [alt, setAlt] = useState(null);
+    const needsAlt = !sameInput(altInput, baseInput);
+
+    useEffect(() => {
+        if (!needsAlt) {
+            setAlt(null);
+            return undefined;
+        }
+        let cancelled = false;
+        loadForInput(altInput, baseInput, base)
+            .then((next) => {
+                if (!cancelled) setAlt(next);
+            })
+            .catch(() => {
+                if (!cancelled) setAlt(null);
+            });
+        return () => {
+            cancelled = true;
+        };
+    }, [needsAlt, altInput, baseInput, base]);
+
+    return needsAlt && alt ? alt : base;
 };
 
-// 透传 drei useTexture 的静态预载方法（App.jsx 模块级预载依赖 useTexture.preload）
-useColorTexture.preload = (src) => useTexture.preload(paintedSrc(src));
+/** 显式的一对线稿/彩色贴图（画廊封面等文件名不带 _sketch 后缀的资源） */
+export const useTexturePair = (sketchUrl, paintedUrl) => {
+    const colorEnabled = useColorEnabled();
+    const initialEnabled = useRef(colorEnabled);
+    const baseUrl = initialEnabled.current && paintedUrl ? paintedUrl : sketchUrl;
+    const base = useDreiTexture(baseUrl);
+    const [alt, setAlt] = useState(null);
+    const targetUrl = colorEnabled && paintedUrl ? paintedUrl : sketchUrl;
+    const needsAlt = targetUrl !== baseUrl;
+
+    useEffect(() => {
+        if (!needsAlt) {
+            setAlt(null);
+            return undefined;
+        }
+        let cancelled = false;
+        loadTexture(targetUrl)
+            .then((texture) => {
+                if (!cancelled) setAlt(copyTextureSettings(texture, base));
+            })
+            .catch(() => {
+                if (!cancelled) setAlt(null);
+            });
+        return () => {
+            cancelled = true;
+        };
+    }, [needsAlt, targetUrl, base]);
+
+    return needsAlt && alt ? alt : base;
+};
+
+/**
+ * 只在上色模式加载的彩色贴图（Studio 的 painted 面、About 气球等）。
+ * 初始线稿模式完全不发请求；点“上色”后异步补上。
+ */
+export const useColorOnlyTexture = (url) => {
+    const colorEnabled = useColorEnabled();
+    const [texture, setTexture] = useState(null);
+
+    useEffect(() => {
+        if (!colorEnabled || !url) {
+            setTexture(null);
+            return undefined;
+        }
+        let cancelled = false;
+        loadTexture(url)
+            .then((next) => {
+                if (!cancelled) setTexture(copyTextureSettings(next, null));
+            })
+            .catch(() => {
+                if (!cancelled) setTexture(null);
+            });
+        return () => {
+            cancelled = true;
+        };
+    }, [colorEnabled, url]);
+
+    return texture;
+};
+
+// 透传 drei useTexture 的静态预载方法（SceneCanvas 模块级预载依赖它）
+useColorTexture.preload = (src) => useDreiTexture.preload(resolveTextureSrc(src));

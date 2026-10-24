@@ -43,6 +43,7 @@ import './styles/main.scss';
 // On high-end devices, preloads everything for zero stutter.
 // On mobile/low-end devices, only preloads core textures to prevent Out Of Memory crashes.
 import { IMAGE_ASSETS, filterTexturesByDevice } from './config/texturePreloadList';
+import { getColorEnabled } from './utils/colorMode';
 
 // Standard Browser-level Image Preloader (for <img> tags)
 const preloadBrowserImage = (path) => {
@@ -52,10 +53,6 @@ const preloadBrowserImage = (path) => {
 };
 
 // （1d 减负 2026-10-12：设备分级预载已统一为核心集——原 isLowEnd 全量/分级分支随之移除）
-
-// Refined check for "hover capability" (non-touch devices should have hover: hover)
-// Laptops with touch screens (which also have a mouse/trackpad) will return true here.
-const supportsHover = typeof window !== 'undefined' && window.matchMedia('(hover: hover)').matches;
 
 // 3D 核心贴图预载在懒加载的 SceneCanvas 内，避免把 three/drei 拉进主包。
 // 图片类资产仍在这里用浏览器 Image 预载（用于 DOM <img>）。
@@ -264,7 +261,7 @@ export default function App() {
     // Eagerly preload Sanity CMS data and images
     loadSanityData();
 
-    const filteredImages = filterTexturesByDevice(IMAGE_ASSETS, supportsHover);
+    const filteredImages = filterTexturesByDevice(IMAGE_ASSETS, getColorEnabled());
     filteredImages.forEach(path => preloadBrowserImage(path));
   }, []);
 

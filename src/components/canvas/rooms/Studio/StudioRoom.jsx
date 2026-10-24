@@ -12,7 +12,8 @@ import { useAudio } from '../../../../context/useAudio';
 import { useStudioContent } from '../../../../hooks/useSanityData';
 import '../../shaders/RevealMaterial';
 import { isTouchDevice } from '../../../../utils/deviceDetect';
-import { COLOR_DEFAULT } from '../../../../utils/colorTexture';
+import { useColorOnlyTexture } from '../../../../utils/colorTexture';
+import { useColorEnabled } from '../../../../utils/colorMode';
 import { usePaintMaterial } from '../Gallery/usePaintMaterial';
 
 // ============================================
@@ -629,20 +630,19 @@ const MonitorBlock = memo(({ item, meshRef, isSelected, onMonitorClick, disabled
                 '/textures/studio/phone_front.webp'
     );
 
-    // Dynamic Dummy texture for touch devices 
     const isTouch = isTouchDevice();
-    const dummyTex = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+    const colorEnabled = useColorEnabled();
 
     // Determine painted front texture URL
-    const paintedFrontTextureUrl = isTouch ? dummyTex : (item.paintedFrontTexture || (
+    const paintedFrontTextureUrl = item.paintedFrontTexture || (
         isBlogMonitor ? '/textures/studio/monitor_front_painted.webp' :
             isTvMonitor ? '/textures/studio/tv_front_painted.webp' :
                 '/textures/studio/phone_front_painted.webp'
-    ));
+    );
 
     // Load dynamic front texture
     const frontTex = useLoader(TextureLoader, frontTextureUrl);
-    const frontPaintedTex = useLoader(TextureLoader, paintedFrontTextureUrl);
+    const frontPaintedTex = useColorOnlyTexture(paintedFrontTextureUrl);
 
     // Load Monitor textures (Blog) - shell + painted
     const monitorBack = useLoader(TextureLoader, '/textures/studio/monitor_back.webp');
@@ -650,27 +650,27 @@ const MonitorBlock = memo(({ item, meshRef, isSelected, onMonitorClick, disabled
     const monitorBottom = useLoader(TextureLoader, '/textures/studio/monitor_bottom.webp');
     const monitorLeft = useLoader(TextureLoader, '/textures/studio/monitor_left.webp');
     const monitorRight = useLoader(TextureLoader, '/textures/studio/monitor_right.webp');
-    const monitorBackPainted = useLoader(TextureLoader, isTouch ? dummyTex : '/textures/studio/monitor_back_painted.webp');
-    const monitorTopPainted = useLoader(TextureLoader, isTouch ? dummyTex : '/textures/studio/monitor_top_painted.webp');
-    const monitorBottomPainted = useLoader(TextureLoader, isTouch ? dummyTex : '/textures/studio/monitor_bottom_painted.webp');
-    const monitorLeftPainted = useLoader(TextureLoader, isTouch ? dummyTex : '/textures/studio/monitor_left_painted.webp');
-    const monitorRightPainted = useLoader(TextureLoader, isTouch ? dummyTex : '/textures/studio/monitor_right_painted.webp');
+    const monitorBackPainted = useColorOnlyTexture('/textures/studio/monitor_back_painted.webp');
+    const monitorTopPainted = useColorOnlyTexture('/textures/studio/monitor_top_painted.webp');
+    const monitorBottomPainted = useColorOnlyTexture('/textures/studio/monitor_bottom_painted.webp');
+    const monitorLeftPainted = useColorOnlyTexture('/textures/studio/monitor_left_painted.webp');
+    const monitorRightPainted = useColorOnlyTexture('/textures/studio/monitor_right_painted.webp');
 
     // Load TV textures (YouTube) - shell + painted
     const tvBack = useLoader(TextureLoader, '/textures/studio/tv_back.webp');
     const tvTop = useLoader(TextureLoader, '/textures/studio/tv_top.webp');
     const tvBottom = useLoader(TextureLoader, '/textures/studio/tv_bottom.webp');
     const tvSide = useLoader(TextureLoader, '/textures/studio/tv_side.webp');
-    const tvBackPainted = useLoader(TextureLoader, isTouch ? dummyTex : '/textures/studio/tv_back_painted.webp');
-    const tvTopPainted = useLoader(TextureLoader, isTouch ? dummyTex : '/textures/studio/tv_top_painted.webp');
-    const tvBottomPainted = useLoader(TextureLoader, isTouch ? dummyTex : '/textures/studio/tv_bottom_painted.webp');
-    const tvSidePainted = useLoader(TextureLoader, isTouch ? dummyTex : '/textures/studio/tv_side_painted.webp');
+    const tvBackPainted = useColorOnlyTexture('/textures/studio/tv_back_painted.webp');
+    const tvTopPainted = useColorOnlyTexture('/textures/studio/tv_top_painted.webp');
+    const tvBottomPainted = useColorOnlyTexture('/textures/studio/tv_bottom_painted.webp');
+    const tvSidePainted = useColorOnlyTexture('/textures/studio/tv_side_painted.webp');
 
     // Load Phone textures (TikTok) - shell + painted
     const phoneBack = useLoader(TextureLoader, '/textures/studio/phone_back.webp');
     const phoneSide = useLoader(TextureLoader, '/textures/studio/phone_side.webp');
-    const phoneBackPainted = useLoader(TextureLoader, isTouch ? dummyTex : '/textures/studio/phone_back_painted.webp');
-    const phoneSidePainted = useLoader(TextureLoader, isTouch ? dummyTex : '/textures/studio/phone_side_painted.webp');
+    const phoneBackPainted = useColorOnlyTexture('/textures/studio/phone_back_painted.webp');
+    const phoneSidePainted = useColorOnlyTexture('/textures/studio/phone_side_painted.webp');
 
     // Build texture config for current device type
     // Each entry: { sketch, painted } — if painted is null, that face won't have reveal
@@ -756,7 +756,7 @@ const MonitorBlock = memo(({ item, meshRef, isSelected, onMonitorClick, disabled
     const updatePaintState = useCallback(() => {
         if (!faceConfig) return;
 
-        const shouldPaint = !isTouch && (COLOR_DEFAULT || isHoveredRef.current || isSelected);
+        const shouldPaint = colorEnabled || (!isTouch && (isHoveredRef.current || isSelected));
         const targetProgress = shouldPaint ? 1.0 : 0.0;
         const duration = shouldPaint ? 0.8 : 0.5;
 
@@ -784,12 +784,12 @@ const MonitorBlock = memo(({ item, meshRef, isSelected, onMonitorClick, disabled
                 if (paintedBoxRef.current) paintedBoxRef.current.visible = false;
             });
         }
-    }, [faceConfig, isSelected, isTouch]);
+    }, [faceConfig, isSelected, isTouch, colorEnabled]);
 
     // React to purely external changes (e.g., overlay closes and isSelected becomes false)
     useEffect(() => {
         updatePaintState();
-    }, [isSelected, updatePaintState]);
+    }, [isSelected, colorEnabled, updatePaintState]);
 
     if (!faceConfig) {
         // Fallback for unknown platform

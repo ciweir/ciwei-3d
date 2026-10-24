@@ -6,11 +6,14 @@ import { setMusicVolume, getMusicVolume } from '../../utils/audioManager';
 import { useAchievements } from '../../context/useAchievements';
 import AchievementPopup from './AchievementPopup';
 import AchievementsPanel from './AchievementsPanel';
+import { useColorEnabled, toggleColorEnabled } from '../../utils/colorMode';
+import { isTouchDevice } from '../../utils/deviceDetect';
 import {
     SketchBackIcon,
     SketchMenuIcon,
     SketchAudioIcon,
     SketchAudioMutedIcon,
+    SketchPaletteIcon,
     SketchTrophyIcon,
     SketchCloseIcon,
 } from './SketchIcons';
@@ -32,6 +35,8 @@ const NavigationUI = () => {
     const { currentRoom, isInRoom, requestExit, hasEntered, teleportTo, isTeleporting } = useScene();
     const { isMuted, globalVolume, setGlobalVolume } = useAudio();
     const { showTutorial } = useAchievements();
+    const colorEnabled = useColorEnabled();
+    const touchDevice = isTouchDevice();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [hoveredRoom, setHoveredRoom] = useState(null);
     const [isExiting, setIsExiting] = useState(false); // Track when back button is clicked
@@ -251,6 +256,18 @@ const NavigationUI = () => {
                     >
                         <SketchMenuIcon />
                     </button>
+                    {/* Color Mode Toggle - touch devices only */}
+                    {touchDevice && (
+                        <button
+                            className={`nav-btn color-btn ${colorEnabled ? 'is-on' : ''}`}
+                            onClick={toggleColorEnabled}
+                            aria-label={colorEnabled ? '切换为线稿' : '上色'}
+                            aria-pressed={colorEnabled}
+                            title={colorEnabled ? '切换为线稿' : '上色'}
+                        >
+                            <SketchPaletteIcon />
+                        </button>
+                    )}
                     {/* Audio Toggle Button */}
                     <button
                         className={`nav-btn audio-btn ${isAudioMenuOpen ? 'open' : ''}`}

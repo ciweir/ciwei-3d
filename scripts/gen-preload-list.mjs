@@ -122,15 +122,20 @@ ${arr('ABOUT_CORE_TEXTURES', ABOUT_CORE_TEXTURES, '关于房间核心集：头�
 ${arr('STUDIO_TEXTURES', G.STUDIO_TEXTURES, '工作室房间贴图')}
 ${arr('PAINTED_TEXTURES', PAINTED_TEXTURES, '已存在的彩色版（_painted）：供运行期判断能否把线稿切成彩色')}
 /**
- * 按设备是否支持 hover 过滤贴图清单：
- * 触摸设备跳过 _painted（彩色）版本，只加载素描版，节省移动端内存。
+ * 按当前颜色模式过滤贴图清单：
+ * 线稿模式跳过 _painted（彩色）版本，只加载素描版，节省移动端内存。
  * @param {string[]} list 贴图路径清单
- * @param {boolean} usePainted 是否保留 _painted 版本
+ * @param {boolean} usePainted 是否保留彩色版本
  * @returns {string[]} 过滤后的清单
  */
 export const filterTexturesByDevice = (list, usePainted) => {
     const painted = new Set(PAINTED_TEXTURES);
     return list.filter((path) => {
+        // 画廊封面是 -sketch.webp / .webp 成对文件，不在 /textures/ 下。
+        // 线稿模式不预取彩色封面，点“上色”后再由按需加载补齐。
+        if (path.startsWith('/covers/') && !usePainted && !path.endsWith('-sketch.webp')) {
+            return false;
+        }
         if (!path.startsWith('/textures/')) return true;
         if (path.endsWith('_painted.webp')) return usePainted;
         if (!usePainted) return true;

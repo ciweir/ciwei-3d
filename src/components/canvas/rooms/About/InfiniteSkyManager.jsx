@@ -1,13 +1,13 @@
 import { useState, useRef, useEffect } from 'react';
-import { useFrame, useLoader } from '@react-three/fiber';
+import { useFrame } from '@react-three/fiber';
 import { Text, PositionalAudio } from '@react-three/drei';
 import * as THREE from 'three';
 import gsap from 'gsap';
 import SkyChunk, { CHUNK_LENGTH, ROOM_Z } from './SkyChunk';
 import '../../shaders/RevealBasicMaterial'; // Registers brush-stroke reveal for BasicMaterial
 import { isTouchDevice } from '../../../../utils/deviceDetect';
-import { paintedSrc } from '../../../../utils/colorTexture';
-import { BALLOON_CONFIG, balloonSketchUrl, balloonPaintedUrl } from '../../../../data/balloonConfig';
+import { useColorTexture } from '../../../../utils/colorTexture';
+import { BALLOON_CONFIG, balloonSketchUrl } from '../../../../data/balloonConfig';
 
 // Reusable Vector3 to avoid allocations in event handlers
 const _tempVec3 = new THREE.Vector3();
@@ -142,7 +142,7 @@ const InfiniteSkyManager = ({ scrollProgressRef }) => {
  */
 const IntroMilestone = ({ z, scrollProgressRef }) => {
     // Load avatar texture
-    const avatarTexture = useLoader(THREE.TextureLoader, paintedSrc('/textures/about/awatarnachmurce.webp'));
+    const avatarTexture = useColorTexture('/textures/about/awatarnachmurce.webp');
     // Refs for all animated elements
     const groupRef = useRef();
     const titleRef = useRef();
@@ -301,8 +301,8 @@ const JourneyMilestone = ({ z, scrollProgressRef }) => {
     const freelanceRef = useRef();
 
     // Load textures
-    const uoTexture = useLoader(THREE.TextureLoader, paintedSrc('/textures/about/uowyspa.webp'));
-    const freelanceTexture = useLoader(THREE.TextureLoader, paintedSrc('/textures/about/freelancewyspa.webp'));
+    const uoTexture = useColorTexture('/textures/about/uowyspa.webp');
+    const freelanceTexture = useColorTexture('/textures/about/freelancewyspa.webp');
 
     // Texture settings
     uoTexture.colorSpace = THREE.SRGBColorSpace;
@@ -466,11 +466,9 @@ const SkillBalloon = ({ config, revealFactorRef, spreadFactorRef, timeRef }) => 
 
     // 构建期生成的 webp（pipeline/make-balloons.mjs）：素描版 + 上色版
     // 两版同一随机种子绘制，线稿与色块严格对齐，供 reveal 揭示
-    const texture = useLoader(THREE.TextureLoader, paintedSrc(balloonSketchUrl(config)));
-    const paintedTexture = useLoader(
-        THREE.TextureLoader,
-        paintedSrc(isTouch ? balloonSketchUrl(config) : balloonPaintedUrl(config))
-    );
+    // 彩色模式切换后 useColorTexture 会异步换成 painted 版本；线稿模式保持素描
+    const texture = useColorTexture(balloonSketchUrl(config));
+    const paintedTexture = texture;
     texture.colorSpace = THREE.SRGBColorSpace;
     paintedTexture.colorSpace = THREE.SRGBColorSpace;
 

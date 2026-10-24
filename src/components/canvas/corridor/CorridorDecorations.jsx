@@ -1,7 +1,7 @@
 import { useMemo, useState, useRef, useEffect } from 'react';
 import { Text } from '@react-three/drei';
 // 全站彩色：桌面端自动取 _painted 彩色版（见 utils/colorTexture.js）
-import { useColorTexture as useTexture } from '../../../utils/colorTexture';
+import { useColorTexture as useTexture, useColorOnlyTexture } from '../../../utils/colorTexture';
 import * as THREE from 'three';
 import { useFrame, useThree } from '@react-three/fiber';
 import gsap from 'gsap';
@@ -330,7 +330,7 @@ const CorridorDecorations = ({ segmentLength, zOffset, corridorWidth = 4, corrid
     // TEKSTURY DEKORACJI
     // =============================================
     const frameTexture = useTexture('/textures/corridor/ramkanazdjecieduza.webp');
-    const framePaintedTexture = useTexture('/textures/corridor/ramkanazdjecieduza_painted.webp');
+    const framePaintedTexture = useColorOnlyTexture('/textures/corridor/ramkanazdjecieduza_painted.webp');
     const standingFrameTexture = useTexture('/textures/corridor/ramkanazdjeciemala.webp');
     const treeTexture = useTexture('/textures/corridor/drzewkowdoniczce.webp');
     const grateTexture = useTexture('/textures/corridor/kratkawentylacyjna.webp');

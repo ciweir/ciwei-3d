@@ -489,6 +489,11 @@ export const PAINTED_TEXTURES = [
 export const filterTexturesByDevice = (list, usePainted) => {
     const painted = new Set(PAINTED_TEXTURES);
     return list.filter((path) => {
+        // 画廊封面是 -sketch.webp / .webp 成对文件，不在 /textures/ 下。
+        // 线稿模式不预取彩色封面，点“上色”后再由按需加载补齐。
+        if (path.startsWith('/covers/') && !usePainted && !path.endsWith('-sketch.webp')) {
+            return false;
+        }
         if (!path.startsWith('/textures/')) return true;
         if (path.endsWith('_painted.webp')) return usePainted;
         if (!usePainted) return true;

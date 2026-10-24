@@ -2,7 +2,8 @@ import React, { Suspense, useRef, useState, useMemo, useEffect, useLayoutEffect,
 import { Text as TroikaText } from 'troika-three-text';
 import { useThree, useFrame } from '@react-three/fiber';
 // 全站彩色：桌面端自动取 _painted 彩色版（见 utils/colorTexture.js）
-import { useColorTexture as useTexture, paintedSrc, COLOR_DEFAULT } from '../../../../utils/colorTexture';
+import { useColorTexture as useTexture, useTexturePair } from '../../../../utils/colorTexture';
+import { useColorEnabled } from '../../../../utils/colorMode';
 import * as THREE from 'three';
 import gsap from 'gsap';
 import { Observer } from 'gsap/all';
@@ -224,6 +225,7 @@ const GalleryRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
     // User requested: painted on desktop, regular on touch/phones (even if laptop has touch screen)
     // We use matchMedia('(hover: hover)') to detect devices with a cursor/hover capability
     const [canHover, setCanHover] = useState(() => typeof window !== 'undefined' ? window.matchMedia('(hover: hover)').matches : true);
+    const colorEnabled = useColorEnabled();
 
     // Pobieranie danych z Sanity.io (fallback do starych danych)
     const sanityProjects = useGalleryProjects();
@@ -289,8 +291,8 @@ const GalleryRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
 
     // 封面贴图下沉到每张卡自己加载：房间就绪只等首批卡片，
     // 不再被全部 44 张封面拖住（此前 63 张画廊贴图要全齐才渲染任何一张卡）。
-    const backTextureRaw = useTexture(canHover ? '/textures/gallery/tylkartki_painted.webp' : '/textures/gallery/tylkartki.webp');
-    const overlayTextureRaw = useTexture(canHover ? '/textures/gallery/przyciskdotylukartki_painted.webp' : '/textures/gallery/przyciskdotylukartki.webp');
+    const backTextureRaw = useTexture('/textures/gallery/tylkartki.webp');
+    const overlayTextureRaw = useTexture('/textures/gallery/przyciskdotylukartki.webp');
 
     // Construct the full list of projects (repeated)
     const projects = useMemo(() => {
@@ -308,7 +310,7 @@ const GalleryRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
             // Map tech stack logos to the correct version (painted or regular)
             // 1d-ii：隔断项无 techStack——兜底空数组
             const techStack = (projectData.techStack || []).map(path => {
-                if (!canHover) return path; // Keep regular
+                if (!colorEnabled) return path;
                 const name = path.split('/').pop().replace('.webp', '');
                 if (name === 'csslogo') return '/textures/gallery/css3logo_painted.webp';
                 return `/textures/gallery/${name}_painted.webp`;
@@ -322,7 +324,7 @@ const GalleryRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
                 techStack: techStack
             };
         });
-    }, [projectsWithDividers, backTextureRaw, overlayTextureRaw, canHover]);
+    }, [projectsWithDividers, backTextureRaw, overlayTextureRaw, colorEnabled]);
 
     // Function to scroll to a specific project index
     const scrollToIndex = (index, onComplete) => {
@@ -397,6 +399,7 @@ const GalleryRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
     const cityTexture = useTexture('/textures/gallery/miastotlo.webp');
     const birdTexture = useTexture('/textures/gallery/bird_gray.webp');
     const clothespinTexture = useTexture('/textures/gallery/klamerka.webp');
+    const thresholdTexture = useTexture('/textures/corridor/texturadoprogow.webp');
 
     useEffect(() => {
         if (floorTexture) {
@@ -410,7 +413,13 @@ const GalleryRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
             railingTexture.repeat.set(7, 1);
             railingTexture.needsUpdate = true;
         }
-    }, [floorTexture, railingTexture]);
+        if (thresholdTexture) {
+            thresholdTexture.colorSpace = THREE.SRGBColorSpace;
+            thresholdTexture.wrapS = thresholdTexture.wrapT = THREE.RepeatWrapping;
+            thresholdTexture.repeat.set(15 / 2.524, 1);
+            thresholdTexture.needsUpdate = true;
+        }
+    }, [floorTexture, railingTexture, thresholdTexture]);
 
     const materials = useMemo(() => {
         const floorMat = new THREE.MeshBasicMaterial({
@@ -429,13 +438,7 @@ const GalleryRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
 
         const thresholdMat = new THREE.MeshBasicMaterial({
             color: '#e0e0e0',
-            map: (() => {
-                const t = new THREE.TextureLoader().load(paintedSrc('/textures/corridor/texturadoprogow.webp'));
-                t.colorSpace = THREE.SRGBColorSpace;
-                t.wrapS = t.wrapT = THREE.RepeatWrapping;
-                t.repeat.set(15 / 2.524, 1);
-                return t;
-            })(),
+            map: thresholdTexture,
             side: THREE.DoubleSide
         });
         thresholdMat.onBeforeCompile = onBeforeCompile;
@@ -447,7 +450,7 @@ const GalleryRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
             rope: ropeMat,
             threshold: thresholdMat
         };
-    }, [floorTexture, onBeforeCompile]);
+    }, [floorTexture, thresholdTexture, onBeforeCompile]);
 
     const curve = useMemo(() => {
         return new THREE.CatmullRomCurve3([
@@ -549,6 +552,7 @@ const GalleryRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
                                 isTransitioning={isTransitioning} // Pass down to lock out individual pointer events just in case
                                 paintProgress={uniformsData.uPaintProgress}
                                 roomOrigin={uniformsData.uRoomOrigin}
+                                colorEnabled={colorEnabled}
                                 skipVideo={isWarmup} // 预热期不建视频元素：离屏卸载会中断下载、污染浏览器缓存（ERR_CACHE_READ_FAILURE）
                             />
                         </Suspense>
@@ -718,7 +722,7 @@ const FlyingBird = ({ texture }) => {
 };
 
 // Sub-component for individual project cards
-const ProjectCard = memo(forwardRef(({ index, project, clothespinTexture, currentScroll, curve, isSelected, scrollToIndex, onClick, isMobile, isTransitioning, paintProgress, roomOrigin, total, skipVideo = false }, ref) => {
+const ProjectCard = memo(forwardRef(({ index, project, clothespinTexture, currentScroll, curve, isSelected, scrollToIndex, onClick, isMobile, isTransitioning, paintProgress, roomOrigin, total, colorEnabled, skipVideo = false }, ref) => {
     const cardRef = useRef();
     const { openOverlay } = useScene();
     const paperRef = useRef(); // Ref for the moving part (Paper)
@@ -756,16 +760,15 @@ const ProjectCard = memo(forwardRef(({ index, project, clothespinTexture, curren
     const [detailsMounted, setDetailsMounted] = useState(false);
     // 每张卡自己加载封面，房间不必等所有作品贴图
     const frontTexture = useTexture(project.isDivider ? '/textures/paper-texture.webp' : project.front);
-    const paintedTextureRaw = useTexture(
-        project.isDivider
-            ? '/textures/paper-texture.webp'
-            : (!isMobile && project.painted ? project.painted : project.front)
+    const colorTexture = useTexturePair(
+        project.isDivider ? '/textures/paper-texture.webp' : project.front,
+        project.isDivider ? null : project.painted
     );
-    const paintedTexture = project.isDivider ? null : paintedTextureRaw;
+    const paintedTexture = project.isDivider ? null : colorTexture;
     useMemo(() => {
         if (frontTexture) frontTexture.colorSpace = THREE.SRGBColorSpace;
-        if (paintedTextureRaw) paintedTextureRaw.colorSpace = THREE.SRGBColorSpace;
-    }, [frontTexture, paintedTextureRaw]);
+        if (colorTexture) colorTexture.colorSpace = THREE.SRGBColorSpace;
+    }, [frontTexture, colorTexture]);
     const [isAnimating, setIsAnimating] = useState(false);  // True ONLY during flip animation
     const [, setIsScrolling] = useState(false);  // True during scroll phase
 
@@ -1104,7 +1107,7 @@ const ProjectCard = memo(forwardRef(({ index, project, clothespinTexture, curren
             const totalWind = 0.02 + uWindStrength;
             const flutter = Math.sin(uTime * 2.0 + y * 2.0) * totalWind * (1.0 + Math.abs(uBend * 3.0));
 
-            textRef.current.position.z = bendAmount + flutter + 0.055;
+            textRef.current.position.z = bendAmount + flutter + 0.065;
 
             // 旋转文字以贴合曲面（dz/dy 导数）
             const dz_dy = 2.0 * y * uBend + 2.0 * Math.cos(uTime * 2.0 + y * 2.0) * totalWind * (1.0 + Math.abs(uBend * 3.0));
@@ -1336,7 +1339,7 @@ const ProjectCard = memo(forwardRef(({ index, project, clothespinTexture, curren
                     <PaperMaterial
                         ref={materialRef}
                         color="#ffffff"
-                        map={COLOR_DEFAULT ? (paintedTexture || frontTexture) : frontTexture}
+                        map={colorEnabled ? (paintedTexture || frontTexture) : frontTexture}
                         mapBack={project.backTexture}
                         mapPainted={useVideo && videoTexture ? videoTexture : paintedTexture}
                         side={THREE.DoubleSide}
@@ -1514,11 +1517,11 @@ const ProjectCard = memo(forwardRef(({ index, project, clothespinTexture, curren
 
                 {/* 卡片内底部纸签：裁成照片下缘的说明条，保证每张卡都看得到标题 */}
                 <group visible={!isSelected && !isAnimating}>
-                    <mesh position={[0, -0.8, 0.008]}>
+                    <mesh position={[0, -0.8, 0.035]}>
                         <planeGeometry args={[1.5, 0.3]} />
                         <meshBasicMaterial color="#f5eedf" transparent opacity={0.94} />
                     </mesh>
-                    <mesh position={[0, -0.655, 0.012]}>
+                    <mesh position={[0, -0.655, 0.04]}>
                         <planeGeometry args={[1.5, 0.012]} />
                         <meshBasicMaterial color="#d8ccb6" transparent opacity={0.7} />
                     </mesh>
@@ -1538,7 +1541,7 @@ const ProjectCard = memo(forwardRef(({ index, project, clothespinTexture, curren
                     </GalleryText>
                     <GalleryText
                         ref={labelMetaTextRef}
-                        position={[0, -0.875, 0.06]}
+                        position={[0, -0.875, 0.07]}
                         fontSize={0.055}
                         color="#6b6254"
                         font="/fonts/NotoSansSC.ttf"
