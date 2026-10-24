@@ -8,7 +8,8 @@
     "build": "vite build",
     "lint": "eslint src",
     "audit:assets": "node scripts/audit-assets.mjs",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "gen:mobile": "node scripts/gen-mobile-textures.mjs"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.7",

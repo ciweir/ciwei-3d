@@ -28,6 +28,7 @@ function filesIn(dir, { recurse = false } = {}) {
       if (recurse) out.push(...filesIn(p, { recurse }));
     } else if (
       EXTS.includes(path.extname(e.name).toLowerCase()) &&
+      !e.name.endsWith('-mobile.webp') &&
       fs.statSync(p).size >= MIN_BYTES
     ) {
       out.push('/' + p.replace(/\\/g, '/').replace(/^public\//, ''));

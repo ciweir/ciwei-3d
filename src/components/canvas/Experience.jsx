@@ -119,13 +119,15 @@ const Experience = ({ onSceneReady }) => {
             {/* === INFINITE CORRIDOR (deferred until door click / already inside) === */}
             {(corridorRequested || hasEntered || Boolean(initialRoom)) && (
                 initialRoom ? (
-                    <InfiniteCorridorManager
-                        onDoorEnter={handleDoorEnter}
-                        hideDoorsForSegments={hasEntered ? [] : [-1]}
-                        clipSegmentNeg1={!hasEntered}
-                        setCameraOverride={setCameraOverride}
-                        initialSegments={[0]}
-                    />
+                    <Suspense fallback={null}>
+                        <InfiniteCorridorManager
+                            onDoorEnter={handleDoorEnter}
+                            hideDoorsForSegments={hasEntered ? [] : [-1]}
+                            clipSegmentNeg1={!hasEntered}
+                            setCameraOverride={setCameraOverride}
+                            initialSegments={[0]}
+                        />
+                    </Suspense>
                 ) : (
                     <Suspense fallback={null}>
                         <InfiniteCorridorManager

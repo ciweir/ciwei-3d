@@ -9,11 +9,20 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTexture as useDreiTexture } from '@react-three/drei';
 import * as THREE from 'three';
 import { PAINTED_TEXTURES } from '../config/texturePreloadList';
+import { MOBILE_TEXTURES } from '../config/mobileTextureManifest';
 import { getColorEnabled, useColorEnabled, useColorLoadScope } from './colorMode';
 import { isTouchDevice } from './deviceDetect';
 import { beginColorLoad, endColorLoad } from './colorLoadStatus';
 
 const PAINTED_SET = new Set(PAINTED_TEXTURES);
+const MOBILE_SET = new Set(MOBILE_TEXTURES);
+
+/** 触屏设备优先取 -mobile.webp；没有变体的（小图/透明云）沿用原图 */
+export const mobileSrc = (src) => {
+    if (typeof src !== 'string' || !isTouchDevice()) return src;
+    if (!MOBILE_SET.has(src)) return src;
+    return src.replace(/\.webp$/i, '-mobile.webp');
+};
 
 /** 线稿 URL → 彩色版 URL；无对应彩色版时原样返回 */
 export const paintedSrc = (src) => {
@@ -24,7 +33,7 @@ export const paintedSrc = (src) => {
 };
 
 export const resolveTextureSrc = (src, colorEnabled = getColorEnabled()) =>
-    colorEnabled ? paintedSrc(src) : src;
+    mobileSrc(colorEnabled ? paintedSrc(src) : src);
 
 const mapInput = (input, mapper) => {
     if (typeof input === 'string') return mapper(input);
@@ -225,9 +234,9 @@ export const useTexturePair = (sketchUrl, paintedUrl) => {
     const colorEnabled = useColorEnabled();
     const scope = useColorLoadScope();
     const initialEnabled = useRef(colorEnabled);
-    const baseUrl = initialEnabled.current && paintedUrl ? paintedUrl : sketchUrl;
+    const baseUrl = mobileSrc(initialEnabled.current && paintedUrl ? paintedUrl : sketchUrl);
     const base = useDreiTexture(baseUrl);
-    const targetUrl = colorEnabled && paintedUrl ? paintedUrl : sketchUrl;
+    const targetUrl = mobileSrc(colorEnabled && paintedUrl ? paintedUrl : sketchUrl);
     const wantsAlt = targetUrl !== baseUrl;
     const [altState, setAltState] = useState(null);
     const altReady = Boolean(altState && altState.key === targetUrl);
@@ -259,16 +268,17 @@ export const useTexturePair = (sketchUrl, paintedUrl) => {
 export const useColorOnlyTexture = (url) => {
     const colorEnabled = useColorEnabled();
     const scope = useColorLoadScope();
+    const src = mobileSrc(url);
     const [state, setState] = useState(null);
-    const ready = Boolean(state && state.key === url);
-    const needsLoad = colorEnabled && url && !ready && scopeMatches(scope, url);
+    const ready = Boolean(state && state.key === src);
+    const needsLoad = colorEnabled && src && !ready && scopeMatches(scope, src);
 
     useEffect(() => {
         if (!needsLoad) return undefined;
         let cancelled = false;
-        loadTexture(url)
+        loadTexture(src)
             .then((next) => {
-                if (!cancelled) setState({ key: url, value: copyTextureSettings(next, null) });
+                if (!cancelled) setState({ key: src, value: copyTextureSettings(next, null) });
             })
             .catch(() => {
                 if (!cancelled) setState(null);
@@ -276,7 +286,7 @@ export const useColorOnlyTexture = (url) => {
         return () => {
             cancelled = true;
         };
-    }, [needsLoad, url]);
+    }, [needsLoad, src]);
 
     if (!colorEnabled || !ready) return null;
     return state.value ?? null;
@@ -286,7 +296,7 @@ export const useColorOnlyTexture = (url) => {
 useColorTexture.preload = (src) => {
     // 触屏端云朵固定线稿，预载时不要被彩色模式改写成 _painted
     const resolved = isTouchDevice() && src.includes('/textures/clouds/')
-        ? src
+        ? mobileSrc(src)
         : resolveTextureSrc(src);
     useDreiTexture.preload(resolved);
 };
