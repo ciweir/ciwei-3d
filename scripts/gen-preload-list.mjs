@@ -111,7 +111,7 @@ const body = `/**
  *
  * 本次扫描结果：${sameAsSource}
  */
-import { isTouchDevice } from '../utils/deviceDetect';
+import { isTouchDevice } from '../utils/deviceDetect.js';
 
 ${arr('ENTRANCE_TEXTURES', G.ENTRANCE_TEXTURES, '入口场景：共享贴图 + 入口门/道具')}
 ${arr('CORRIDOR_TEXTURES', G.CORRIDOR_TEXTURES, '走廊：墙面地面 + 单门 + 装饰')}
