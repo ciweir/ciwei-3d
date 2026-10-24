@@ -1,7 +1,9 @@
 import { useMemo, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
-import { useColorTexture } from '../../../../utils/colorTexture';
+import { useCloudTexture } from '../../../../utils/colorTexture';
+import { isTouchDevice } from '../../../../utils/deviceDetect';
+import { applyCloudAlphaKey, CLOUD_ALPHA_KEY } from '../../cloudAlphaKey';
 
 /**
  * SkyChunk Component
@@ -97,13 +99,14 @@ const Cloud = ({
 }) => {
     const meshRef = useRef();
     const materialRef = useRef();
+    const isTouch = isTouchDevice();
     const { camera } = useThree();
 
     // Store base position for animation
     const basePosition = useRef(position);
 
     // Load the specific cloud texture
-    const texture = useColorTexture(CLOUD_TEXTURES[textureIndex]);
+    const texture = useCloudTexture(CLOUD_TEXTURES[textureIndex]);
 
     // LEGACY FIX: Use original aspect ratios to prevent stretching after POT conversion
     const legacyCloudAspects = {
@@ -183,6 +186,8 @@ const Cloud = ({
                 opacity={baseOpacity}
                 depthWrite={false}
                 side={THREE.DoubleSide}
+                onBeforeCompile={isTouch ? applyCloudAlphaKey : undefined}
+                customProgramCacheKey={isTouch ? () => CLOUD_ALPHA_KEY : undefined}
             />
         </mesh>
     );

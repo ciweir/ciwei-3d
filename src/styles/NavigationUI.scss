@@ -95,9 +95,51 @@
     }
 
     // 上色开启：调色盘内部铺一层淡墨，按钮仍保持纸张质感
-    &.color-btn.is-on svg.icon-palette {
-        fill: rgba($ink, 0.3);
+    &.color-btn {
+        position: relative;
+
+        &.is-on svg.icon-palette {
+            fill: rgba($ink, 0.3);
+        }
     }
+
+    .color-btn__pending {
+        position: absolute;
+        top: 7px;
+        right: 8px;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: $ink;
+        z-index: 2;
+        animation: colorPendingPulse 1s ease-in-out infinite;
+    }
+}
+
+@keyframes colorPendingPulse {
+    0%, 100% { opacity: 0.3; transform: scale(0.8); }
+    50% { opacity: 1; transform: scale(1.15); }
+}
+
+.color-loading-hint {
+    position: fixed;
+    top: 58px;
+    right: 16px;
+    z-index: 120;
+    padding: 6px 10px 5px;
+    background: rgba($paper, 0.94);
+    border: 1px dashed rgba($ink, 0.3);
+    font-family: $font-primary;
+    font-size: 12px;
+    letter-spacing: 0.05em;
+    color: $ink;
+    pointer-events: none;
+    animation: colorHintIn 0.2s ease 0.15s both;
+}
+
+@keyframes colorHintIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 // === BACK BUTTON ===

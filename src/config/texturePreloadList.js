@@ -7,6 +7,8 @@
  *
  * 本次扫描结果：ENTRANCE_TEXTURES     49 项 ｜ CORRIDOR_TEXTURES     80 项 ｜ UI_TEXTURES     9 项 ｜ IMAGE_ASSETS     10 项 ｜ GALLERY_TEXTURES     63 项 ｜ CONTACT_TEXTURES     14 项 ｜ STUDIO_TEXTURES     28 项 ｜ ABOUT_TEXTURES     42 项
  */
+import { isTouchDevice } from '../utils/deviceDetect';
+
 // 入口场景：共享贴图 + 入口门/道具
 export const ENTRANCE_TEXTURES = [
     '/textures/doors/door_back.webp',
@@ -493,6 +495,11 @@ export const filterTexturesByDevice = (list, usePainted) => {
         // 线稿模式不预取彩色封面，点“上色”后再由按需加载补齐。
         if (path.startsWith('/covers/') && !usePainted && !path.endsWith('-sketch.webp')) {
             return false;
+        }
+        // 云朵在触屏端始终用线稿，不预取彩色云；桌面端彩色模式用彩色云。
+        if (path.includes('/textures/clouds/')) {
+            if (path.endsWith('_painted.webp')) return !isTouchDevice() && usePainted;
+            return isTouchDevice() || !usePainted;
         }
         if (!path.startsWith('/textures/')) return true;
         if (path.endsWith('_painted.webp')) return usePainted;

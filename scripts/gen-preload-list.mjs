@@ -111,6 +111,8 @@ const body = `/**
  *
  * 本次扫描结果：${sameAsSource}
  */
+import { isTouchDevice } from '../utils/deviceDetect';
+
 ${arr('ENTRANCE_TEXTURES', G.ENTRANCE_TEXTURES, '入口场景：共享贴图 + 入口门/道具')}
 ${arr('CORRIDOR_TEXTURES', G.CORRIDOR_TEXTURES, '走廊：墙面地面 + 单门 + 装饰')}
 ${arr('UI_TEXTURES', G.UI_TEXTURES, '界面：头像逐帧动画')}
@@ -135,6 +137,11 @@ export const filterTexturesByDevice = (list, usePainted) => {
         // 线稿模式不预取彩色封面，点“上色”后再由按需加载补齐。
         if (path.startsWith('/covers/') && !usePainted && !path.endsWith('-sketch.webp')) {
             return false;
+        }
+        // 云朵在触屏端始终用线稿，不预取彩色云；桌面端彩色模式用彩色云。
+        if (path.includes('/textures/clouds/')) {
+            if (path.endsWith('_painted.webp')) return !isTouchDevice() && usePainted;
+            return isTouchDevice() || !usePainted;
         }
         if (!path.startsWith('/textures/')) return true;
         if (path.endsWith('_painted.webp')) return usePainted;

@@ -1,0 +1,38 @@
+@use 'variables' as *;
+
+.gallery-swipe-hint {
+    position: fixed;
+    left: 50%;
+    bottom: 17%;
+    transform: translateX(-50%) rotate(-0.6deg);
+    z-index: 118;
+    padding: 8px 18px 7px;
+    background:
+        linear-gradient(rgba($paper, 0.82), rgba($paper, 0.82)),
+        url('/textures/paper-texture.webp') center center;
+    background-size: auto, 320px;
+    clip-path: polygon(
+        0% 8%, 3% 2%, 12% 5%, 24% 1%, 38% 5%, 51% 1%, 66% 4%, 79% 1%, 91% 5%, 100% 2%,
+        98% 22%, 100% 42%, 97% 61%, 100% 79%, 98% 94%, 88% 98%, 74% 95%, 62% 100%, 48% 96%,
+        35% 100%, 22% 96%, 10% 100%, 2% 92%, 0% 74%, 3% 56%, 0% 38%, 2% 20%
+    );
+    filter: drop-shadow(0 3px 6px rgba($black, 0.1));
+    font-family: $font-primary;
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    color: $ink;
+    white-space: nowrap;
+    pointer-events: none;
+    animation: gallerySwipeHintIn 0.45s ease both;
+}
+
+@keyframes gallerySwipeHintIn {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(6px) rotate(-0.6deg);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0) rotate(-0.6deg);
+    }
+}

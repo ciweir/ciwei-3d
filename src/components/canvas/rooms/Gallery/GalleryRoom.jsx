@@ -1199,7 +1199,8 @@ const ProjectCard = memo(forwardRef(({ index, project, clothespinTexture, curren
         // Visibility Check (fade out if too far)
         const dist = Math.abs(displayX);
         const scale = THREE.MathUtils.clamp(1 - (dist / 50), 0.7, 1);
-        cardRef.current.scale.setScalar(scale);
+        // 移动端卡片整体放大 16%，让作品在小屏上更有存在感
+        cardRef.current.scale.setScalar(scale * (isMobile ? 1.16 : 1));
     });
 
     /* === 1d-ii 隔断渲染分支（长廊分段的"门楣"）——无交互、无贴图、无视频 === */

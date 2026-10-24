@@ -6,7 +6,9 @@ import { setMusicVolume, getMusicVolume } from '../../utils/audioManager';
 import { useAchievements } from '../../context/useAchievements';
 import AchievementPopup from './AchievementPopup';
 import AchievementsPanel from './AchievementsPanel';
-import { useColorEnabled, toggleColorEnabled } from '../../utils/colorMode';
+import GallerySwipeHint from './GallerySwipeHint';
+import { useColorEnabled, toggleColorEnabled, setColorLoadScope } from '../../utils/colorMode';
+import { useColorLoadPending } from '../../utils/colorLoadStatus';
 import { isTouchDevice } from '../../utils/deviceDetect';
 import {
     SketchBackIcon,
@@ -36,6 +38,7 @@ const NavigationUI = () => {
     const { isMuted, globalVolume, setGlobalVolume } = useAudio();
     const { showTutorial } = useAchievements();
     const colorEnabled = useColorEnabled();
+    const colorPending = useColorLoadPending();
     const touchDevice = isTouchDevice();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [hoveredRoom, setHoveredRoom] = useState(null);
@@ -50,6 +53,11 @@ const NavigationUI = () => {
     // Refs for focus management
     const mapPanelRef = useRef();
     const mapCloseRef = useRef();
+
+    // 上色只加载当前房间；进入其他房间时再补
+    useEffect(() => {
+        setColorLoadScope(currentRoom || 'corridor');
+    }, [currentRoom]);
 
     useEffect(() => {
         const handleInspectChange = (e) => {
@@ -263,9 +271,11 @@ const NavigationUI = () => {
                             onClick={toggleColorEnabled}
                             aria-label={colorEnabled ? '切换为线稿' : '上色'}
                             aria-pressed={colorEnabled}
+                            aria-busy={colorPending > 0}
                             title={colorEnabled ? '切换为线稿' : '上色'}
                         >
                             <SketchPaletteIcon />
+                            {colorPending > 0 && <span className="color-btn__pending" aria-hidden="true" />}
                         </button>
                     )}
                     {/* Audio Toggle Button */}
@@ -286,6 +296,13 @@ const NavigationUI = () => {
                     >
                         <SketchTrophyIcon />
                     </button>
+                </div>
+            )}
+
+            {/* 上色进度提示：按钮上的小圆点之外，再给一个短文字反馈 */}
+            {touchDevice && colorEnabled && colorPending > 0 && (
+                <div className="color-loading-hint" role="status" aria-live="polite">
+                    正在上色…
                 </div>
             )}
 
@@ -495,6 +512,8 @@ const NavigationUI = () => {
                     }}
                 />
             )}
+
+            <GallerySwipeHint />
         </div>
     );
 };

@@ -9,7 +9,9 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTexture as useDreiTexture } from '@react-three/drei';
 import * as THREE from 'three';
 import { PAINTED_TEXTURES } from '../config/texturePreloadList';
-import { getColorEnabled, useColorEnabled } from './colorMode';
+import { getColorEnabled, useColorEnabled, useColorLoadScope } from './colorMode';
+import { isTouchDevice } from './deviceDetect';
+import { beginColorLoad, endColorLoad } from './colorLoadStatus';
 
 const PAINTED_SET = new Set(PAINTED_TEXTURES);
 
@@ -47,6 +49,44 @@ const sameInput = (a, b) => {
     return false;
 };
 
+/* === 房间范围：彩色贴图只加载当前房间，其他房间进入时再补 === */
+const SCOPE_OVERRIDES = {
+    // 画廊门槛用的是走廊贴图，但当前房间是画廊
+    '/textures/corridor/texturadoprogow.webp': 'gallery',
+};
+
+export const textureScope = (url) => {
+    if (!url) return 'shared';
+    if (SCOPE_OVERRIDES[url]) return SCOPE_OVERRIDES[url];
+    if (url.startsWith('/covers/')) return 'gallery';
+    if (url.startsWith('/textures/clouds/') || url.startsWith('/textures/paper-texture')) return 'shared';
+    if (url.startsWith('/textures/gallery/')) return 'gallery';
+    if (url.startsWith('/textures/studio/')) return 'studio';
+    if (url.startsWith('/textures/about/')) return 'about';
+    if (url.startsWith('/textures/contact/')) return 'contact';
+    if (url.startsWith('/textures/corridor/') || url.startsWith('/textures/doors/')) return 'corridor';
+    if (url.startsWith('/textures/entrance/')) return 'entrance';
+    return 'shared';
+};
+
+const inputScope = (input) => {
+    if (typeof input === 'string') return textureScope(input);
+    if (Array.isArray(input)) {
+        const scopes = input.map(textureScope).filter((s) => s !== 'shared');
+        return scopes[0] || 'shared';
+    }
+    if (input && typeof input === 'object') {
+        const scopes = Object.values(input).map(textureScope).filter((s) => s !== 'shared');
+        return scopes[0] || 'shared';
+    }
+    return 'shared';
+};
+
+const scopeMatches = (scope, input) => {
+    const target = inputScope(input);
+    return target === 'shared' || target === scope;
+};
+
 /* === 按需加载：最多 6 个并发，避免一次点“上色”把移动网络打满 === */
 const textureCache = new Map();
 let activeLoads = 0;
@@ -71,13 +111,16 @@ const loadRawTexture = (url) =>
 const loadTexture = (url) => {
     if (!url) return Promise.resolve(null);
     if (textureCache.has(url)) return textureCache.get(url);
+    beginColorLoad();
     const promise = new Promise((resolve, reject) => {
         loadQueue.push(() => loadRawTexture(url).then(resolve, reject));
         pumpQueue();
-    }).catch((error) => {
-        textureCache.delete(url);
-        throw error;
-    });
+    })
+        .catch((error) => {
+            textureCache.delete(url);
+            throw error;
+        })
+        .finally(endColorLoad);
     textureCache.set(url, promise);
     return promise;
 };
@@ -134,6 +177,7 @@ const loadForInput = async (altInput, baseInput, base) => {
  */
 export const useColorTexture = (input, ...rest) => {
     const colorEnabled = useColorEnabled();
+    const scope = useColorLoadScope();
     const initialEnabled = useRef(colorEnabled);
     const baseInput = useMemo(
         () => mapInput(input, (src) => resolveTextureSrc(src, initialEnabled.current)),
@@ -144,59 +188,68 @@ export const useColorTexture = (input, ...rest) => {
         () => mapInput(input, (src) => resolveTextureSrc(src, colorEnabled)),
         [input, colorEnabled]
     );
-    const [alt, setAlt] = useState(null);
-    const needsAlt = !sameInput(altInput, baseInput);
+    const wantsAlt = !sameInput(altInput, baseInput);
+    const altKey = useMemo(() => JSON.stringify(altInput), [altInput]);
+    const [altState, setAltState] = useState(null);
+    const altReady = Boolean(altState && altState.key === altKey);
+    const needsLoad = wantsAlt && !altReady && scopeMatches(scope, altInput);
 
     useEffect(() => {
-        if (!needsAlt) {
-            setAlt(null);
-            return undefined;
-        }
+        if (!needsLoad) return undefined;
         let cancelled = false;
         loadForInput(altInput, baseInput, base)
             .then((next) => {
-                if (!cancelled) setAlt(next);
+                if (!cancelled) setAltState({ key: altKey, value: next });
             })
             .catch(() => {
-                if (!cancelled) setAlt(null);
+                if (!cancelled) setAltState(null);
             });
         return () => {
             cancelled = true;
         };
-    }, [needsAlt, altInput, baseInput, base]);
+    }, [needsLoad, altInput, altKey, baseInput, base]);
 
-    return needsAlt && alt ? alt : base;
+    if (!wantsAlt) return base;
+    return altReady ? altState.value : base;
+};
+
+/** 云朵在移动端彩色模式下仍保持线稿，避免彩色云贴图自带的矩形纸底 */
+export const useCloudTexture = (url) => {
+    const colorEnabled = useColorEnabled();
+    const paintedUrl = !isTouchDevice() && colorEnabled ? paintedSrc(url) : null;
+    return useTexturePair(url, paintedUrl);
 };
 
 /** 显式的一对线稿/彩色贴图（画廊封面等文件名不带 _sketch 后缀的资源） */
 export const useTexturePair = (sketchUrl, paintedUrl) => {
     const colorEnabled = useColorEnabled();
+    const scope = useColorLoadScope();
     const initialEnabled = useRef(colorEnabled);
     const baseUrl = initialEnabled.current && paintedUrl ? paintedUrl : sketchUrl;
     const base = useDreiTexture(baseUrl);
-    const [alt, setAlt] = useState(null);
     const targetUrl = colorEnabled && paintedUrl ? paintedUrl : sketchUrl;
-    const needsAlt = targetUrl !== baseUrl;
+    const wantsAlt = targetUrl !== baseUrl;
+    const [altState, setAltState] = useState(null);
+    const altReady = Boolean(altState && altState.key === targetUrl);
+    const needsLoad = wantsAlt && !altReady && scopeMatches(scope, targetUrl);
 
     useEffect(() => {
-        if (!needsAlt) {
-            setAlt(null);
-            return undefined;
-        }
+        if (!needsLoad) return undefined;
         let cancelled = false;
         loadTexture(targetUrl)
             .then((texture) => {
-                if (!cancelled) setAlt(copyTextureSettings(texture, base));
+                if (!cancelled) setAltState({ key: targetUrl, value: copyTextureSettings(texture, base) });
             })
             .catch(() => {
-                if (!cancelled) setAlt(null);
+                if (!cancelled) setAltState(null);
             });
         return () => {
             cancelled = true;
         };
-    }, [needsAlt, targetUrl, base]);
+    }, [needsLoad, targetUrl, base]);
 
-    return needsAlt && alt ? alt : base;
+    if (!wantsAlt) return base;
+    return altReady ? altState.value : base;
 };
 
 /**
@@ -205,28 +258,35 @@ export const useTexturePair = (sketchUrl, paintedUrl) => {
  */
 export const useColorOnlyTexture = (url) => {
     const colorEnabled = useColorEnabled();
-    const [texture, setTexture] = useState(null);
+    const scope = useColorLoadScope();
+    const [state, setState] = useState(null);
+    const ready = Boolean(state && state.key === url);
+    const needsLoad = colorEnabled && url && !ready && scopeMatches(scope, url);
 
     useEffect(() => {
-        if (!colorEnabled || !url) {
-            setTexture(null);
-            return undefined;
-        }
+        if (!needsLoad) return undefined;
         let cancelled = false;
         loadTexture(url)
             .then((next) => {
-                if (!cancelled) setTexture(copyTextureSettings(next, null));
+                if (!cancelled) setState({ key: url, value: copyTextureSettings(next, null) });
             })
             .catch(() => {
-                if (!cancelled) setTexture(null);
+                if (!cancelled) setState(null);
             });
         return () => {
             cancelled = true;
         };
-    }, [colorEnabled, url]);
+    }, [needsLoad, url]);
 
-    return texture;
+    if (!colorEnabled || !ready) return null;
+    return state.value ?? null;
 };
 
 // 透传 drei useTexture 的静态预载方法（SceneCanvas 模块级预载依赖它）
-useColorTexture.preload = (src) => useDreiTexture.preload(resolveTextureSrc(src));
+useColorTexture.preload = (src) => {
+    // 触屏端云朵固定线稿，预载时不要被彩色模式改写成 _painted
+    const resolved = isTouchDevice() && src.includes('/textures/clouds/')
+        ? src
+        : resolveTextureSrc(src);
+    useDreiTexture.preload(resolved);
+};
