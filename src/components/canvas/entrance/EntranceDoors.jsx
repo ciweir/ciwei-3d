@@ -12,7 +12,7 @@ import { isTouchDevice } from '../../../utils/deviceDetect';
 
 // Use same font as App.jsx preload (Inter) - works reliably
 // 中文化（2026-10-12）：Inter woff（外网 + 无中文字形）→ 本地 Noto Sans SC
-const FONT_URL = '/fonts/NotoSansSC.ttf';
+const FONT_URL = '/fonts/NotoSansSC.woff';
 
 
 
@@ -1025,7 +1025,7 @@ const EntranceDoors = ({
                 color="#1a1a1a"
                 anchorX="center"
                 anchorY="middle"
-                font="/fonts/CabinSketch-Bold.ttf"
+                font="/fonts/CabinSketch-Bold.woff"
                 outlineWidth={0.015}
                 outlineColor="#ffffff"
                 clipRect={[-1, -0.5, -1 + (clipProgress * 2.5), 0.5]}

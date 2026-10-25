@@ -39,8 +39,8 @@ $font-handwritten: 'Rubik Scribble', cursive; // 本地手写批注
 $font-primary: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
 $font-display: 'Noto Serif SC Headings', 'Songti SC', 'SimSun', serif;
 $font-cjk: 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans SC', sans-serif; // 中文字形（系统栈）
-// 注意：/fonts/NotoSansSC.ttf 是可变字体子集（wght 100–900，当前 1321 字形），
-// 同时供 canvas <Text> 与 DOM 阅读室/UI 使用；改文案后仍需重跑子集化。
+// 注意：/fonts/NotoSansSC.woff 是保留原字形的可变字体（wght 100–900），
+// 装饰字体按源码拉丁字符集裁剪；新增装饰文案后重跑 npm run gen:fonts。
 
 // ── 断点 ─────────────────────────────────────────────────────
 $breakpoint-mobile: 480px;

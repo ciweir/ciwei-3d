@@ -8,7 +8,7 @@
 // 本地可变字体：wght 100–900，供 3D Text 与 DOM 阅读室/UI 共用
 @font-face {
     font-family: 'Noto Sans SC';
-    src: url('/fonts/NotoSansSC.ttf') format('truetype');
+    src: url('/fonts/NotoSansSC.woff') format('woff');
     font-weight: 100 900;
     font-style: normal;
     font-display: swap;
@@ -17,7 +17,7 @@
 // 标题衬线：只含项目标题/分类/固定栏目所需字符的 71KB 子集
 @font-face {
     font-family: 'Noto Serif SC Headings';
-    src: url('/fonts/NotoSerifSC-Headings.ttf') format('truetype');
+    src: url('/fonts/NotoSerifSC-Headings.woff') format('woff');
     font-weight: 600;
     font-style: normal;
     font-display: swap;

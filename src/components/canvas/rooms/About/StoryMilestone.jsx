@@ -167,7 +167,7 @@ const StoryMilestone = ({
                 color={styles.titleColor}
                 anchorX="center"
                 anchorY="middle"
-                font="/fonts/NotoSansSC.ttf"
+                font="/fonts/NotoSansSC.woff"
                 fillOpacity={0}
             >
                 {title}
@@ -182,7 +182,7 @@ const StoryMilestone = ({
                     color={styles.subtitleColor}
                     anchorX="center"
                     anchorY="middle"
-                    font="/fonts/NotoSansSC.ttf"
+                    font="/fonts/NotoSansSC.woff"
                     fillOpacity={0}
                 >
                     {subtitle}

@@ -230,7 +230,7 @@ const IntroMilestone = ({ z, scrollProgressRef }) => {
                 color="#1a1a1a"
                 anchorX="center"
                 anchorY="middle"
-                font="/fonts/NotoSansSC.ttf"
+                font="/fonts/NotoSansSC.woff"
             >
                 此唯
             </Text>
@@ -243,7 +243,7 @@ const IntroMilestone = ({ z, scrollProgressRef }) => {
                 color="#4a4a4a"
                 anchorX="center"
                 anchorY="middle"
-                font="/fonts/NotoSansSC.ttf"
+                font="/fonts/NotoSansSC.woff"
             >
                 （视频导演）
             </Text>
@@ -267,7 +267,7 @@ const IntroMilestone = ({ z, scrollProgressRef }) => {
                 color="#555555"
                 anchorX="center"
                 anchorY="middle"
-                font="/fonts/NotoSansSC.ttf"
+                font="/fonts/NotoSansSC.woff"
                 fontStyle="italic"
             >
                 "把素材变成
@@ -281,7 +281,7 @@ const IntroMilestone = ({ z, scrollProgressRef }) => {
                 color="#555555"
                 anchorX="center"
                 anchorY="middle"
-                font="/fonts/NotoSansSC.ttf"
+                font="/fonts/NotoSansSC.woff"
                 fontStyle="italic"
             >
                 能被看完的东西"
@@ -378,7 +378,7 @@ const JourneyMilestone = ({ z, scrollProgressRef }) => {
                 color="#1a1a1a"
                 anchorX="center"
                 anchorY="middle"
-                font="/fonts/NotoSansSC.ttf"
+                font="/fonts/NotoSansSC.woff"
             >
                 JOURNEY
             </Text>
@@ -390,7 +390,7 @@ const JourneyMilestone = ({ z, scrollProgressRef }) => {
                 color="#555555"
                 anchorX="center"
                 anchorY="middle"
-                font="/fonts/NotoSansSC.ttf"
+                font="/fonts/NotoSansSC.woff"
             >
                 My path so far...
             </Text>
@@ -412,7 +412,7 @@ const JourneyMilestone = ({ z, scrollProgressRef }) => {
                     color="#1a1a1a"
                     anchorX="center"
                     anchorY="middle"
-                    font="/fonts/NotoSansSC.ttf"
+                    font="/fonts/NotoSansSC.woff"
                 >
                     2025-NOW
                 </Text>
@@ -435,7 +435,7 @@ const JourneyMilestone = ({ z, scrollProgressRef }) => {
                     color="#1a1a1a"
                     anchorX="center"
                     anchorY="middle"
-                    font="/fonts/NotoSansSC.ttf"
+                    font="/fonts/NotoSansSC.woff"
                 >
                     2023-NOW
                 </Text>
@@ -762,7 +762,7 @@ const SkillBalloon = ({ config, revealFactorRef, spreadFactorRef, timeRef }) => 
                         color="#1a1a1a"
                         anchorX="center"
                         anchorY="middle"
-                        font="/fonts/NotoSansSC.ttf"
+                        font="/fonts/NotoSansSC.woff"
                         fillOpacity={0}
                         outlineWidth={0.02}
                         outlineColor="#fff"
@@ -849,7 +849,7 @@ const SkillsMilestone = ({ z, scrollProgressRef }) => {
                 color="#1a1a1a"
                 anchorX="center"
                 anchorY="middle"
-                font="/fonts/NotoSansSC.ttf"
+                font="/fonts/NotoSansSC.woff"
             >
                 SKILLS
             </Text>
@@ -861,7 +861,7 @@ const SkillsMilestone = ({ z, scrollProgressRef }) => {
                 color="#555555"
                 anchorX="center"
                 anchorY="middle"
-                font="/fonts/NotoSansSC.ttf"
+                font="/fonts/NotoSansSC.woff"
             >
                 Technologies I love working with
             </Text>
