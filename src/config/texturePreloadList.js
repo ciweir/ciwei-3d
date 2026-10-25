@@ -501,6 +501,13 @@ export const filterTexturesByDevice = (list, usePainted) => {
             if (path.endsWith('_painted.webp')) return !isTouchDevice() && usePainted;
             return isTouchDevice() || !usePainted;
         }
+        // 首帧海报只预载当前设备对应的一套；地图彩色图层在触屏端不渲染。
+        if (path.includes('/images/entrance-poster') || path.includes('/images/gallery-entry')) {
+            return path.endsWith('-mobile.webp') ? isTouchDevice() : !isTouchDevice();
+        }
+        if (isTouchDevice() && path.startsWith('/images/') && path.endsWith('_painted.webp')) {
+            return false;
+        }
         if (!path.startsWith('/textures/')) return true;
         if (path.endsWith('_painted.webp')) return usePainted;
         if (!usePainted) return true;
