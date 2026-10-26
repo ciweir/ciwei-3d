@@ -49,13 +49,11 @@ const AchievementPopup = () => {
                 />
             </svg>
             <div className="popup-content">
-                {!isSoundPrompt && (
-                    <div className={`checkbox ${isCompleted ? 'checked' : ''}`}>
-                        {isCompleted && (
-                            <svg viewBox="0 0 24 24" className="checkmark">
-                                <path d="M5 13l4 4L19 7" fill="none" stroke="#1a1a1a" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-                            </svg>
-                        )}
+                {!isSoundPrompt && isCompleted && (
+                    <div className="checkbox checked">
+                        <svg viewBox="0 0 24 24" className="checkmark">
+                            <path d="M5 13l4 4L19 7" fill="none" stroke="#1a1a1a" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
                     </div>
                 )}
                 <div className="text-content" style={isSoundPrompt ? { alignItems: 'center', textAlign: 'center' } : {}}>

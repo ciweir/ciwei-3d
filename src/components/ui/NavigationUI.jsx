@@ -306,9 +306,18 @@ const NavigationUI = () => {
                 </div>
             )}
 
-            {/* Map Panel - Drops from top when open */}
+            {/* Map Scrim - makes the paper sheet a real modal, not a dropdown over the scene */}
             {hasEntered && (
-                <div className={`map-panel ${isMenuOpen ? 'open' : ''}`} inert={!isMenuOpen ? true : undefined} ref={mapPanelRef} onKeyDown={handleMapKeyDown} role="dialog" aria-label="Map">
+                <div
+                    className={`map-scrim ${isMenuOpen ? 'open' : ''}`}
+                    onClick={() => setIsMenuOpen(false)}
+                    aria-hidden="true"
+                />
+            )}
+
+            {/* Map Panel - centered paper sheet when open */}
+            {hasEntered && (
+                <div className={`map-panel ${isMenuOpen ? 'open' : ''}`} inert={!isMenuOpen ? true : undefined} ref={mapPanelRef} onKeyDown={handleMapKeyDown} role="dialog" aria-modal="true" aria-label="地图">
                     {/* SVG Border Overlay */}
                     <svg
                         className="map-border-overlay"
@@ -337,7 +346,10 @@ const NavigationUI = () => {
 
                     <div className="map-content-clipped">
                         <div className="map-header">
-                            <h3>地图</h3>
+                            <div className="map-heading">
+                                <h3>地图</h3>
+                                <p>选择一个房间，推门进入</p>
+                            </div>
                             <button
                                 ref={mapCloseRef}
                                 className="close-btn"
@@ -404,24 +416,19 @@ const NavigationUI = () => {
                             />
 
                             {/* Permanent Map Text Labels（中文化 2026-10-12） */}
-                            <div className="map-room-label about">关于</div>
-                            <div className="map-room-label gallery">画廊</div>
-                            <div className="map-room-label contact">联系</div>
-                            <div className="map-room-label studio">工作室</div>
+                            <div className={`map-room-label about ${hoveredRoom === 'about' ? 'is-hovered' : ''} ${currentRoom === 'about' ? 'is-current' : ''}`}>关于</div>
+                            <div className={`map-room-label gallery ${hoveredRoom === 'gallery' ? 'is-hovered' : ''} ${currentRoom === 'gallery' ? 'is-current' : ''}`}>画廊</div>
+                            <div className={`map-room-label contact ${hoveredRoom === 'contact' ? 'is-hovered' : ''} ${currentRoom === 'contact' ? 'is-current' : ''}`}>联系</div>
+                            <div className={`map-room-label studio ${hoveredRoom === 'studio' ? 'is-hovered' : ''} ${currentRoom === 'studio' ? 'is-current' : ''}`}>工作室</div>
 
-                            {/* Pin slot markers - 4 locations */}
+                            {/* Small ink nodes at the four room positions; the pushpin itself carries the active state */}
                             {ROOMS.map((room) => (
-                                <button
+                                <span
                                     key={room.id}
-                                    className={`pin-slot ${currentRoom === room.id ? 'active' : ''} ${hoveredRoom === room.id ? 'hovered' : ''}`}
+                                    className={`map-room-mark ${currentRoom === room.id ? 'is-current' : ''} ${hoveredRoom === room.id ? 'is-hovered' : ''}`}
                                     style={{ left: `${room.x}%`, top: `${room.y}%` }}
-                                    onClick={() => handleRoomClick(room.id)}
-                                    onMouseEnter={() => setHoveredRoom(room.id)}
-                                    onMouseLeave={() => setHoveredRoom(null)}
-                                    title={room.label}
-                                >
-                                    <img src="/images/pin-slot.webp" alt="" className="slot-image" />
-                                </button>
+                                    aria-hidden="true"
+                                />
                             ))}
 
                             {/* The pin marker - moves to hovered slot, or current room, or start position */}
