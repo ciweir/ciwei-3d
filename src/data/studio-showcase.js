@@ -29,14 +29,14 @@ const DEFAULT_DEVICE = 'tv';
 
 export const STUDIO_SHOWCASE = ciweiProjects.map((p) => {
     const device = DEVICE_BY_CATEGORY[p.category] || DEFAULT_DEVICE;
-    // 封面用彩色版（真实素材 /covers/*.webp），素描版仅作兜底
-    const cover = p.painted || p.front;
+    // 保留线稿/彩色两版：Studio 屏幕放映彩色成片，缺彩色版时回退线稿
+    const cover = p.front || p.painted;
     return {
         ...p,
         device,
         platform: PLATFORM_BY_DEVICE[device],
         frontTexture: cover,
-        paintedFrontTexture: cover,
+        paintedFrontTexture: p.painted || cover,
         date: p.year ? `${p.year}-01-01` : '',
     };
 });

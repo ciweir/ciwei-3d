@@ -1,120 +1,535 @@
-import { useRef, useState, useEffect, useMemo, useCallback, memo } from 'react';
-import { useFrame, useThree, useLoader } from '@react-three/fiber';
+import { useRef, useState, useEffect, useLayoutEffect, useMemo, useCallback } from 'react';
+import { useFrame, useThree, createPortal } from '@react-three/fiber';
+import { Text, Edges, PositionalAudio, useTexture as useDreiTexture } from '@react-three/drei';
 import * as THREE from 'three';
 import gsap from 'gsap';
 import { CONTENT_DATA, PLATFORM_CONFIG } from './contentData';
+import MonitorBlock from './MonitorBlock';
+import { STUDIO_PAINT_CONFIG } from './studioPaintConfig';
 import { useScene } from '../../../../context/useScene';
 import { useAchievements } from '../../../../context/useAchievements';
-import { TextureLoader } from 'three';
-import FloatingCodeParticles from './FloatingCodeParticles';
-import { PositionalAudio } from '@react-three/drei';
 import { useAudio } from '../../../../context/useAudio';
 import { useStudioContent } from '../../../../hooks/useSanityData';
-import '../../shaders/RevealMaterial';
-import { isTouchDevice } from '../../../../utils/deviceDetect';
-import { useColorOnlyTexture } from '../../../../utils/colorTexture';
-import { useColorEnabled } from '../../../../utils/colorMode';
+import { mobileSrc } from '../../../../utils/colorTexture';
 import { usePaintMaterial } from '../Gallery/usePaintMaterial';
 
-// ============================================
-// ⚙️ 上色配置——在此调节（从哪到哪）
-// 调整这些值可改变入场动画的方向与范围
-// ============================================
-const STUDIO_PAINT_CONFIG = {
-    dirX: 0.0,
-    dirY: -1.0,    // 方向：从上(-1)到下
-    dirZ: 0.0,
-    startDist: -10.0, // 波的起点
-    endDist: 10.0,   // Koniec fali
-    noiseAxes: 'xz'  // 噪声所在平面
-};
+const STUDIO_ENTER_DISTANCE = 8;
+const BASE_FALL_SPEED = 0.04;
+const SCROLL_SENSITIVITY = 0.008;
+const DRAG_SENSITIVITY = 0.01;
+const SPEED_DECAY = 0.985;
+const BENCH_HEIGHT = 0.62;
+const HERO_GAP = 0.12;
 
-// ============================================
-// ⚙️ AUDIO SETTINGS - TWEAK HERE
-// 调整这些值可改变显示器嗡鸣的音量与可听范围
-// ============================================
-// 本文件内部使用，无需导出
 const AUDIO_SETTINGS = {
     volume: 1,
     distance: 2,
-    rolloff: 1.0
+    rolloff: 1.0,
 };
 
-// ============================================
-// CONFIG - Adjust these values as needed
-// ============================================
-const CAMERA_Y_OFFSET = -6; // Negative = camera lower, Positive = camera higher
-const CAMERA_ZOOM_DISTANCE = 3; // Distance from monitor front when zoomed in
-const CAMERA_PAN_RIGHT = 1; // How far camera moves right after zoom (for content panel space)
-const TOWER_RADIUS = 2.2; // All monitors at same distance from center (smaller = narrower)
-const MONITORS_PER_RING = 4; // How many monitors per vertical level
-const FALL_SPEED = 0.3; // How fast monitors fall down
-const TOWER_HEIGHT = 12; // Total visible height of tower
-const VERTICAL_SPACING = 2.5; // Space between monitor rings
-const TOWER_Y_START = -5; // Starting Y offset for tower (negative = lower) -> CONTROLS HEIGHT (UP/DOWN)
-const TOWER_Z_START = -10; // Starting Z position (negative = further away) -> CONTROLS DISTANCE
+const DEVICE_DIMENSIONS = {
+    tv: { width: 1.6, height: 1.187, depth: 1.0 },
+    monitor: { width: 1.6, height: 1.0, depth: 0.15 },
+    phone: { width: 0.6, height: 1.139, depth: 0.1 },
+};
+
+const getDevice = (content) => content.device || PLATFORM_CONFIG[content.platform]?.shape || 'tv';
+
+const getStageLayout = (width) => {
+    if (width < 768) {
+        return {
+            kind: 'mobile',
+            heroDist: 6.9,
+            heroMaxWidth: 2.85,
+            heroMaxHeight: 2.45,
+            heroZoom: 1.8,
+            backgroundScale: 0.54,
+            columns: [-2.3, 2.3],
+            rows: 11,
+            rowGap: 1.25,
+            backgroundZ: -3.8,
+            wallYOffset: -0.55,
+        };
+    }
+    if (width < 1024) {
+        return {
+            kind: 'tablet',
+            heroDist: 7.2,
+            heroMaxWidth: 3.5,
+            heroMaxHeight: 2.9,
+            heroZoom: 2.2,
+            backgroundScale: 0.62,
+            columns: [-3.25, 3.25],
+            rows: 11,
+            rowGap: 1.5,
+            backgroundZ: -4.0,
+            wallYOffset: -0.35,
+        };
+    }
+    return {
+        kind: 'desktop',
+        heroDist: 7.4,
+        heroMaxWidth: 3.9,
+        heroMaxHeight: 3.15,
+        heroZoom: 2.6,
+        backgroundScale: 0.72,
+        columns: [-4.8, -2.65, 2.65, 4.8],
+        rows: 7,
+        rowGap: 1.7,
+        backgroundZ: -4.1,
+        wallYOffset: -0.2,
+    };
+};
+
+const getPlatformConfig = (content) => {
+    const device = getDevice(content);
+    return PLATFORM_CONFIG[content.platform] || {
+        shape: device,
+        color: '#ffffff',
+        accentColor: '#cccccc',
+        icon: '·',
+        label: content.platform || '作品',
+    };
+};
+
+const buildHeroItem = (content, layout) => {
+    if (!content) return null;
+    const device = getDevice(content);
+    const base = DEVICE_DIMENSIONS[device] || DEVICE_DIMENSIONS.tv;
+    const scale = Math.min(layout.heroMaxWidth / base.width, layout.heroMaxHeight / base.height);
+    const height = base.height * scale;
+    // 主屏画面始终用彩色成片：房间是线稿，屏幕里放的是真实作品
+    const paintedCover = content.paintedFrontTexture || content.frontTexture;
+    return {
+        ...content,
+        device,
+        isHero: true,
+        x: 0,
+        baseY: BENCH_HEIGHT + HERO_GAP + height / 2,
+        z: 0,
+        rot: 0,
+        width: base.width * scale,
+        height,
+        depth: base.depth * scale,
+        frontTexture: paintedCover,
+        paintedFrontTexture: paintedCover,
+        platformConfig: getPlatformConfig(content),
+    };
+};
+
+const buildBackgroundItems = (content, heroItem, layout) => {
+    const source = content.filter((item) => item.id !== heroItem?.id);
+    if (source.length === 0) return [];
+    const items = [];
+    const maxColumn = Math.max(...layout.columns.map((value) => Math.abs(value)), 1);
+    const slots = layout.rows * layout.columns.length;
+
+    for (let index = 0; index < slots; index += 1) {
+        const contentItem = source[index % source.length];
+        const column = index % layout.columns.length;
+        const row = Math.floor(index / layout.columns.length);
+        const x = layout.columns[column];
+        const device = getDevice(contentItem);
+        const base = DEVICE_DIMENSIONS[device] || DEVICE_DIMENSIONS.tv;
+        const deviceScale = layout.backgroundScale * (device === 'phone' ? 1.7 : 1);
+        const scale = deviceScale * (1 + Math.sin(index * 2.17) * 0.03);
+        const paintedCover = contentItem.paintedFrontTexture || contentItem.frontTexture;
+
+        items.push({
+            ...contentItem,
+            index,
+            isHero: false,
+            x,
+            baseY: heroItem.baseY
+                + layout.wallYOffset
+                + (column - (layout.columns.length - 1) / 2) * layout.rowGap * 0.32
+                + (row - (layout.rows - 1) / 2) * layout.rowGap
+                + Math.sin(index * 1.7) * 0.1,
+            z: layout.backgroundZ - (Math.abs(x) / maxColumn) * 0.5,
+            rot: Math.sin(index * 1.3) * 0.025,
+            width: base.width * scale,
+            height: base.height * scale,
+            depth: base.depth * scale,
+            frontTexture: paintedCover,
+            paintedFrontTexture: paintedCover,
+            platformConfig: getPlatformConfig(contentItem),
+        });
+    }
+
+    return items;
+};
+
+const createPaperTexture = ({ base, line }) => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 512;
+    canvas.height = 512;
+    const context = canvas.getContext('2d');
+
+    context.fillStyle = base;
+    context.fillRect(0, 0, 512, 512);
+
+    for (let i = 0; i < 760; i += 1) {
+        const alpha = 0.015 + Math.random() * 0.035;
+        context.fillStyle = `rgba(96, 85, 66, ${alpha})`;
+        context.fillRect(Math.random() * 512, Math.random() * 512, 1, 1);
+    }
+
+    context.strokeStyle = 'rgba(115, 104, 84, 0.045)';
+    context.lineWidth = 1;
+    for (let i = 0; i < 38; i += 1) {
+        const x = Math.random() * 512;
+        const y = Math.random() * 512;
+        context.beginPath();
+        context.moveTo(x, y);
+        context.lineTo(x + 18 + Math.random() * 60, y + (Math.random() - 0.5) * 7);
+        context.stroke();
+    }
+
+    context.strokeStyle = line;
+    context.lineWidth = 1;
+    for (let x = 0; x <= 512; x += 64) {
+        context.beginPath();
+        for (let y = 0; y <= 512; y += 16) {
+            const wobble = Math.sin((x + y) * 0.045) * 1.2;
+            if (y === 0) context.moveTo(x + wobble, y);
+            else context.lineTo(x + wobble, y);
+        }
+        context.stroke();
+    }
+    for (let y = 0; y <= 512; y += 64) {
+        context.beginPath();
+        for (let x = 0; x <= 512; x += 16) {
+            const wobble = Math.sin((x - y) * 0.04) * 1.2;
+            if (x === 0) context.moveTo(x, y + wobble);
+            else context.lineTo(x, y + wobble);
+        }
+        context.stroke();
+    }
+
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.wrapT = THREE.RepeatWrapping;
+    texture.anisotropy = 4;
+    texture.needsUpdate = true;
+    return texture;
+};
+
+const createShadowTexture = () => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 256;
+    canvas.height = 256;
+    const context = canvas.getContext('2d');
+    const gradient = context.createRadialGradient(128, 128, 18, 128, 128, 126);
+    gradient.addColorStop(0, 'rgba(24, 20, 14, 0.32)');
+    gradient.addColorStop(0.55, 'rgba(24, 20, 14, 0.14)');
+    gradient.addColorStop(1, 'rgba(24, 20, 14, 0)');
+    context.fillStyle = gradient;
+    context.fillRect(0, 0, 256, 256);
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.needsUpdate = true;
+    return texture;
+};
+
+const createTopFadeTexture = () => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 32;
+    canvas.height = 256;
+    const context = canvas.getContext('2d');
+    const gradient = context.createLinearGradient(0, 0, 0, 256);
+    gradient.addColorStop(0, 'rgba(247, 242, 232, 0.95)');
+    gradient.addColorStop(0.55, 'rgba(247, 242, 232, 0.55)');
+    gradient.addColorStop(0.82, 'rgba(247, 242, 232, 0.18)');
+    gradient.addColorStop(1, 'rgba(247, 242, 232, 0)');
+    context.fillStyle = gradient;
+    context.fillRect(0, 0, 32, 256);
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.needsUpdate = true;
+    return texture;
+};
+
+const createClapperTexture = () => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 256;
+    canvas.height = 192;
+    const context = canvas.getContext('2d');
+
+    context.fillStyle = '#26231d';
+    context.fillRect(0, 0, 256, 192);
+
+    context.save();
+    context.beginPath();
+    context.rect(0, 0, 256, 40);
+    context.clip();
+    context.fillStyle = '#f2eadc';
+    context.fillRect(0, 0, 256, 40);
+    context.fillStyle = '#26231d';
+    for (let x = -40; x < 300; x += 32) {
+        context.beginPath();
+        context.moveTo(x, 40);
+        context.lineTo(x + 18, 0);
+        context.lineTo(x + 34, 0);
+        context.lineTo(x + 16, 40);
+        context.fill();
+    }
+    context.restore();
+
+    context.strokeStyle = '#f2eadc';
+    context.lineWidth = 3;
+    context.strokeRect(9, 49, 238, 134);
+
+    context.fillStyle = '#f2eadc';
+    context.font = '700 25px Arial, sans-serif';
+    context.fillText('STUDIO 01', 22, 88);
+    context.font = '14px Arial, sans-serif';
+    context.fillText('SCENE 01  ·  TAKE 01', 22, 116);
+    context.strokeStyle = 'rgba(242, 234, 220, 0.5)';
+    context.lineWidth = 1;
+    context.beginPath();
+    context.moveTo(22, 132);
+    context.lineTo(230, 132);
+    context.stroke();
+    context.font = '11px Arial, sans-serif';
+    context.fillText('DIRECTOR / CIWEI', 22, 154);
+
+    context.fillStyle = '#f2eadc';
+    context.beginPath();
+    context.arc(20, 20, 6, 0, Math.PI * 2);
+    context.fill();
+
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    texture.anisotropy = 4;
+    texture.needsUpdate = true;
+    return texture;
+};
+
+const Clapperboard = () => {
+    const texture = useMemo(() => createClapperTexture(), []);
+    useEffect(() => () => texture.dispose(), [texture]);
+
+    return (
+        <group>
+            <mesh position={[0, 0, -0.014]}>
+                <boxGeometry args={[0.54, 0.41, 0.026]} />
+                <meshBasicMaterial color="#1f1c17" />
+            </mesh>
+            <mesh position={[0, 0, 0.002]} raycast={() => null}>
+                <planeGeometry args={[0.52, 0.39]} />
+                <meshBasicMaterial map={texture} toneMapped={false} />
+            </mesh>
+        </group>
+    );
+};
+
+const makeTornPanelGeometry = (width, height, jitter = 0.028) => {
+    const shape = new THREE.Shape();
+    const points = [];
+    const segX = 12;
+    const segY = 9;
+
+    for (let i = 0; i < segX; i += 1) {
+        const t = i / segX;
+        points.push([-width / 2 + width * t, height / 2 + Math.sin(i * 2.4) * jitter]);
+    }
+    for (let i = 0; i < segY; i += 1) {
+        const t = i / segY;
+        points.push([width / 2 + Math.sin(i * 2.7) * jitter, height / 2 - height * t]);
+    }
+    for (let i = 0; i < segX; i += 1) {
+        const t = i / segX;
+        points.push([width / 2 - width * t, -height / 2 + Math.sin(i * 2.2) * jitter]);
+    }
+    for (let i = 0; i < segY; i += 1) {
+        const t = i / segY;
+        points.push([-width / 2 + Math.sin(i * 2.9) * jitter, -height / 2 + height * t]);
+    }
+
+    shape.moveTo(points[0][0], points[0][1]);
+    for (let i = 1; i < points.length; i += 1) {
+        shape.lineTo(points[i][0], points[i][1]);
+    }
+    shape.closePath();
+    return new THREE.ShapeGeometry(shape);
+};
+
+const HeroCaption = ({ width, height, title, meta, titleSize, metaSize }) => {
+    const geometry = useMemo(() => makeTornPanelGeometry(width, height, 0.011), [width, height]);
+    const edges = useMemo(() => new THREE.EdgesGeometry(geometry, 30), [geometry]);
+    const playGeometry = useMemo(() => {
+        const shape = new THREE.Shape();
+        shape.moveTo(-0.042, -0.058);
+        shape.lineTo(0.058, 0);
+        shape.lineTo(-0.042, 0.058);
+        shape.closePath();
+        return new THREE.ShapeGeometry(shape);
+    }, []);
+
+    useEffect(() => () => {
+        geometry.dispose();
+        edges.dispose();
+        playGeometry.dispose();
+    }, [geometry, edges, playGeometry]);
+
+    return (
+        <group rotation={[0, 0, -0.004]}>
+            <mesh raycast={() => null}>
+                <primitive object={geometry} attach="geometry" />
+                <meshBasicMaterial color="#f7f0e3" side={THREE.DoubleSide} />
+            </mesh>
+            <lineSegments geometry={edges} position={[0, 0, 0.004]}>
+                <lineBasicMaterial color="#8a7f6c" transparent opacity={0.28} />
+            </lineSegments>
+            <mesh position={[width / 2 - 0.2, height / 2 - 0.02, 0.012]} rotation={[0, 0, -0.05]} raycast={() => null}>
+                <planeGeometry args={[0.26, 0.075]} />
+                <meshBasicMaterial color="#e5dac0" transparent opacity={0.9} />
+            </mesh>
+            <mesh position={[-width / 2 + 0.13, 0, 0.015]} raycast={() => null}>
+                <ringGeometry args={[0.068, 0.086, 24]} />
+                <meshBasicMaterial color="#26231e" transparent opacity={0.85} />
+            </mesh>
+            <mesh geometry={playGeometry} position={[-width / 2 + 0.148, 0, 0.018]} raycast={() => null}>
+                <meshBasicMaterial color="#26231e" />
+            </mesh>
+            <Text
+                font="/fonts/NotoSansSC.woff"
+                fontSize={titleSize}
+                color="#26231e"
+                anchorX="left"
+                anchorY="middle"
+                position={[-width / 2 + 0.34, 0.072, 0.018]}
+                maxWidth={width - 0.42}
+                raycast={() => null}
+            >
+                {title}
+            </Text>
+            <Text
+                font="/fonts/NotoSansSC.woff"
+                fontSize={metaSize}
+                color="#6a6256"
+                anchorX="left"
+                anchorY="middle"
+                position={[-width / 2 + 0.34, -0.112, 0.018]}
+                maxWidth={width - 0.42}
+                raycast={() => null}
+            >
+                {meta}
+            </Text>
+        </group>
+    );
+};
+
+const WallPlaque = ({ width, height, isMobile }) => {
+    const geometry = useMemo(() => makeTornPanelGeometry(width, height, 0.018), [width, height]);
+    const edges = useMemo(() => new THREE.EdgesGeometry(geometry, 30), [geometry]);
+
+    useEffect(() => () => {
+        geometry.dispose();
+        edges.dispose();
+    }, [geometry, edges]);
+
+    return (
+        <group rotation={[0, 0, 0.003]}>
+            <mesh raycast={() => null}>
+                <primitive object={geometry} attach="geometry" />
+                <meshBasicMaterial color="#f6efe2" side={THREE.DoubleSide} />
+            </mesh>
+            <lineSegments geometry={edges} position={[0, 0, 0.004]}>
+                <lineBasicMaterial color="#8a7f6c" transparent opacity={0.24} />
+            </lineSegments>
+            <Text
+                font="/fonts/CabinSketch-Bold.woff"
+                fontSize={isMobile ? 0.4 : 0.5}
+                color="#26231e"
+                anchorX="center"
+                anchorY="middle"
+                position={[0, 0.14, 0.03]}
+                letterSpacing={0.04}
+                raycast={() => null}
+            >
+                STUDIO 01
+            </Text>
+            <mesh position={[-width * 0.24, -0.23, 0.03]} raycast={() => null}>
+                <circleGeometry args={[0.028, 20]} />
+                <meshBasicMaterial color="#9a3b2c" />
+            </mesh>
+            <Text
+                font="/fonts/NotoSansSC.woff"
+                fontSize={isMobile ? 0.14 : 0.17}
+                color="#5f584d"
+                anchorX="left"
+                anchorY="middle"
+                position={[-width * 0.21, -0.23, 0.03]}
+                raycast={() => null}
+            >
+                作品放映室 · 正在放映
+            </Text>
+            <mesh position={[-width / 2 + 0.15, height / 2 - 0.1, 0.035]} rotation={[0, 0, 0.06]} raycast={() => null}>
+                <planeGeometry args={[0.36, 0.11]} />
+                <meshBasicMaterial color="#e5dac0" transparent opacity={0.95} />
+            </mesh>
+            <mesh position={[width / 2 - 0.15, height / 2 - 0.1, 0.035]} rotation={[0, 0, -0.06]} raycast={() => null}>
+                <planeGeometry args={[0.36, 0.11]} />
+                <meshBasicMaterial color="#e5dac0" transparent opacity={0.95} />
+            </mesh>
+        </group>
+    );
+};
 
 const StudioRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
     const groupRef = useRef();
-    const towerRef = useRef();
-    const { camera, size } = useThree();
+    const stageRef = useRef();
+    const { camera, size, scene } = useThree();
+    const layout = useMemo(() => getStageLayout(size.width), [size.width]);
 
-    // Responsive camera parameters based on PIXEL width
-    const responsiveParams = useMemo(() => {
-        const isMobile = size.width < 768; // Standard mobile breakpoint
-        const isTablet = size.width < 1024 && size.width >= 768;
-
-
-        return {
-            zoomDistance: isMobile ? 2 : isTablet ? 3 : CAMERA_ZOOM_DISTANCE,
-            panRight: isMobile ? 0 : isTablet ? 0.5 : Math.max(0.3, (size.width / 1920) * CAMERA_PAN_RIGHT),
-            panDown: isMobile ? 9.7 : 0, // Positive = camera DOWN = monitor at TOP
-            yOffset: isMobile ? 2.5 : isTablet ? -3 : CAMERA_Y_OFFSET,
-            towerRadius: isMobile ? 1.5 : (isTablet ? 1.8 : TOWER_RADIUS),
-            isMobile, // Pass through boolean
-        };
-    }, [size.width]);
-
-    // Store original camera position for reset
-    const originalCameraY = useRef(null);
-    const originalCameraZ = useRef(null);
-    const originalCameraX = useRef(null);
-
-    // State
-    const isDraggingRef = useRef(false);
-    const lastXRef = useRef(0);
-    const dragDistance = useRef(0); // Changed to ref to prevent 100x/sec re-renders on drag
-
-    // Physics
-    const rotationVelocity = useRef(0);
-    const autoRotationSpeed = useRef(0.12); // Now a ref to support changing direction
-    const DRAG_SENSITIVITY = 0.008; // Increased from 0.005
-    const FRICTION = 0.98; // Increased from 0.95 (longer spin)
-
-    // Vertical Fall Physics
-    const fallSpeed = useRef(FALL_SPEED); // Start with default
-    const BASE_FALL_SPEED = FALL_SPEED;
-    const SCROLL_SENSITIVITY = 0.006; // Tripled from 0.002
-    const SWIPE_SENSITIVITY = 0.005; // Adjusted
-    const SPEED_DECAY = 0.985; // Slower return to normal (was 0.96)
-
-    // Content State
+    const [stageFrame, setStageFrame] = useState(null);
     const [selectedMonitor, setSelectedMonitor] = useState(null);
     const [isAnimating, setIsAnimating] = useState(false);
 
-    // Global Scene Context for Overlay
     const { openOverlay, overlayContent, isTeleporting } = useScene();
-
-    // Achievements Context
     const { showTutorial, unlockAchievement, hidePopup } = useAchievements();
     const { globalVolume, isMuted } = useAudio();
     const effectiveVolume = isMuted ? 0 : AUDIO_SETTINGS.volume * globalVolume;
 
-    // Pobieranie danych z Sanity.io (fallback do starych danych)
     const sanityContent = useStudioContent();
     const activeContent = sanityContent || CONTENT_DATA;
 
+    const heroItem = useMemo(() => {
+        if (!activeContent?.length) return null;
+        const latest = [...activeContent].sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+        return buildHeroItem(latest, layout);
+    }, [activeContent, layout]);
+
+    const backgroundItems = useMemo(
+        () => buildBackgroundItems(activeContent || [], heroItem, layout),
+        [activeContent, heroItem, layout]
+    );
+
+    // 屏幕里始终是彩色成片；提前拉当前设备版本的封面，避免相机落位后主屏才出图
+    useMemo(() => {
+        (activeContent || []).forEach((item) => {
+            const cover = item.paintedFrontTexture || item.frontTexture;
+            if (cover) useDreiTexture.preload(mobileSrc(cover));
+        });
+    }, [activeContent]);
+
+    const heroRef = useRef();
+    const monitorRefs = useRef([]);
+    const monitorOffsets = useRef([]);
+    const isDraggingRef = useRef(false);
+    const dragStartY = useRef(0);
+    const dragStartX = useRef(0);
+    const dragDistance = useRef(0);
+    const fallSpeed = useRef(BASE_FALL_SPEED);
+    const cameraHome = useRef(null);
+    const prevOverlayContent = useRef(null);
+    const hasSignaledReady = useRef(false);
+    const frameCount = useRef(0);
+
     const audioRef = useRef();
+
+    const { onBeforeCompile: paintOnBeforeCompile, animatePaint, resetPaint, uniformsData: paintUniforms, updateRoomOrigin } = usePaintMaterial(STUDIO_PAINT_CONFIG);
+
     useEffect(() => {
         if (audioRef.current && audioRef.current.setVolume) {
             audioRef.current.setVolume(effectiveVolume);
@@ -122,748 +537,453 @@ const StudioRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
     }, [effectiveVolume]);
 
     useEffect(() => {
-        if (isExiting || isTeleporting) {
-            hidePopup();
-        }
+        if (isExiting || isTeleporting) hidePopup();
     }, [isExiting, isTeleporting, hidePopup]);
 
-    // ===== PAINT TRANSITION (top-to-bottom) =====
-    const { onBeforeCompile: paintOnBeforeCompile, animatePaint, resetPaint, uniformsData: paintUniforms, updateRoomOrigin } = usePaintMaterial(STUDIO_PAINT_CONFIG);
+    // 相机在开门后会再向房内飞 8 个单位；用落位后的相机推算舞台，首帧就摆正。
+    // 舞台挂在场景根节点：门的墙体会做非等比挤压，若留在房间层级里会把整组拉斜。
+    useLayoutEffect(() => {
+        if (!showRoom || stageFrame || !heroItem) return undefined;
 
-    const [, setIsTransitioning] = useState(false);
+        const forward = camera.getWorldDirection(new THREE.Vector3());
+        forward.y = 0;
+        forward.normalize();
+        const finalWorld = camera.position.clone().addScaledVector(forward, STUDIO_ENTER_DISTANCE);
+        const stagePosition = finalWorld.clone().addScaledVector(forward, layout.heroDist);
+        stagePosition.y = finalWorld.y - 2.45;
+        const yaw = Math.atan2(finalWorld.x - stagePosition.x, finalWorld.z - stagePosition.z);
 
-    const wasTeleportedRef = useRef(false);
+        setStageFrame({
+            position: stagePosition.toArray(),
+            yaw,
+        });
+        return undefined;
+    }, [showRoom, stageFrame, heroItem, camera, layout.heroDist]);
+
     useEffect(() => {
-        if (isTeleporting) wasTeleportedRef.current = true;
-    }, [isTeleporting]);
+        monitorOffsets.current = backgroundItems.map(() => 0);
+    }, [backgroundItems]);
 
     useEffect(() => {
         if (showRoom && !isWarmup) {
-            if (wasTeleportedRef.current || isTeleporting) {
+            if (isTeleporting) {
                 paintUniforms.uPaintProgress.value = 1.0;
-                setIsTransitioning(false);
             } else {
-                setIsTransitioning(true);
                 resetPaint();
                 animatePaint(0.2, 2.5);
-                setTimeout(() => {
-                    setIsTransitioning(false);
-                }, 2700);
             }
         } else {
             paintUniforms.uPaintProgress.value = 1.0;
         }
-    }, [showRoom, isWarmup, isTeleporting]);
+    }, [showRoom, isWarmup, isTeleporting, animatePaint, resetPaint, paintUniforms]);
 
-    const latestContent = useMemo(() => {
-        if (!activeContent || activeContent.length === 0) return null;
-        return [...activeContent].sort((a, b) => new Date(b.date) - new Date(a.date))[0];
-    }, [activeContent]);
+    useEffect(() => {
+        const handleWheel = (event) => {
+            if (selectedMonitor || overlayContent || isAnimating || isExiting) return;
+            fallSpeed.current += event.deltaY * SCROLL_SENSITIVITY;
+            unlockAchievement('studio_interact');
+        };
+        window.addEventListener('wheel', handleWheel, { passive: true });
+        return () => window.removeEventListener('wheel', handleWheel);
+    }, [selectedMonitor, overlayContent, isAnimating, isExiting, unlockAchievement]);
 
-    // Monitor Y offsets for falling animation (mutable)
-    const monitorOffsets = useRef([]);
-    // Refs to monitor meshes for direct position updates (avoids 28 useFrame hooks)
-    const monitorRefs = useRef([]);
-
-    // Track tower state for floating particles parallax (REFS not state!)
-    const particleTowerRotation = useRef(0);
-    const particleFallOffset = useRef(0);
-
-    // Track if we've signaled ready
-    const hasSignaledReady = useRef(false);
-    const frameCount = useRef(0);
-    const FRAMES_TO_WAIT = 5; // Wait for 5 actual render frames
-
-    // Real render-based ready detection - count actual rendered frames
-    useFrame(() => {
-        // Update room origin for paint shader
-        updateRoomOrigin(groupRef);
-
-        if (hasSignaledReady.current) return;
-
-        frameCount.current++;
-
-        // After N frames have been rendered, we know GPU has drawn the content
-        if (frameCount.current >= FRAMES_TO_WAIT) {
-            hasSignaledReady.current = true;
-            onReady?.();
-            if (!isWarmup) setTimeout(() => showTutorial('studio_interact'), 2000);
-        }
-    });
-
-    // Build cylindrical tower - all monitors at same radius, shuffled content, staggered heights
-    const monitorData = useMemo(() => {
-        const items = [];
-
-        // Shuffle content for mixed appearance (seeded for consistency)
-        let shuffledContent = [...activeContent].sort(() => 0.5 - Math.random());
-        
-        // Ensure the tower is extremely tall (at least 12 rings = 48 items)
-        // so that the teleportation boundaries are far outside the camera's view.
-        if (shuffledContent.length > 0) {
-            while (shuffledContent.length < 48) {
-                shuffledContent = [...shuffledContent, ...[...activeContent].sort(() => 0.5 - Math.random())];
-            }
-        }
-
-        // Calculate how many rings we need
-        const totalMonitors = shuffledContent.length;
-        const ringsNeeded = Math.ceil(totalMonitors / MONITORS_PER_RING);
-
-        let contentIndex = 0;
-        const currentRadius = responsiveParams.towerRadius;
-
-        for (let ring = 0; ring < ringsNeeded && contentIndex < shuffledContent.length; ring++) {
-            const angleStep = (Math.PI * 2) / MONITORS_PER_RING;
-            const angleOffset = ring % 2 === 0 ? 0 : angleStep / 2; // Offset alternate rings
-
-            for (let i = 0; i < MONITORS_PER_RING && contentIndex < shuffledContent.length; i++) {
-                const contentItem = shuffledContent[contentIndex];
-                const platform = PLATFORM_CONFIG[contentItem.platform] || {
-                    shape: contentItem.device || 'monitor',
-                    color: '#ffffff',
-                    accentColor: '#cccccc',
-                    icon: '🌐',
-                    label: contentItem.platform || 'Web',
-                };
-                const angle = i * angleStep + angleOffset;
-
-                const x = Math.cos(angle) * currentRadius;
-                const z = Math.sin(angle) * currentRadius;
-
-                // Staggered Y - base + random jitter for organic look
-                const baseY = ring * VERTICAL_SPACING;
-                const yJitter = (Math.sin(contentIndex * 1.7) + Math.cos(contentIndex * 2.3)) * 0.4; // Pseudo-random
-                const finalY = baseY + yJitter;
-
-                let width, height, depth;
-                const deviceShape = contentItem.device || platform.shape || 'monitor';
-                switch (deviceShape) {
-                    case 'tv':
-                        width = 1.6; height = 1.187; depth = 1.0; // Legacy 1.348 ratio
-                        break;
-                    case 'monitor':
-                        width = 1.6; height = 1; depth = 0.15; // Legacy 1.835 ratio
-                        break;
-                    case 'phone':
-                        width = 0.6; height = 1.139; depth = 0.1; // Legacy 0.527 ratio
-                        break;
-                    default:
-                        width = 1.4; height = 1.0; depth = 0.6;
-                }
-
-                items.push({
-                    ...contentItem,
-                    index: contentIndex,
-                    x,
-                    baseY: finalY, // Staggered Y position
-                    z,
-                    width, height, depth,
-                    angle: angle,
-                    rot: -angle + Math.PI / 2,
-                    platformConfig: platform,
-                    isLatest: latestContent ? contentItem.id === latestContent.id : false,
-                });
-
-                contentIndex++;
-            }
-        }
-
-        // Initialize offsets
-        monitorOffsets.current = items.map(() => 0);
-
-        // Pre-compute totalHeight for seamless loop (avoid calculating in useFrame)
-        const minBaseY = items.length > 0 ? Math.min(...items.map(m => m.baseY)) : 0;
-        const maxBaseY = items.length > 0 ? Math.max(...items.map(m => m.baseY)) : 0;
-        // Make sure we have a baseline height so monitors don't instantly teleport if there's only 1 row
-        const totalHeight = Math.max(VERTICAL_SPACING * 3, maxBaseY - minBaseY + VERTICAL_SPACING);
-
-        return { items, totalHeight };
-    }, [latestContent?.id, responsiveParams.towerRadius, activeContent]);
-
-    // Destructure for easier access
-    const monitors = monitorData.items;
-    const totalHeight = monitorData.totalHeight;
-
-    // Need a ref for lastY too
-    const lastYRef = useRef(0);
-
-    // --- INTERACTION ---
-    const handlePointerDown = (e) => {
-        if (isAnimating) return;
-        // e.preventDefault(); // Might block scroll, good for custom drag
-        e.stopPropagation(); // Stop bubbling
-
+    const handlePointerDown = useCallback((event) => {
+        if (isAnimating || event.button > 0) return;
         isDraggingRef.current = true;
-        lastXRef.current = e.clientX;
-        lastYRef.current = e.clientY; // Store init Y
+        dragStartY.current = event.clientY;
+        dragStartX.current = event.clientX;
         dragDistance.current = 0;
-        rotationVelocity.current = 0;
-
-        // Disable auto-rotate immediately
         document.body.style.cursor = 'grabbing';
-    };
+    }, [isAnimating]);
 
     const handlePointerUp = useCallback(() => {
         isDraggingRef.current = false;
         document.body.style.cursor = 'auto';
     }, []);
 
-    const handlePointerMove = useCallback((e) => {
-        if (!isDraggingRef.current || !towerRef.current || isAnimating) return;
+    const handlePointerMove = useCallback((event) => {
+        if (!isDraggingRef.current || isAnimating) return;
+        const clientX = typeof event.clientX === 'number'
+            ? event.clientX
+            : (event.touches && event.touches[0]?.clientX);
+        const clientY = typeof event.clientY === 'number'
+            ? event.clientY
+            : (event.touches && event.touches[0]?.clientY);
+        if (typeof clientX !== 'number' || typeof clientY !== 'number') return;
 
-        const clientX = e.clientX || (e.touches && e.touches[0]?.clientX);
-        const clientY = e.clientY || (e.touches && e.touches[0]?.clientY);
-
-        if (!clientX || !clientY) return;
-
-        const deltaX = clientX - lastXRef.current;
-        const deltaY = clientY - lastYRef.current;
-
-        lastXRef.current = clientX;
-        lastYRef.current = clientY;
-
+        const deltaX = clientX - dragStartX.current;
+        const deltaY = clientY - dragStartY.current;
+        dragStartX.current = clientX;
+        dragStartY.current = clientY;
         dragDistance.current += Math.abs(deltaX) + Math.abs(deltaY);
-
-        // HORIZONTAL -> Rotation
-        if (Math.abs(deltaX) > 1) {
-            autoRotationSpeed.current = Math.sign(deltaX) * 0.12;
+        if (Math.abs(deltaY) > 0.5) {
+            fallSpeed.current += deltaY * DRAG_SENSITIVITY;
+            unlockAchievement('studio_interact');
         }
-        rotationVelocity.current = deltaX * DRAG_SENSITIVITY;
-        towerRef.current.rotation.y += rotationVelocity.current;
-
-        // VERTICAL -> Fall Speed
-        fallSpeed.current += deltaY * SWIPE_SENSITIVITY;
-
-        unlockAchievement('studio_interact');
     }, [isAnimating, unlockAchievement]);
 
-    // Wheel Listener for Desktop
-    useEffect(() => {
-        const handleWheel = (e) => {
-            // e.deltaY > 0 means scroll DOWN.
-            // Scroll DOWN -> Monitors go DOWN (Speed +).
-            // Scroll UP -> Monitors go UP (Speed -).
-            fallSpeed.current += e.deltaY * SCROLL_SENSITIVITY;
-            unlockAchievement('studio_interact');
-        };
-
-        window.addEventListener('wheel', handleWheel);
-        return () => window.removeEventListener('wheel', handleWheel);
-    }, [unlockAchievement]);
-
-    // Global Event Listeners for seamless drag
     useEffect(() => {
         window.addEventListener('pointerup', handlePointerUp);
         window.addEventListener('pointermove', handlePointerMove);
-        // Also touch events for mobile if pointer events fail (though React usually patches)
-        window.addEventListener('touchend', handlePointerUp);
-        window.addEventListener('touchmove', handlePointerMove); // Native touchmove
-
         return () => {
             window.removeEventListener('pointerup', handlePointerUp);
             window.removeEventListener('pointermove', handlePointerMove);
-            window.removeEventListener('touchend', handlePointerUp);
-            window.removeEventListener('touchmove', handlePointerMove);
         };
     }, [handlePointerUp, handlePointerMove]);
 
-    // STEP 1 ONLY: Rotate tower to center the clicked monitor
-    const handleMonitorClick = useCallback((item) => {
-        // Prevent click if we were dragging
-        if (dragDistance.current > 5 || isAnimating || !towerRef.current) return;
+    const openScreen = useCallback((item, screenRef) => {
+        if (dragDistance.current > 6 || isAnimating || !screenRef?.current) return;
 
         setIsAnimating(true);
         setSelectedMonitor(item);
-        rotationVelocity.current = 0;
-
         unlockAchievement('studio_interact');
 
-        // Monitor's facing rotation (item.rot = -angle + PI/2)
-        // Monitor's screen faces local +Z, rotated by item.rot
-        // Tower rotated by towerRotation
-        // World facing = item.rot + towerRotation
-        // We want world facing = 0 (toward camera at +Z)
-        // So: towerRotation = -item.rot
+        const worldPosition = screenRef.current.getWorldPosition(new THREE.Vector3());
+        const forward = camera.getWorldDirection(new THREE.Vector3());
+        forward.y = 0;
+        forward.normalize();
+        const right = new THREE.Vector3().crossVectors(forward, new THREE.Vector3(0, 1, 0)).normalize();
+        const relative = worldPosition.clone().sub(camera.position);
+        const depth = relative.dot(forward);
+        const xLocal = relative.dot(right);
+        const yLocal = relative.y;
+        const isMobile = layout.kind === 'mobile';
+        const zoomDistance = item.isHero ? layout.heroZoom : (isMobile ? 4.8 : 4.2);
+        const newDepth = Math.max(isMobile ? 3.8 : 4.2, depth - zoomDistance);
 
-        const monitorFacingRotation = item.rot;
-        let targetRotation = -monitorFacingRotation;
+        cameraHome.current = {
+            x: camera.position.x,
+            y: camera.position.y,
+            z: camera.position.z,
+            rotationX: camera.rotation.x,
+            rotationY: camera.rotation.y,
+            rotationZ: camera.rotation.z,
+        };
 
-        // Normalize current rotation
-        let currentRotation = towerRef.current.rotation.y % (Math.PI * 2);
-        if (currentRotation < 0) currentRotation += Math.PI * 2;
+        const targetPosition = camera.position.clone()
+            .addScaledVector(forward, depth - newDepth);
 
-        // Normalize target
-        while (targetRotation < 0) targetRotation += Math.PI * 2;
-        targetRotation = targetRotation % (Math.PI * 2);
+        let targetRotationX = camera.rotation.x;
 
-        // Find shortest path from current to target
-        let delta = targetRotation - currentRotation;
-        if (delta > Math.PI) delta -= Math.PI * 2;
-        if (delta < -Math.PI) delta += Math.PI * 2;
+        if (isMobile) {
+            targetPosition.addScaledVector(right, xLocal);
+            const tanV = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+            const screenAngle = Math.atan2(yLocal, newDepth);
+            const desiredAngle = Math.atan(0.5 * tanV);
+            targetRotationX = THREE.MathUtils.clamp(
+                camera.rotation.x - (desiredAngle - screenAngle),
+                -0.52,
+                0.16
+            );
+        } else {
+            const tanH = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.aspect;
+            const desiredOffset = -0.38 * tanH * newDepth;
+            targetPosition.addScaledVector(right, xLocal - desiredOffset);
+        }
 
-        // Final target = current + shortest delta
-        const finalRotation = towerRef.current.rotation.y + delta;
-
-
-        // STEP 1: Animate tower rotation
-        gsap.to(towerRef.current.rotation, {
-            y: finalRotation,
-            duration: 0.8,
+        gsap.to(camera.position, {
+            x: targetPosition.x,
+            y: targetPosition.y,
+            z: targetPosition.z,
+            duration: 0.55,
             ease: 'power2.inOut',
-            onComplete: () => {
-                // STEP 2: After rotation, move camera Y to center on monitor
-                // Store original camera Y if not stored
-                if (originalCameraY.current === null) {
-                    originalCameraY.current = camera.position.y;
-                }
-
-                // Monitor's world Y position
-                // Group is at y=-1.2, tower at y=0 relative to group
-                // Monitor's current Y = baseY + offset
-                const monitorCurrentY = item.baseY + (monitorOffsets.current[item.index] || 0);
-                const monitorWorldY = -1.2 + monitorCurrentY + responsiveParams.yOffset;
-
-                // STEP 3: Move camera FORWARD (in the direction it's looking)
-                // Store original camera position if not stored
-                if (originalCameraZ.current === null) {
-                    originalCameraZ.current = camera.position.z;
-                    originalCameraX.current = camera.position.x;
-                }
-
-                // Get camera's forward direction
-                const forward = new THREE.Vector3();
-                camera.getWorldDirection(forward);
-
-                // Get camera's right direction (cross product of forward and up)
-                const up = new THREE.Vector3(0, 1, 0);
-                const right = new THREE.Vector3();
-                right.crossVectors(forward, up).normalize();
-
-                // STEP 3 & 4: Move camera forward + right/down (using responsive values)
-                const zoomDist = responsiveParams.zoomDistance;
-                const panRight = responsiveParams.panRight;
-                const panDown = responsiveParams.panDown;
-
-                const targetX = camera.position.x + forward.x * zoomDist + right.x * panRight;
-                const targetZ = camera.position.z + forward.z * zoomDist + right.z * panRight;
-                const targetY = monitorWorldY - panDown; // Pan down moves camera down = monitor at top
-
-
-                gsap.to(camera.position, {
-                    x: targetX,
-                    y: targetY,
-                    z: targetZ,
-                    duration: 0.5,
-                    ease: 'power2.inOut',
-                    onComplete: () => {
-                        setIsAnimating(false);
-                        openOverlay(item); // Open global overlay in HUD
-                    }
-                });
-            }
         });
 
-    }, [isAnimating, camera, responsiveParams, openOverlay]);
+        gsap.to(camera.rotation, {
+            x: targetRotationX,
+            y: camera.rotation.y,
+            z: camera.rotation.z,
+            duration: 0.55,
+            ease: 'power2.inOut',
+            onComplete: () => {
+                setIsAnimating(false);
+                openOverlay(item);
+            },
+        });
+    }, [camera, isAnimating, layout, openOverlay, unlockAchievement]);
 
-    // Trigger camera return ONLY when overlay is explicitly closed
-    // We use a ref to track if overlay was previously open to avoid initial race conditions
-    const prevOverlayContent = useRef(null);
+    const handleHeroClick = useCallback((item) => {
+        openScreen(item, heroRef);
+    }, [openScreen]);
 
-    useEffect(() => {
-        // If it WAS open (prev) and is NOW closed (null) AND we are viewing a monitor -> Return camera
-        if (prevOverlayContent.current && !overlayContent && selectedMonitor && !isAnimating) {
-            handleReturnCamera();
-        }
+    const handleBackgroundClick = useCallback((item) => {
+        openScreen(item, { current: monitorRefs.current[item.index] });
+    }, [openScreen]);
 
-        // Update ref for next render
-        prevOverlayContent.current = overlayContent;
-    }, [overlayContent, selectedMonitor, isAnimating]);
-
-    const handleReturnCamera = useCallback(() => {
-        setIsAnimating(true);
-
-        // Slightly faster return
-        if (originalCameraX.current !== null && originalCameraY.current !== null && originalCameraZ.current !== null) {
-            gsap.to(camera.position, {
-                x: originalCameraX.current,
-                y: originalCameraY.current,
-                z: originalCameraZ.current,
-                duration: 0.8,
-                ease: 'power2.inOut',
-                onComplete: () => {
-                    setIsAnimating(false);
-                    setSelectedMonitor(null); // Resume auto-rotation
-                }
-            });
-        } else {
+    const returnCamera = useCallback(() => {
+        const home = cameraHome.current;
+        if (!home) {
             setIsAnimating(false);
             setSelectedMonitor(null);
+            return;
         }
+
+        setIsAnimating(true);
+        gsap.to(camera.position, {
+            x: home.x,
+            y: home.y,
+            z: home.z,
+            duration: 0.7,
+            ease: 'power2.inOut',
+        });
+        gsap.to(camera.rotation, {
+            x: home.rotationX,
+            y: home.rotationY,
+            z: home.rotationZ,
+            duration: 0.7,
+            ease: 'power2.inOut',
+            onComplete: () => {
+                setIsAnimating(false);
+                setSelectedMonitor(null);
+            },
+        });
     }, [camera]);
 
-    // Cleaned up old listener effect that is now handled by the global effect above
-
-    useFrame((state, delta) => {
-        if (!towerRef.current) return;
-
-        // Auto-rotate and Physics when idle
-        if (!isDraggingRef.current && !isAnimating && !selectedMonitor) {
-            towerRef.current.rotation.y += autoRotationSpeed.current * delta + rotationVelocity.current;
-            rotationVelocity.current *= FRICTION;
-
-            // Decay fall speed back to base speed (but keep direction!)
-            // If going down (>0), drift to positive base. If going up (<0), drift to negative base.
-            const targetDrift = fallSpeed.current > 0 ? BASE_FALL_SPEED : -BASE_FALL_SPEED;
-            fallSpeed.current = THREE.MathUtils.lerp(fallSpeed.current, targetDrift, 1.0 - SPEED_DECAY);
-
-            // totalHeight is now pre-computed in useMemo for performance
-            // Update all monitor offsets and positions in a single loop (no child useFrames needed)
-            monitors.forEach((monitor, index) => {
-                // Update offset
-                monitorOffsets.current[index] -= fallSpeed.current * delta;
-
-                // Calculate current Y
-                const currentY = monitor.baseY + monitorOffsets.current[index];
-
-                // If below threshold (-10.0), teleport to top (seamless loop)
-                // If moving UP (negative speed), check TOP threshold (totalHeight - 10.0)
-                if (currentY < -10.0 && fallSpeed.current > 0) {
-                    // Falling Down -> Reset to top
-                    monitorOffsets.current[index] += totalHeight;
-                } else if (currentY > totalHeight - 10.0 && fallSpeed.current < 0) {
-                    // Moving Up -> Reset to bottom
-                    monitorOffsets.current[index] -= totalHeight;
-                }
-
-                // Direct DOM update - bypass React reconciliation for performance
-                const ref = monitorRefs.current[index];
-                if (ref) {
-                    ref.position.y = monitor.baseY + monitorOffsets.current[index];
-                }
-            });
-
-            // Update particle refs directly (no setState = no re-render = smooth!)
-            particleTowerRotation.current = towerRef.current.rotation.y;
-            particleFallOffset.current = fallSpeed.current; // Pass velocity, not offset!
+    useEffect(() => {
+        if (prevOverlayContent.current && !overlayContent && selectedMonitor && !isAnimating) {
+            if (isExiting || isTeleporting) {
+                setSelectedMonitor(null);
+            } else {
+                returnCamera();
+            }
         }
+        prevOverlayContent.current = overlayContent;
+    }, [overlayContent, selectedMonitor, isAnimating, isExiting, isTeleporting, returnCamera]);
+
+    useFrame((_, delta) => {
+        updateRoomOrigin(stageRef.current || groupRef);
+
+        if (!hasSignaledReady.current) {
+            frameCount.current += 1;
+            if (frameCount.current >= 5) {
+                hasSignaledReady.current = true;
+                onReady?.();
+                if (!isWarmup) setTimeout(() => showTutorial('studio_interact'), 2000);
+            }
+        }
+
+        if (!stageFrame || backgroundItems.length === 0) return;
+        if (isDraggingRef.current || isAnimating || selectedMonitor || isExiting) return;
+
+        const targetSpeed = fallSpeed.current >= 0 ? BASE_FALL_SPEED : -BASE_FALL_SPEED;
+        fallSpeed.current = THREE.MathUtils.lerp(fallSpeed.current, targetSpeed, 1 - SPEED_DECAY);
+
+        const totalHeight = layout.rows * layout.rowGap;
+        const rowMin = heroItem.baseY + layout.wallYOffset - ((layout.rows - 1) / 2) * layout.rowGap;
+        const rowMax = heroItem.baseY + layout.wallYOffset + ((layout.rows - 1) / 2) * layout.rowGap;
+
+        backgroundItems.forEach((item, index) => {
+            if (monitorOffsets.current[index] === undefined) monitorOffsets.current[index] = 0;
+            monitorOffsets.current[index] -= fallSpeed.current * delta;
+            const currentY = item.baseY + monitorOffsets.current[index];
+
+            if (currentY < rowMin - layout.rowGap && fallSpeed.current > 0) {
+                monitorOffsets.current[index] += totalHeight;
+            } else if (currentY > rowMax + layout.rowGap && fallSpeed.current < 0) {
+                monitorOffsets.current[index] -= totalHeight;
+            }
+
+            const ref = monitorRefs.current[index];
+            if (ref) {
+                ref.position.y = item.baseY + monitorOffsets.current[index];
+            }
+        });
     });
 
-    return (
-        <group ref={groupRef} position={[0, -1.2, 0]}>
-            {!isWarmup && (
-                <PositionalAudio
-                    ref={audioRef}
-                    url="/sounds/szummonitorow.mp3"
-                    distanceModel="exponential"
-                    refDistance={AUDIO_SETTINGS.distance}
-                    rolloffFactor={AUDIO_SETTINGS.rolloff}
-                    loop
-                    autoplay
-                    volume={effectiveVolume}
-                />
-            )}
+    const paperTextures = useMemo(() => {
+        const wall = createPaperTexture({ base: '#f7f2e8', line: 'rgba(118, 106, 86, 0.07)' });
+        wall.repeat.set(5, 3);
+        const floor = createPaperTexture({ base: '#e9e1d2', line: 'rgba(110, 99, 81, 0.06)' });
+        floor.repeat.set(6, 5);
+        return { wall, floor, shadow: createShadowTexture(), topFade: createTopFadeTexture() };
+    }, []);
 
-            {/* THE INFINITE TOWER */}
-            <group
-                ref={towerRef}
-                position={[0, TOWER_Y_START, TOWER_Z_START]}
-                onPointerDown={handlePointerDown}
-            >
-                {/* Invisible Hit Cylinder for easier drag interaction */}
-                <mesh visible={false}>
-                    <cylinderGeometry args={[responsiveParams.towerRadius + 0.5, responsiveParams.towerRadius + 0.5, TOWER_HEIGHT * 1.5, 16]} />
-                    <meshBasicMaterial color="#e0e0e0" />
+    useEffect(() => () => {
+        Object.values(paperTextures).forEach((texture) => texture.dispose());
+    }, [paperTextures]);
+
+    if (!heroItem || !stageFrame) {
+        return <group ref={groupRef} position={[0, -1.2, 0]} />;
+    }
+
+    const benchWidth = Math.max(heroItem.width + 1.2, 3.0);
+    const benchDepth = Math.max(heroItem.depth + 0.6, 1.9);
+    const signWidth = layout.kind === 'mobile' ? 3.0 : 4.0;
+    const signHeight = layout.kind === 'mobile' ? 0.85 : 0.95;
+    const signY = heroItem.baseY + heroItem.height / 2 + (layout.kind === 'mobile' ? 1.15 : 1.55);
+    const labelWidth = Math.min(Math.max(heroItem.width * 0.66, 1.0), 2.7);
+    const labelHeight = labelWidth < 1.5 ? 0.44 : 0.48;
+    const labelY = heroItem.baseY - heroItem.height / 2 + labelHeight / 2 + 0.15;
+    const labelZ = heroItem.depth / 2 + 0.03;
+    const title = heroItem.title || '最新作品';
+    const meta = [
+        heroItem.category,
+        heroItem.durationSeconds ? `${heroItem.durationSeconds} 秒` : null,
+        layout.kind === 'mobile' ? '轻触播放' : '点击播放',
+    ]
+        .filter(Boolean)
+        .join(' · ');
+    const titleSize = Math.min(0.125, Math.max(0.075, (labelWidth - 0.62) / Math.max(title.length, 1) * 1.05));
+    const metaSize = Math.max(0.058, titleSize * 0.6);
+    const heroVisible = !selectedMonitor || selectedMonitor.isHero;
+
+    const stage = (
+        <group
+            ref={stageRef}
+            position={stageFrame.position}
+            rotation={[0, stageFrame.yaw, 0]}
+            onPointerDown={handlePointerDown}
+        >
+                {!isWarmup && (
+                    <PositionalAudio
+                        ref={audioRef}
+                        url="/sounds/szummonitorow.mp3"
+                        distanceModel="exponential"
+                        refDistance={AUDIO_SETTINGS.distance}
+                        rolloffFactor={AUDIO_SETTINGS.rolloff}
+                        loop
+                        autoplay
+                        volume={effectiveVolume}
+                        position={[0, heroItem.baseY, 0]}
+                    />
+                )}
+
+                {/* 墙面 */}
+                <mesh position={[0, 6.2, -5.8]} raycast={() => null}>
+                    <planeGeometry args={[26, 13]} />
+                    <meshBasicMaterial map={paperTextures.wall} toneMapped={false} />
                 </mesh>
 
-                {monitors.map((item, index) => (
+                {/* 地面 */}
+                <mesh position={[0, 0, 3.5]} rotation={[-Math.PI / 2, 0, 0]} raycast={() => null}>
+                    <planeGeometry args={[26, 24]} />
+                    <meshBasicMaterial map={paperTextures.floor} toneMapped={false} />
+                </mesh>
+
+                {/* 顶部柔化：让片墙自然消失在纸雾里，而不是被视口硬切 */}
+                <mesh position={[0, 10.5, -3.95]} raycast={() => null} renderOrder={10}>
+                    <planeGeometry args={[26, 7]} />
+                    <meshBasicMaterial
+                        map={paperTextures.topFade}
+                        transparent
+                        depthWrite={false}
+                        toneMapped={false}
+                    />
+                </mesh>
+
+                {/* 踢脚线 */}
+                <mesh position={[0, 0.1, -5.74]}>
+                    <boxGeometry args={[26, 0.2, 0.12]} />
+                    <meshBasicMaterial color="#d9d0c1" />
+                    <Edges color="#8a8070" threshold={20} />
+                </mesh>
+
+                {/* 空白墙面/地面也响应上下拖动 */}
+                <mesh position={[0, 5, -4.9]}>
+                    <planeGeometry args={[30, 14]} />
+                    <meshBasicMaterial transparent opacity={0} depthWrite={false} />
+                </mesh>
+                <mesh position={[0, 0.004, 2]} rotation={[-Math.PI / 2, 0, 0]}>
+                    <planeGeometry args={[30, 20]} />
+                    <meshBasicMaterial transparent opacity={0} depthWrite={false} />
+                </mesh>
+
+                {/* 墙面标签 */}
+                <group position={[0, signY, -3.35]}>
+                    <WallPlaque
+                        width={signWidth}
+                        height={signHeight}
+                        isMobile={layout.kind === 'mobile'}
+                    />
+                </group>
+
+                {/* 矮柜 */}
+                <group>
+                    <mesh position={[0, 0.55, -0.85]}>
+                        <boxGeometry args={[benchWidth, 0.14, benchDepth]} />
+                        <meshBasicMaterial color="#e7decf" />
+                        <Edges color="#756b5b" threshold={20} />
+                    </mesh>
+                    <mesh position={[0, 0.29, -0.85]}>
+                        <boxGeometry args={[benchWidth * 0.92, 0.42, benchDepth * 0.88]} />
+                        <meshBasicMaterial color="#ded4c2" />
+                        <Edges color="#756b5b" threshold={20} />
+                    </mesh>
+                    <mesh position={[0, 0.3, -0.85 + benchDepth / 2 + 0.008]}>
+                        <boxGeometry args={[benchWidth * 0.74, 0.016, 0.014]} />
+                        <meshBasicMaterial color="#9b8f7b" />
+                    </mesh>
+                    <mesh position={[-0.38, 0.3, -0.85 + benchDepth / 2 + 0.03]} rotation={[Math.PI / 2, 0, 0]}>
+                        <cylinderGeometry args={[0.028, 0.028, 0.035, 12]} />
+                        <meshBasicMaterial color="#8e816d" />
+                    </mesh>
+                    <mesh position={[0.38, 0.3, -0.85 + benchDepth / 2 + 0.03]} rotation={[Math.PI / 2, 0, 0]}>
+                        <cylinderGeometry args={[0.028, 0.028, 0.035, 12]} />
+                        <meshBasicMaterial color="#8e816d" />
+                    </mesh>
+                    <mesh position={[0, 0.012, -0.8]} rotation={[-Math.PI / 2, 0, 0]} raycast={() => null}>
+                        <planeGeometry args={[benchWidth + 2.4, benchDepth + 2.2]} />
+                        <meshBasicMaterial map={paperTextures.shadow} transparent depthWrite={false} />
+                    </mesh>
+                </group>
+
+                {/* 场记板 */}
+                <group
+                    position={[benchWidth / 2 - 0.85, 0.24, -0.85 + benchDepth / 2 + 0.12]}
+                    rotation={[-0.12, -0.1, 0.03]}
+                >
+                    <Clapperboard />
+                </group>
+
+                {/* 主屏 */}
+                <group visible={heroVisible}>
                     <MonitorBlock
-                        key={`${item.id}-${index}`}
-                        item={item}
-                        index={index}
-                        meshRef={(el) => { monitorRefs.current[index] = el; }}
-                        isSelected={selectedMonitor?.id === item.id}
-                        onMonitorClick={handleMonitorClick}
+                        item={heroItem}
+                        meshRef={heroRef}
+                        isSelected={selectedMonitor?.isHero === true}
+                        onMonitorClick={handleHeroClick}
                         disabled={isAnimating}
                         paintOnBeforeCompile={paintOnBeforeCompile}
                         paintUniforms={paintUniforms}
                     />
-                ))}
-            </group>
 
-            {/* Floating code symbols parallax background */}
-            <FloatingCodeParticles
-                towerRotationRef={particleTowerRotation}
-                fallOffsetRef={particleFallOffset}
-            />
+                    {/* 主屏下三分之一信息条 */}
+                    <group position={[0, labelY, labelZ]}>
+                        <HeroCaption
+                            width={labelWidth}
+                            height={labelHeight}
+                            title={title}
+                            meta={meta}
+                            titleSize={titleSize}
+                            metaSize={metaSize}
+                        />
+                    </group>
+                </group>
+
+                {/* 两侧片墙 */}
+                <group>
+                    {backgroundItems.map((item, index) => (
+                        <MonitorBlock
+                            key={`${item.id}-${index}`}
+                            item={item}
+                            meshRef={(element) => { monitorRefs.current[index] = element; }}
+                            isSelected={selectedMonitor?.index === index && !selectedMonitor?.isHero}
+                            onMonitorClick={handleBackgroundClick}
+                            disabled={isAnimating}
+                            paintOnBeforeCompile={paintOnBeforeCompile}
+                            paintUniforms={paintUniforms}
+                        />
+                    ))}
+                </group>
         </group>
+    );
+
+    return (
+        <>
+            <group ref={groupRef} position={[0, -1.2, 0]} />
+            {createPortal(stage, scene)}
+        </>
     );
 };
 
-// ===========================================
-// MONITOR BLOCK COMPONENT - with Paint Reveal on Hover
-// Uses proven two-box approach: painted box behind + sketch box with revealMaterial in front
-// ===========================================
-const MonitorBlock = memo(({ item, meshRef, isSelected, onMonitorClick, disabled, paintOnBeforeCompile, paintUniforms }) => {
-    // Position.y is updated directly by parent's useFrame via meshRef
-    const paintedBoxRef = useRef();
-    const hideDelayRef = useRef();
-    // RevealMaterial refs for each face (up to 6)
-    const matRef0 = useRef(); // +X right
-    const matRef1 = useRef(); // -X left
-    const matRef2 = useRef(); // +Y top
-    const matRef3 = useRef(); // -Y bottom
-    const matRef4 = useRef(); // +Z front
-    const matRef5 = useRef(); // -Z back
-    const matRefs = [matRef0, matRef1, matRef2, matRef3, matRef4, matRef5];
-
-    // Check device types (prioritize Sanity 'device' field, fallback to platform defaults)
-    const deviceShape = item.device || (PLATFORM_CONFIG[item.platform]?.shape) || 'monitor';
-    const isBlogMonitor = deviceShape === 'monitor';
-    const isTvMonitor = deviceShape === 'tv';
-    const isPhoneMonitor = deviceShape === 'phone';
-
-    // Determine the URL for the front texture (custom or default)
-    const frontTextureUrl = item.frontTexture || (
-        isBlogMonitor ? '/textures/studio/monitor_front.webp' :
-            isTvMonitor ? '/textures/studio/tv_front.webp' :
-                '/textures/studio/phone_front.webp'
-    );
-
-    const isTouch = isTouchDevice();
-    const colorEnabled = useColorEnabled();
-
-    // Determine painted front texture URL
-    const paintedFrontTextureUrl = item.paintedFrontTexture || (
-        isBlogMonitor ? '/textures/studio/monitor_front_painted.webp' :
-            isTvMonitor ? '/textures/studio/tv_front_painted.webp' :
-                '/textures/studio/phone_front_painted.webp'
-    );
-
-    // Load dynamic front texture
-    const frontTex = useLoader(TextureLoader, frontTextureUrl);
-    const frontPaintedTex = useColorOnlyTexture(paintedFrontTextureUrl);
-
-    // Load Monitor textures (Blog) - shell + painted
-    const monitorBack = useLoader(TextureLoader, '/textures/studio/monitor_back.webp');
-    const monitorTop = useLoader(TextureLoader, '/textures/studio/monitor_top.webp');
-    const monitorBottom = useLoader(TextureLoader, '/textures/studio/monitor_bottom.webp');
-    const monitorLeft = useLoader(TextureLoader, '/textures/studio/monitor_left.webp');
-    const monitorRight = useLoader(TextureLoader, '/textures/studio/monitor_right.webp');
-    const monitorBackPainted = useColorOnlyTexture('/textures/studio/monitor_back_painted.webp');
-    const monitorTopPainted = useColorOnlyTexture('/textures/studio/monitor_top_painted.webp');
-    const monitorBottomPainted = useColorOnlyTexture('/textures/studio/monitor_bottom_painted.webp');
-    const monitorLeftPainted = useColorOnlyTexture('/textures/studio/monitor_left_painted.webp');
-    const monitorRightPainted = useColorOnlyTexture('/textures/studio/monitor_right_painted.webp');
-
-    // Load TV textures (YouTube) - shell + painted
-    const tvBack = useLoader(TextureLoader, '/textures/studio/tv_back.webp');
-    const tvTop = useLoader(TextureLoader, '/textures/studio/tv_top.webp');
-    const tvBottom = useLoader(TextureLoader, '/textures/studio/tv_bottom.webp');
-    const tvSide = useLoader(TextureLoader, '/textures/studio/tv_side.webp');
-    const tvBackPainted = useColorOnlyTexture('/textures/studio/tv_back_painted.webp');
-    const tvTopPainted = useColorOnlyTexture('/textures/studio/tv_top_painted.webp');
-    const tvBottomPainted = useColorOnlyTexture('/textures/studio/tv_bottom_painted.webp');
-    const tvSidePainted = useColorOnlyTexture('/textures/studio/tv_side_painted.webp');
-
-    // Load Phone textures (TikTok) - shell + painted
-    const phoneBack = useLoader(TextureLoader, '/textures/studio/phone_back.webp');
-    const phoneSide = useLoader(TextureLoader, '/textures/studio/phone_side.webp');
-    const phoneBackPainted = useColorOnlyTexture('/textures/studio/phone_back_painted.webp');
-    const phoneSidePainted = useColorOnlyTexture('/textures/studio/phone_side_painted.webp');
-
-    // Build texture config for current device type
-    // Each entry: { sketch, painted } — if painted is null, that face won't have reveal
-    const faceConfig = useMemo(() => {
-        if (isBlogMonitor) {
-            return [
-                { sketch: monitorRight, painted: monitorRightPainted },    // +X
-                { sketch: monitorLeft, painted: monitorLeftPainted },      // -X
-                { sketch: monitorTop, painted: monitorTopPainted },        // +Y
-                { sketch: monitorBottom, painted: monitorBottomPainted },  // -Y
-                { sketch: frontTex, painted: frontPaintedTex },            // +Z front
-                { sketch: monitorBack, painted: monitorBackPainted },      // -Z
-            ];
-        } else if (isTvMonitor) {
-            return [
-                { sketch: tvSide, painted: tvSidePainted },       // +X
-                { sketch: tvSide, painted: tvSidePainted },       // -X
-                { sketch: tvTop, painted: tvTopPainted },          // +Y
-                { sketch: tvBottom, painted: tvBottomPainted },    // -Y
-                { sketch: frontTex, painted: frontPaintedTex },    // +Z front
-                { sketch: tvBack, painted: tvBackPainted },        // -Z
-            ];
-        } else if (isPhoneMonitor) {
-            return [
-                { sketch: phoneSide, painted: phoneSidePainted },  // +X
-                { sketch: phoneSide, painted: phoneSidePainted },  // -X
-                { sketch: phoneSide, painted: phoneSidePainted },  // +Y
-                { sketch: phoneSide, painted: phoneSidePainted },  // -Y
-                { sketch: frontTex, painted: frontPaintedTex },    // +Z front
-                { sketch: phoneBack, painted: phoneBackPainted },  // -Z
-            ];
-        }
-        return null;
-    }, [
-        isBlogMonitor, isTvMonitor, isPhoneMonitor,
-        frontTex, frontPaintedTex,
-        monitorBack, monitorTop, monitorBottom, monitorLeft, monitorRight,
-        monitorBackPainted, monitorTopPainted, monitorBottomPainted, monitorLeftPainted, monitorRightPainted,
-        tvBack, tvTop, tvBottom, tvSide,
-        tvBackPainted, tvTopPainted, tvBottomPainted, tvSidePainted,
-        phoneBack, phoneSide, phoneBackPainted, phoneSidePainted
-    ]);
-
-    // Painted materials for inner box (standard materials showing painted textures)
-    const paintedMaterials = useMemo(() => {
-        if (!faceConfig) return null;
-        return faceConfig.map(f => {
-            const mat = new THREE.MeshBasicMaterial({
-                color: '#e0e0e0',
-                map: f.painted || f.sketch // Use sketch as fallback if no painted version
-            });
-            // Apply paint transition shader
-            if (paintOnBeforeCompile) {
-                mat.onBeforeCompile = paintOnBeforeCompile;
-                mat.customProgramCacheKey = () => 'paintOnBeforeCompile_studio_painted';
-                mat.transparent = true;
-                mat.needsUpdate = true;
-            }
-            return mat;
-        });
-    }, [faceConfig, paintOnBeforeCompile]);
-
-    // Sketch materials for outer box (standard materials, used for faces WITHOUT reveal)
-    const sketchMaterials = useMemo(() => {
-        if (!faceConfig) return null;
-        return faceConfig.map(f => {
-            if (f.painted) return null; // Will use revealMaterial instead
-            const mat = new THREE.MeshBasicMaterial({ color: '#e0e0e0', map: f.sketch });
-            // Apply paint transition shader
-            if (paintOnBeforeCompile) {
-                mat.onBeforeCompile = paintOnBeforeCompile;
-                mat.customProgramCacheKey = () => 'paintOnBeforeCompile_studio_sketch';
-                mat.transparent = true;
-                mat.needsUpdate = true;
-            }
-            return mat;
-        });
-    }, [faceConfig, paintOnBeforeCompile]);
-
-    // --- HOVER STATE MANAGEMENT (NO REACT RE-RENDERS!) ---
-    const isHoveredRef = useRef(false);
-
-    const updatePaintState = useCallback(() => {
-        if (!faceConfig) return;
-
-        const shouldPaint = colorEnabled || (!isTouch && (isHoveredRef.current || isSelected));
-        const targetProgress = shouldPaint ? 1.0 : 0.0;
-        const duration = shouldPaint ? 0.8 : 0.5;
-
-        // Animate each revealMaterial face
-        matRefs.forEach((ref) => {
-            if (ref.current) {
-                gsap.to(ref.current, {
-                    uProgress: targetProgress,
-                    duration,
-                    ease: 'power2.out',
-                    overwrite: true
-                });
-            }
-        });
-
-        // Show/hide painted box
-        if (shouldPaint) {
-            if (hideDelayRef.current) hideDelayRef.current.kill();
-            if (paintedBoxRef.current) paintedBoxRef.current.visible = true;
-        } else {
-            // Hide painted box after reverse animation completes
-            // On initial mount (when hideDelay is empty), hide it very quickly (0.05s) just to allow 1-3 frames for compilation
-            const delay = hideDelayRef.current === undefined ? 0.05 : (duration + 0.05);
-            hideDelayRef.current = gsap.delayedCall(delay, () => {
-                if (paintedBoxRef.current) paintedBoxRef.current.visible = false;
-            });
-        }
-    }, [faceConfig, isSelected, isTouch, colorEnabled]);
-
-    // React to purely external changes (e.g., overlay closes and isSelected becomes false)
-    useEffect(() => {
-        updatePaintState();
-    }, [isSelected, colorEnabled, updatePaintState]);
-
-    if (!faceConfig) {
-        // Fallback for unknown platform
-        return (
-            <group ref={meshRef} position={[item.x, item.baseY, item.z]} rotation={[0, item.rot, 0]}>
-                <mesh frustumCulled={false}>
-                    <boxGeometry args={[item.width, item.height, item.depth]} />
-                    <meshBasicMaterial color={item.platformConfig.color} />
-                </mesh>
-            </group>
-        );
-    }
-
-    return (
-        <group
-            ref={meshRef}
-            position={[item.x, item.baseY, item.z]}
-            rotation={[0, item.rot, 0]}
-            onPointerOver={(e) => {
-                if (disabled) return;
-                e.stopPropagation();
-                isHoveredRef.current = true;
-                updatePaintState();
-                document.body.style.cursor = 'pointer';
-            }}
-            onPointerOut={() => {
-                isHoveredRef.current = false;
-                updatePaintState();
-                document.body.style.cursor = 'auto';
-            }}
-            onPointerUp={(e) => {
-                if (disabled) return;
-                e.stopPropagation();
-                onMonitorClick(item);
-            }}
-        >
-            {/* PAINTED BOX (behind) — initially visible to force shader compilation during loading phase */}
-            <mesh ref={paintedBoxRef} visible={true} frustumCulled={false}>
-                <boxGeometry args={[item.width, item.height, item.depth]} />
-                {paintedMaterials.map((mat, i) => (
-                    <primitive key={`p${i}`} attach={`material-${i}`} object={mat} />
-                ))}
-            </mesh>
-
-            {/* SKETCH BOX (front) — revealMaterial faces get discarded on hover */}
-            <mesh frustumCulled={false}>
-                <boxGeometry args={[item.width, item.height, item.depth]} />
-                {faceConfig.map((face, i) => {
-                    if (face.painted) {
-                        // This face has a painted version → use revealMaterial for brush-stroke discard
-                        return (
-                            <revealMaterial color="#e0e0e0"
-                                key={`s${i}`}
-                                ref={matRefs[i]}
-                                attach={`material-${i}`}
-                                map={face.sketch}
-                                transparent={true}
-                                alphaTest={0.1}
-                                paintUniforms={paintUniforms}
-                                paintConfig={STUDIO_PAINT_CONFIG}
-                                uProgress={0.0}
-                            />
-                        );
-                    } else {
-                        // No painted version → standard material (no reveal)
-                        return (
-                            <primitive key={`s${i}`} attach={`material-${i}`} object={sketchMaterials[i]} />
-                        );
-                    }
-                })}
-            </mesh>
-        </group>
-    );
-});
-
 export default StudioRoom;
-
