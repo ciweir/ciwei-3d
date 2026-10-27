@@ -33,10 +33,13 @@ const ROOMS = [
 // Pin starting position - the dashed circle at the bottom of the tower
 const PIN_START_POSITION = { x: 50.5, y: 97 };
 
+// 与 ciwei-projects.json 的 22 部作品同步
+const STUDIO_WORK_COUNT = 22;
+
 const NavigationUI = () => {
     const { currentRoom, isInRoom, requestExit, hasEntered, teleportTo, isTeleporting } = useScene();
     const { isMuted, globalVolume, setGlobalVolume } = useAudio();
-    const { showTutorial } = useAchievements();
+    const { showTutorial, activePopup } = useAchievements();
     const colorEnabled = useColorEnabled();
     const colorPending = useColorLoadPending();
     const touchDevice = isTouchDevice();
@@ -49,6 +52,7 @@ const NavigationUI = () => {
     const [isAchievementsOpen, setIsAchievementsOpen] = useState(false);
     const [bgmVol, setBgmVol] = useState(0.3);
     const [isUIHidden, setIsUIHidden] = useState(false);
+    const [studioHintReady, setStudioHintReady] = useState(false);
 
     // Refs for focus management
     const mapPanelRef = useRef();
@@ -58,6 +62,22 @@ const NavigationUI = () => {
     useEffect(() => {
         setColorLoadScope(currentRoom || 'corridor');
     }, [currentRoom]);
+
+    // 首访先让成就提示说完，再出现常驻浏览纸签
+    useEffect(() => {
+        if (!(hasEntered && isInRoom && currentRoom === 'studio')) {
+            setStudioHintReady(false);
+            return undefined;
+        }
+        const timer = window.setTimeout(() => setStudioHintReady(true), 3000);
+        return () => window.clearTimeout(timer);
+    }, [hasEntered, isInRoom, currentRoom]);
+
+    const showStudioVeil = hasEntered && isInRoom && currentRoom === 'studio' && !isExiting;
+    const showStudioHint = showStudioVeil
+        && studioHintReady
+        && !activePopup
+        && !isUIHidden;
 
     useEffect(() => {
         const handleInspectChange = (e) => {
@@ -238,6 +258,8 @@ const NavigationUI = () => {
 
     return (
         <div className="navigation-ui">
+            {showStudioVeil && <div className="studio-top-veil" aria-hidden="true" />}
+
             {/* Global Achievement Popup */}
             <AchievementPopup />
 
@@ -525,6 +547,19 @@ const NavigationUI = () => {
             )}
 
             <GallerySwipeHint />
+
+            {showStudioHint && (
+                <div className="studio-browse-hint">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M9 4v16M6 7l3-3 3 3M15 20V4M12 17l3 3 3-3" />
+                    </svg>
+                    <span>
+                        {touchDevice
+                            ? `上下拖动 · 浏览 ${STUDIO_WORK_COUNT} 部作品`
+                            : `滚动 / 拖动 · 浏览 ${STUDIO_WORK_COUNT} 部作品`}
+                    </span>
+                </div>
+            )}
         </div>
     );
 };

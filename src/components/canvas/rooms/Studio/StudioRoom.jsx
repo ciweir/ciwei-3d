@@ -5,6 +5,7 @@ import * as THREE from 'three';
 import gsap from 'gsap';
 import { CONTENT_DATA, PLATFORM_CONFIG } from './contentData';
 import MonitorBlock from './MonitorBlock';
+import HeroVideoScreen from './HeroVideoScreen';
 import { STUDIO_PAINT_CONFIG } from './studioPaintConfig';
 import { useScene } from '../../../../context/useScene';
 import { useAchievements } from '../../../../context/useAchievements';
@@ -945,6 +946,15 @@ const StudioRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
                         disabled={isAnimating}
                         paintOnBeforeCompile={paintOnBeforeCompile}
                         paintUniforms={paintUniforms}
+                    />
+
+                    <HeroVideoScreen
+                        src={heroItem.preview}
+                        width={heroItem.width}
+                        height={heroItem.height}
+                        depth={heroItem.depth}
+                        position={[0, heroItem.baseY, 0]}
+                        active={!selectedMonitor && !overlayContent && !isExiting && !isTeleporting}
                     />
 
                     {/* 主屏下三分之一信息条 */}
