@@ -94,7 +94,7 @@ const percentageStyle = {
   overflow: 'visible'
 };
 
-const Preloader = ({ onComplete, ready, progress = 0, active = true }) => {
+const Preloader = ({ onComplete, ready, progress = 0, active = true, fastExit = false }) => {
   const [isDone, setIsDone] = useState(false);
 
   const { play } = useAudio();
@@ -115,8 +115,11 @@ const Preloader = ({ onComplete, ready, progress = 0, active = true }) => {
   const displayProgressRef = useRef(0);
   const trackerRef = useRef({ val: 0 });
   const readyRef = useRef(ready);
+  // 深链直连房间：首帧海报已覆盖等待，跳过进度门槛与长撕纸，尽快交棒给房间
+  const fastExitRef = useRef(fastExit);
 
   useEffect(() => { readyRef.current = ready; }, [ready]);
+  useEffect(() => { fastExitRef.current = fastExit; }, [fastExit]);
 
   // ----------------------------------------
   // GENERATE TEAR PATH
@@ -162,7 +165,10 @@ const Preloader = ({ onComplete, ready, progress = 0, active = true }) => {
   // ----------------------------------------
   useEffect(() => {
     let newTarget = 0;
-    if (active) {
+    if (fastExit) {
+      // 深链不再等全部贴图 settle：场景已渲染即可离场，剩余贴图由房间 Suspense 兜住
+      newTarget = ready ? 100 : (progress / 100) * 85;
+    } else if (active) {
       newTarget = (progress / 100) * 85;
     } else if (ready) {
       newTarget = 100;
@@ -171,7 +177,7 @@ const Preloader = ({ onComplete, ready, progress = 0, active = true }) => {
     }
 
     setTargetProgress(prev => Math.max(prev, newTarget));
-  }, [progress, active, ready]);
+  }, [progress, active, ready, fastExit]);
 
   // Handle Pencil Sound & Exit checking dynamically
   const checkProgressTriggers = (val) => {
@@ -204,7 +210,9 @@ const Preloader = ({ onComplete, ready, progress = 0, active = true }) => {
     const distance = targetProgress - displayProgressRef.current;
     let duration = 0.5;
 
-    if (distance > 60) {
+    if (fastExitRef.current) {
+      duration = 0.15;
+    } else if (distance > 60) {
       duration = 1.5;
     } else if (distance > 30) {
       duration = 1.0;
@@ -274,29 +282,33 @@ const Preloader = ({ onComplete, ready, progress = 0, active = true }) => {
       }
     });
 
+    // 深链：首帧海报已在画面里，撕纸只做一次轻快收束，不做 1.8s 的完整仪式
+    const fast = fastExitRef.current;
+    const tearDuration = fast ? 0.45 : 1.8;
+
     // 1. Quick pause before tear
-    tl.to({}, { duration: 0.1 });
+    tl.to({}, { duration: fast ? 0.05 : 0.1 });
 
     // 2. Tear Apart
     tl.to(leftHalfRef.current, {
       xPercent: -100,
       rotation: -2,
-      duration: 1.8,
+      duration: tearDuration,
       ease: "power3.inOut"
     }, 'tear');
 
     tl.to(rightHalfRef.current, {
       xPercent: 100,
       rotation: 2,
-      duration: 1.8,
+      duration: tearDuration,
       ease: "power3.inOut"
     }, 'tear');
 
     // 3. Fade container
     tl.to(containerRef.current, {
       opacity: 0,
-      duration: 0.5
-    }, '-=0.5');
+      duration: fast ? 0.25 : 0.5
+    }, fast ? '-=0.25' : '-=0.5');
   };
 
   if (isDone) return null;

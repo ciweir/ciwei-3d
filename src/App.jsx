@@ -57,6 +57,9 @@ const preloadBrowserImage = (path) => {
 // 3D 核心贴图预载在懒加载的 SceneCanvas 内，避免把 three/drei 拉进主包。
 // 图片类资产仍在这里用浏览器 Image 预载（用于 DOM <img>）。
 
+// 深链直连房间：首帧海报已覆盖等待，启动流程不再等完整预载仪式
+const INITIAL_ROOM = getInitialRoomFromUrl();
+
 // Helper component to handle global audio enable on interaction
 const GlobalAudioEnabler = () => {
   const { enableAudio } = useAudio();
@@ -90,7 +93,8 @@ function DocumentMetaBridge({ ready }) {
       // 先完成“进门”状态，否则传送后房间 UI 与退回按钮仍处于入口模式
       markEntered();
       teleportTo(initialRoom);
-    }, 500);
+      // 深链：首帧海报已经接管画面，不必再等 500ms
+    }, INITIAL_ROOM ? 0 : 500);
 
     return () => window.clearTimeout(timer);
   }, [initialRoom, ready, teleportTo, markEntered, deeplinkHandled]);
@@ -114,7 +118,7 @@ function AppContent() {
   const [slowBoot, setSlowBoot] = useState(false);
   // 首屏 2D 入口：3D 只在点击门后挂载；深链/预览钩子视为已请求
   const [sceneRequested, setSceneRequested] = useState(() => {
-    if (getInitialRoomFromUrl()) return true;
+    if (INITIAL_ROOM) return true;
     const params = new URLSearchParams(window.location.search);
     return params.has('preview') || Boolean(window.sessionStorage.getItem('ciwei-preview'));
   });
@@ -217,6 +221,7 @@ function AppContent() {
                 ready={sceneReady}
                 progress={sceneProgress}
                 active={sceneActive}
+                fastExit={Boolean(INITIAL_ROOM)}
                 onComplete={() => setIsLoaded(true)}
               />
 

@@ -6,6 +6,7 @@ import Experience from './Experience';
 import { useScene } from '../../context/useScene';
 import { getInitialRoomFromUrl } from '../../hooks/useDocumentMeta';
 import ciweiProjects from '../../data/ciwei-projects.json';
+import { STUDIO_SHOWCASE } from '../../data/studio-showcase';
 import { useColorTexture as useTexture, smallSrc, setLowResCorridor } from '../../utils/colorTexture';
 import { getColorEnabled } from '../../utils/colorMode';
 import {
@@ -51,6 +52,20 @@ const ROOM_TEXTURES = {
     about: ABOUT_TEXTURES,
     contact: CONTACT_TEXTURES,
 };
+// 工作室首屏画面：主屏（按日期最新一项）+ 首排 8 块侧屏。
+// 房间要等这些封面解码完才有完整片墙，提前到启动阶段下载，避免进门瞬间黑屏。
+const STUDIO_FIRST_SCREEN_COVERS = (() => {
+    const covers = [];
+    const hero = [...STUDIO_SHOWCASE].sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+    const heroCover = hero?.paintedFrontTexture || hero?.frontTexture;
+    if (heroCover) covers.push(heroCover);
+    STUDIO_SHOWCASE.slice(0, 8).forEach((item) => {
+        const cover = item.paintedFrontTexture || item.frontTexture;
+        const coverSmall = smallSrc(cover);
+        if (coverSmall) covers.push(coverSmall);
+    });
+    return covers;
+})();
 // 画廊首屏 9 个卡片槽位对应的封面：按 ciwei-projects 顺序插入分类隔断后取首尾
 const buildInitialGalleryCovers = () => {
     const slots = [];
@@ -91,7 +106,7 @@ const INITIAL_TEXTURES = DEEP_LINK_ROOM
         ...(DEEP_LINK_ROOM === 'gallery'
             ? GALLERY_SHARED_TEXTURES
             : DEEP_LINK_ROOM === 'studio'
-                ? (ROOM_TEXTURES.studio || []).map(smallSrc)
+                ? [...(ROOM_TEXTURES.studio || []).map(smallSrc), ...STUDIO_FIRST_SCREEN_COVERS]
                 : (ROOM_TEXTURES[DEEP_LINK_ROOM] || [])),
         ...UI_TEXTURES,
     ]
