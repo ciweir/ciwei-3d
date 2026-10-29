@@ -680,7 +680,7 @@ const GalleryRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
 
                 {/* Clouds scattered above（独立 Suspense：云贴图不阻塞房间就绪） */}
                 <Suspense fallback={null}>
-                    <GalleryClouds count={24} seed={123} />
+                    <GalleryClouds count={24} seed={123} initialCount={12} />
                 </Suspense>
 
                 {/* Skybox/Environment */}

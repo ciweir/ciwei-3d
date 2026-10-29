@@ -343,7 +343,7 @@ const ContactRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
             )}
 
             {/* ☁️ CLOUDS */}
-            <GalleryClouds count={45} seed={88} rotationOffset={[0, 1, 0]} keyBackground />
+            <GalleryClouds count={45} seed={88} rotationOffset={[0, 1, 0]} keyBackground initialCount={18} />
 
             {/* 🌊 OCEAN WAVE LAYERS */}
             <group position={[0, -1, -8]}>

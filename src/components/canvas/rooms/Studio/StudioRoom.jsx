@@ -508,6 +508,9 @@ const StudioRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
     const [isAnimating, setIsAnimating] = useState(false);
     const [activeProjectId, setActiveProjectId] = useState(null);
     const [activeWallSlot, setActiveWallSlot] = useState(null);
+    // 房间级分批挂载：首帧只编译主屏 + 第一排侧屏，其余片墙在就绪后分批补
+    const initialMonitors = layout.kind === 'mobile' ? 4 : 8;
+    const [mountedMonitors, setMountedMonitors] = useState(initialMonitors);
 
     const { openOverlay, overlayContent, isTeleporting } = useScene();
     const { showTutorial, unlockAchievement, hidePopup } = useAchievements();
@@ -556,15 +559,31 @@ const StudioRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
         }));
     }, [heroItem, activePlaylistIndex, totalWorks]);
 
-    // 屏幕里始终是彩色成片；片墙用 512px 小变体，主屏保留全分辨率
+    // 屏幕里始终是彩色成片；首帧只预载主屏 + 第一排侧屏，后续随分批挂载按需加载
     useMemo(() => {
-        (activeContent || []).forEach((item) => {
+        (activeContent || []).slice(0, initialMonitors).forEach((item) => {
             const cover = item.paintedFrontTexture || item.frontTexture;
             if (cover) useDreiTexture.preload(smallSrc(cover));
         });
         const heroCover = selectedContent?.paintedFrontTexture || selectedContent?.frontTexture;
         if (heroCover) useDreiTexture.preload(heroCover);
-    }, [activeContent, selectedContent]);
+    }, [activeContent, selectedContent, initialMonitors]);
+
+    // 房间就绪后分批补齐片墙，避免一次性编译 28 个屏幕
+    useEffect(() => {
+        if (!showRoom) return undefined;
+        setMountedMonitors(initialMonitors);
+        let count = initialMonitors;
+        const timers = [];
+        const total = backgroundItems.length;
+        const step = () => {
+            count = Math.min(total, count + 6);
+            setMountedMonitors(count);
+            if (count < total) timers.push(setTimeout(step, 450));
+        };
+        timers.push(setTimeout(step, 700));
+        return () => timers.forEach((timer) => clearTimeout(timer));
+    }, [showRoom, backgroundItems.length, initialMonitors]);
 
     const heroRef = useRef();
     const monitorRefs = useRef([]);
@@ -1032,9 +1051,9 @@ const StudioRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
                     </group>
                 </group>
 
-                {/* 两侧片墙 */}
+                {/* 两侧片墙（房间级分批挂载） */}
                 <group>
-                    {backgroundItems.map((item, index) => (
+                    {backgroundItems.slice(0, mountedMonitors).map((item, index) => (
                         <MonitorBlock
                             key={`${item.id}-${index}`}
                             item={item}

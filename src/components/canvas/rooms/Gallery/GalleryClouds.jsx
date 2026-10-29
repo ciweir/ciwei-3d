@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { useCloudTexture } from '../../../../utils/colorTexture';
@@ -21,11 +21,34 @@ const CLOUD_TEXTURES = [
  * GalleryClouds Component
  * Static clouds scattered randomly above the gallery room
  */
-const GalleryClouds = ({ count = 12, seed = 42, rotationOffset = [0, -Math.PI / 3, 0], keyBackground = false }) => {
+const GalleryClouds = ({
+    count = 12,
+    seed = 42,
+    rotationOffset = [0, -Math.PI / 3, 0],
+    keyBackground = false,
+    initialCount = count,
+    batchSize = 6,
+    batchDelay = 400,
+}) => {
     // Movement boundaries - must match StaticCloud
     const startX = 40;
     const endX = -40;
     const totalDistance = startX - endX;
+    // 房间级分批挂载：先挂一部分云，其余在首帧后分批补
+    const [mounted, setMounted] = useState(() => Math.min(initialCount, count));
+
+    useEffect(() => {
+        let current = Math.min(initialCount, count);
+        setMounted(current);
+        const timers = [];
+        const step = () => {
+            current = Math.min(count, current + batchSize);
+            setMounted(current);
+            if (current < count) timers.push(setTimeout(step, batchDelay));
+        };
+        if (current < count) timers.push(setTimeout(step, batchDelay));
+        return () => timers.forEach((timer) => clearTimeout(timer));
+    }, [count, initialCount, batchSize, batchDelay]);
 
     const clouds = useMemo(() => {
         const items = [];
@@ -59,7 +82,7 @@ const GalleryClouds = ({ count = 12, seed = 42, rotationOffset = [0, -Math.PI / 
 
     return (
         <group>
-            {clouds.map((cloud) => (
+            {clouds.slice(0, mounted).map((cloud) => (
                 <StaticCloud
                     key={cloud.id}
                     position={cloud.position}

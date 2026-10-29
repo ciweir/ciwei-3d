@@ -39,11 +39,16 @@ const STORY_CYCLE_LENGTH = 160;
 const MILESTONE_CORRIDOR_CLIP_Z = -8.0;
 
 const InfiniteSkyManager = ({ scrollProgressRef }) => {
-    // PRE-CALCULATED FOR scrolProgress = 0
-    // currentChunk = floor(0/40) = 0 -> [-1, 0, 1, 2]
-    const [activeChunks, setActiveChunks] = useState([-1, 0, 1, 2]);
-    // currentStoryCycle = floor(0/160) = 0 -> [-1, 0, 1]
-    const [activeStoryCycles, setActiveStoryCycles] = useState([-1, 0, 1]);
+    // 房间级分批挂载：首帧只挂当前天空块与当前故事周期，其余随滚动/首帧后补
+    const [activeChunks, setActiveChunks] = useState([0, 1]);
+    // currentStoryCycle = floor(0/160) = 0 -> [0]
+    const [activeStoryCycles, setActiveStoryCycles] = useState([0]);
+    // 首帧稳定后再补邻接块/周期，避免房间首次编译带满
+    const [warm, setWarm] = useState(false);
+    useEffect(() => {
+        const timer = setTimeout(() => setWarm(true), 1200);
+        return () => clearTimeout(timer);
+    }, []);
     const worldRef = useRef();
 
     // Track current chunk for recycling
@@ -67,12 +72,9 @@ const InfiniteSkyManager = ({ scrollProgressRef }) => {
 
         // Figure out which chunk we're in
         const currentChunk = getCurrentChunk(scrollProgress);
-        const shouldBeActiveChunks = [
-            currentChunk - 1,
-            currentChunk,
-            currentChunk + 1,
-            currentChunk + 2,
-        ];
+        const shouldBeActiveChunks = warm
+            ? [currentChunk - 1, currentChunk, currentChunk + 1, currentChunk + 2]
+            : [currentChunk, currentChunk + 1];
 
         const chunksNeedUpdate = shouldBeActiveChunks.some(c => !activeChunks.includes(c)) ||
             activeChunks.some(c => !shouldBeActiveChunks.includes(c));
@@ -83,11 +85,9 @@ const InfiniteSkyManager = ({ scrollProgressRef }) => {
 
         // Update story cycles
         const currentStoryCycle = getCurrentStoryCycle(scrollProgress);
-        const shouldBeActiveCycles = [
-            currentStoryCycle - 1,
-            currentStoryCycle,
-            currentStoryCycle + 1,
-        ];
+        const shouldBeActiveCycles = warm
+            ? [currentStoryCycle - 1, currentStoryCycle, currentStoryCycle + 1]
+            : [currentStoryCycle];
 
         const cyclesNeedUpdate = shouldBeActiveCycles.some(c => !activeStoryCycles.includes(c)) ||
             activeStoryCycles.some(c => !shouldBeActiveCycles.includes(c));

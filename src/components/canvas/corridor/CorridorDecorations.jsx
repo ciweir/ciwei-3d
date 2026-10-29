@@ -535,7 +535,7 @@ const CorridorDecorations = ({ segmentLength, zOffset, corridorWidth = 4, corrid
                 ].map((pos, i) => (
                     <mesh key={`leg-${i}`} position={[pos[0], tableConfig.height / 2, pos[1]]}>
                         <boxGeometry args={[tableConfig.legRadius * 2, tableConfig.height, tableConfig.legRadius * 2]} />
-                        <meshBasicMaterial color="#e0e0e0" map={legTexture} roughness={0.8} toneMapped={false} side={THREE.DoubleSide} />
+                        <meshBasicMaterial color="#e0e0e0" map={legTexture} roughness={0.8} toneMapped={false} />
                     </mesh>
                 ))}
 
