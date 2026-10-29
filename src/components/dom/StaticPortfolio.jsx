@@ -56,11 +56,15 @@ const StaticPortfolio = ({ canRetry3D, onRetry }) => {
                         <span className="sp-group-count">{group.items.length} 部</span>
                     </div>
 
-                    {group.items.map((project) => {
+                    {group.items.map((project, index) => {
                         const video = project.videos?.find((item) => item?.url)?.url;
                         const media = video || project.preview;
                         return (
-                            <article className="sp-row" key={project.id}>
+                            <article
+                                className="sp-row"
+                                key={project.id}
+                                style={{ '--row-index': index }}
+                            >
                                 <div className="sp-row-main">
                                     <h3 className="sp-row-title">{project.title}</h3>
                                     <p className="sp-row-desc">{project.description}</p>

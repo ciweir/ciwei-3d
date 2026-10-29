@@ -8,6 +8,7 @@ import TeleportRoom from './corridor/TeleportRoom';
 import useInfiniteCamera from '../../hooks/useInfiniteCamera';
 import SignSystem from './entrance/SignSystem';
 import { useScene } from '../../context/useScene';
+import { useReducedMotion } from '../../utils/motion';
 
 // Positioning:
 // - Segment -1's SegmentDoors are at Z=15
@@ -46,13 +47,15 @@ const Experience = ({ onSceneReady }) => {
     const { camera } = useThree();
     // 入口先渲染；走廊在推门/已进入时才挂载，避免首屏编译整条走廊
     const [corridorRequested, setCorridorRequested] = useState(false);
+    // 系统偏好「减少动态效果」时关闭鼠标视差，滚动推进保留（用户主动操作）
+    const reducedMotion = useReducedMotion();
 
     // Camera control - both scroll and parallax only work after entering
     // Disable during teleporting to prevent scroll interference
     const { setCameraOverride } = useInfiniteCamera({
         segmentLength: 80,
         scrollSpeed: 0.025,
-        parallaxIntensity: 0.4,
+        parallaxIntensity: reducedMotion ? 0 : 0.4,
         smoothing: 0.06,
         scrollEnabled: hasEntered && !isTeleporting && !isInRoom,
         parallaxEnabled: hasEntered && !isTeleporting && !isInRoom

@@ -4,6 +4,7 @@ import { useThree, useFrame } from '@react-three/fiber';
 // 全站彩色：桌面端自动取 _painted 彩色版（见 utils/colorTexture.js）
 import { useColorTexture as useTexture, useTexturePair, mobileSrc } from '../../../../utils/colorTexture';
 import { useColorEnabled } from '../../../../utils/colorMode';
+import { useReducedMotion } from '../../../../utils/motion';
 import { isTouchDevice } from '../../../../utils/deviceDetect';
 import * as THREE from 'three';
 import gsap from 'gsap';
@@ -96,6 +97,7 @@ const GalleryRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
     const { isTeleporting } = useScene();
     const { showTutorial, unlockAchievement, hidePopup } = useAchievements();
     const { play, audioEnabled } = useAudio();
+    const reducedMotion = useReducedMotion();
     const playRef = useRef(play);
     playRef.current = play;
 
@@ -136,8 +138,8 @@ const GalleryRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
     useEffect(() => {
         // When the room officially shows up (doors open and user flies in)
         if (showRoom && !isWarmup) {
-            if (wasTeleportedRef.current || isTeleporting) {
-                // Skip the painting transition entirely if teleporting via map
+            if (wasTeleportedRef.current || isTeleporting || reducedMotion) {
+                // 减少动态效果：直接显示彩色房间，不做笔刷揭幕
                 uniformsData.uPaintProgress.value = 1.0;
                 setIsTransitioning(false);
             } else {
@@ -158,7 +160,7 @@ const GalleryRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
             // Immediately reveal for warmup or hide if not showing
             uniformsData.uPaintProgress.value = 1.0;
         }
-    }, [showRoom, isWarmup, isTeleporting]);
+    }, [showRoom, isWarmup, isTeleporting, reducedMotion]);
 
     const handleCardClick = async (clickedIndex) => {
         if (globalIsAnimating || isTransitioning) return;
@@ -806,6 +808,7 @@ const ProjectCard = memo(forwardRef(({ index, project, clothespinTexture, curren
     // 背面文字只在首次悬停/打开时创建：30 张卡一次性建 100+ 个 troika 文本，
     // 首次进画廊要等它们逐个建网格，是房间就绪慢的另一主因。
     const [detailsMounted, setDetailsMounted] = useState(false);
+    const reducedMotion = useReducedMotion();
     // 每张卡自己加载封面，房间不必等所有作品贴图
     const frontTexture = useTexture(project.isDivider ? '/textures/paper-texture.webp' : project.front);
     const colorTexture = useTexturePair(
@@ -1257,7 +1260,7 @@ const ProjectCard = memo(forwardRef(({ index, project, clothespinTexture, curren
 
         // Wind / Sway Animation
         const time = state.clock.getElapsedTime();
-        const wind = Math.sin(time * swaySpeed.current + swayOffset.current) * 0.05;
+        const wind = reducedMotion ? 0 : Math.sin(time * swaySpeed.current + swayOffset.current) * 0.05;
 
         cardRef.current.rotation.z = wind;
         cardRef.current.rotation.x = 0;
@@ -1341,15 +1344,19 @@ const ProjectCard = memo(forwardRef(({ index, project, clothespinTexture, curren
 
                 // Brush reveal animation
                 if (materialRef.current && paintedTexture && !isSelected) {
-                    gsap.to(materialRef.current, {
-                        uProgress: 1.0,
-                        duration: 0.8,
-                        ease: 'power2.out',
-                        overwrite: 'auto'
-                    });
+                    if (reducedMotion) {
+                        materialRef.current.uProgress = 1.0;
+                    } else {
+                        gsap.to(materialRef.current, {
+                            uProgress: 1.0,
+                            duration: 0.8,
+                            ease: 'power2.out',
+                            overwrite: 'auto'
+                        });
+                    }
                 }
                 /* 1c：上色完成（800ms，与 uProgress 动画同步）时把 painted 槽位换成视频——"刷完 → 活" */
-                if (project.preview && !isSelected) {
+                if (!reducedMotion && project.preview && !isSelected) {
                     hoveredRef.current = true;
                     paintDoneRef.current = false;
                     videoReadyRef.current = false;
@@ -1368,12 +1375,16 @@ const ProjectCard = memo(forwardRef(({ index, project, clothespinTexture, curren
 
                 // Reverse brush reveal animation ONLY if NOT selected
                 if (materialRef.current && paintedTexture && !isSelected) {
-                    gsap.to(materialRef.current, {
-                        uProgress: 0.0,
-                        duration: 0.5,
-                        ease: 'power2.out',
-                        overwrite: 'auto'
-                    });
+                    if (reducedMotion) {
+                        materialRef.current.uProgress = 0.0;
+                    } else {
+                        gsap.to(materialRef.current, {
+                            uProgress: 0.0,
+                            duration: 0.5,
+                            ease: 'power2.out',
+                            overwrite: 'auto'
+                        });
+                    }
                 }
                 /* 1c：还原静态 painted（视频停播 + 槽位换回） */
                 hoveredRef.current = false;

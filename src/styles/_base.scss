@@ -176,3 +176,55 @@ button {
     font: inherit;
     color: inherit;
 }
+
+// === 动效适配（2026-10-29）===
+// 纸卡入场：About / Contact 资料卡，保留各自的手写倾角（--card-tilt）
+@keyframes paper-card-in {
+    from {
+        opacity: 0;
+        transform: translateY(14px) rotate(calc(var(--card-tilt, 0deg) - 1deg));
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) rotate(var(--card-tilt, 0deg));
+    }
+}
+
+// 2D 目录逐行淡入（--row-index 控制错峰）
+@keyframes sp-row-in {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+// 首屏入口提示的轻微呼吸，不改变按钮命中区
+@keyframes entrance-hint-breathe {
+
+    0%,
+    100% {
+        opacity: 0.78;
+    }
+
+    50% {
+        opacity: 1;
+    }
+}
+
+// 系统开启「减少动态效果」时，关闭装饰性动画
+@media (prefers-reduced-motion: reduce) {
+
+    .about-card,
+    .contact-card,
+    .sp-row,
+    .entrance-landing__hint,
+    .scroll-hint__arrow {
+        animation: none !important;
+    }
+}

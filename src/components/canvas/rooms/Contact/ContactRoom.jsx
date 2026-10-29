@@ -17,6 +17,7 @@ import { SOCIAL } from '../../../../config/site-config';
 // 全站彩色：桌面端自动取 _painted 彩色版（见 utils/colorTexture.js）
 import { useColorTexture as useTexture } from '../../../../utils/colorTexture';
 import { usePaintMaterial } from '../Gallery/usePaintMaterial';
+import { useReducedMotion } from '../../../../utils/motion';
 
 const WAVE_LAYERS = 4;
 
@@ -97,6 +98,7 @@ const ContactRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
     const { isTeleporting } = useScene();
     const { hidePopup } = useAchievements();
     const { globalVolume, isMuted } = useAudio();
+    const reducedMotion = useReducedMotion();
     const effectiveVolume = isMuted ? 0 : AUDIO_SETTINGS.volume * globalVolume;
 
     const audioRef = useRef();
@@ -171,7 +173,7 @@ const ContactRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
 
     useEffect(() => {
         if (showRoom && !isWarmup) {
-            if (wasTeleportedRef.current || isTeleporting) {
+            if (wasTeleportedRef.current || isTeleporting || reducedMotion) {
                 uniformsData.uPaintProgress.value = 1.0;
                 setIsTransitioning(false);
             } else {
@@ -185,7 +187,7 @@ const ContactRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
         } else {
             uniformsData.uPaintProgress.value = 1.0;
         }
-    }, [showRoom, isWarmup, isTeleporting]);
+    }, [showRoom, isWarmup, isTeleporting, reducedMotion]);
 
     // Track if we've signaled ready
     const hasSignaledReady = useRef(false);

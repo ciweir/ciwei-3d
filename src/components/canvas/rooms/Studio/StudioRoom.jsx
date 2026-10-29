@@ -13,6 +13,7 @@ import { useAudio } from '../../../../context/useAudio';
 import { useStudioContent } from '../../../../hooks/useSanityData';
 import { mobileSrc } from '../../../../utils/colorTexture';
 import { usePaintMaterial } from '../Gallery/usePaintMaterial';
+import { useReducedMotion } from '../../../../utils/motion';
 
 const STUDIO_ENTER_DISTANCE = 8;
 const BASE_FALL_SPEED = 0.04;
@@ -511,6 +512,7 @@ const StudioRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
     const { openOverlay, overlayContent, isTeleporting } = useScene();
     const { showTutorial, unlockAchievement, hidePopup } = useAchievements();
     const { globalVolume, isMuted } = useAudio();
+    const reducedMotion = useReducedMotion();
     const effectiveVolume = isMuted ? 0 : AUDIO_SETTINGS.volume * globalVolume;
 
     const sanityContent = useStudioContent();
@@ -620,7 +622,7 @@ const StudioRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
 
     useEffect(() => {
         if (showRoom && !isWarmup) {
-            if (isTeleporting) {
+            if (isTeleporting || reducedMotion) {
                 paintUniforms.uPaintProgress.value = 1.0;
             } else {
                 resetPaint();
@@ -629,7 +631,7 @@ const StudioRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
         } else {
             paintUniforms.uPaintProgress.value = 1.0;
         }
-    }, [showRoom, isWarmup, isTeleporting, animatePaint, resetPaint, paintUniforms]);
+    }, [showRoom, isWarmup, isTeleporting, reducedMotion, animatePaint, resetPaint, paintUniforms]);
 
     useEffect(() => {
         const handleWheel = (event) => {

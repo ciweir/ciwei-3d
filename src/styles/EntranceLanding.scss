@@ -50,6 +50,7 @@
         white-space: nowrap;
         opacity: 1;
         transition: opacity 0.3s ease, transform 0.3s ease;
+        animation: entrance-hint-breathe 3.2s ease-in-out infinite;
         pointer-events: none;
     }
 

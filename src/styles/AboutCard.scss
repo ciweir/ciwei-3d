@@ -15,7 +15,9 @@
     border: 1.5px solid rgba($ink, 0.86);
     border-radius: 3px 8px 4px 10px;
     box-shadow: 3px 5px 0 rgba($ink, 0.14);
-    transform: rotate(-0.45deg);
+    --card-tilt: -0.45deg;
+    transform: rotate(var(--card-tilt));
+    animation: paper-card-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
     color: $ink;
     font-family: $font-primary;
     pointer-events: auto;
@@ -90,7 +92,7 @@
         max-height: calc(62dvh - env(safe-area-inset-bottom, 0px));
         overflow-y: auto;
         padding: 15px 16px 13px;
-        transform: rotate(-0.25deg);
+        --card-tilt: -0.25deg;
 
         h2 { font-size: 26px; }
         .about-card__bio { font-size: 12px; line-height: 1.65; }

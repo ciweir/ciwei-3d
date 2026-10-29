@@ -7,6 +7,7 @@ import InfiniteSkyManager from './InfiniteSkyManager';
 import { useScene } from '../../../../context/useScene';
 import { useAchievements } from '../../../../context/useAchievements';
 import { useAudio } from '../../../../context/useAudio';
+import { useReducedMotion } from '../../../../utils/motion';
 
 // Chunk length for looping flight effect (matches SkyChunk)
 const CHUNK_LENGTH = 40;
@@ -32,6 +33,7 @@ const AboutRoom = ({ onReady, isExiting, isWarmup }) => {
     const { isTeleporting, overlayContent } = useScene();
     const { unlockAchievement, hidePopup } = useAchievements();
     const { globalVolume, isMuted } = useAudio();
+    const reducedMotion = useReducedMotion();
     const effectiveVolume = isMuted ? 0 : AUDIO_SETTINGS.volume * globalVolume;
 
     const audioRef = useRef();
@@ -173,6 +175,11 @@ const AboutRoom = ({ onReady, isExiting, isWarmup }) => {
             // Slow down the start: if chunkProgress is small, multiply by a curve
             let bankAngle = Math.sin(chunkProgress * Math.PI * 2) * 0.12;
             let pitchAngle = Math.sin(chunkProgress * Math.PI * 4) * 0.05;
+            // 减少动态效果：保留用户主动的飞行位移，但取消镜头侧倾/俯仰
+            if (reducedMotion) {
+                bankAngle = 0;
+                pitchAngle = 0;
+            }
 
             // Ease in the flight effect during the first few units
             const flightProgress = Math.min(1, (scrollPosition.current - 0.5) / 5.0);

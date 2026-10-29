@@ -17,7 +17,9 @@
     border: 1.5px solid rgba($ink, 0.86);
     border-radius: 3px 8px 4px 10px;
     box-shadow: 3px 5px 0 rgba($ink, 0.14);
-    transform: rotate(-0.35deg);
+    --card-tilt: -0.35deg;
+    transform: rotate(var(--card-tilt));
+    animation: paper-card-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
     color: $ink;
     font-family: $font-primary;
     pointer-events: auto;
@@ -203,7 +205,7 @@
         width: auto;
         max-height: calc(72dvh - env(safe-area-inset-bottom, 0px));
         padding: 14px;
-        transform: rotate(-0.25deg);
+        --card-tilt: -0.25deg;
         h2 { font-size: 19px; }
         input, textarea { font-size: 16px; }
     }

@@ -137,6 +137,8 @@
     gap: clamp(20px, 4vw, 64px);
     padding: 24px 0;
     border-bottom: 1px solid rgba(26, 26, 26, 0.12);
+    animation: sp-row-in 0.45s ease both;
+    animation-delay: calc(var(--row-index, 0) * 35ms);
 }
 
 .sp-row-main {
