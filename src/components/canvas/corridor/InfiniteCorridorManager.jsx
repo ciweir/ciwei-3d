@@ -53,7 +53,8 @@ const InfiniteCorridorManager = ({
     hideDoorsForSegments = [], // Segments that should hide their SegmentDoors
     clipSegmentNeg1 = false, // Whether to clip segment -1 at EntranceDoors
     setCameraOverride, // Function to take over camera control
-    initialSegments = [0, 1] // 深链直接进房间时只编译所在段，避免首帧带上整条走廊
+    initialSegments = [0, 1], // 深链直接进房间时只编译所在段，避免首帧带上整条走廊
+    soloRoom = null // 深链直连：段内只挂目标门与房间，进房后再补墙体/装饰
 }) => {
     const { camera } = useThree();
     // Pre-mount segments 0 and 1 so shaders compile during preloader.
@@ -68,6 +69,8 @@ const InfiniteCorridorManager = ({
 
     // Update active segments based on camera position
     useFrame(() => {
+        // solo 模式下只保留初始段，避免相机位置抖动带来额外段的挂载/卸载
+        if (soloRoom) return;
         const currentSegment = getSegmentFromZ(camera.position.z);
 
         // Render previous, current, and next segment
@@ -97,6 +100,7 @@ const InfiniteCorridorManager = ({
                         hideSegmentDoors={hideDoorsForSegments.includes(segmentIndex)}
                         zClip={clipSegmentNeg1 && segmentIndex === -1 ? 22 : 100000}
                         setCameraOverride={setCameraOverride}
+                        soloRoom={soloRoom}
                     />
                 </SegmentVisibilityWrapper>
             ))}

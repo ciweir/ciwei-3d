@@ -1,4 +1,4 @@
-import { Suspense, useCallback, useRef, useState } from 'react';
+import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { useThree, useFrame } from '@react-three/fiber';
 
 import InfiniteCorridorManager from './corridor/InfiniteCorridorManager';
@@ -42,11 +42,13 @@ const SceneReadyGate = ({ onReady }) => {
 
 const Experience = ({ onSceneReady }) => {
     // Use SceneContext for room state
-    const { hasEntered, markEntered, enterRoom, isTeleporting, isInRoom, initialRoom } = useScene();
+    const { hasEntered, markEntered, enterRoom, isTeleporting, isInRoom, initialRoom, currentRoom } = useScene();
 
     const { camera } = useThree();
     // 入口先渲染；走廊在推门/已进入时才挂载，避免首屏编译整条走廊
     const [corridorRequested, setCorridorRequested] = useState(false);
+    // 深链直连：段内先只挂目标门与房间，进房后再补墙体/装饰（此时相机已在房间内）
+    const [soloRoom, setSoloRoom] = useState(initialRoom || null);
     // 系统偏好「减少动态效果」时关闭鼠标视差，滚动推进保留（用户主动操作）
     const reducedMotion = useReducedMotion();
 
@@ -80,6 +82,13 @@ const Experience = ({ onSceneReady }) => {
     const handleEnterStart = useCallback(() => {
         setCorridorRequested(true);
     }, []);
+
+    // 进房后延后补挂走廊墙体与装饰：出口需要它们，但进门时不该为它们等编译
+    useEffect(() => {
+        if (!soloRoom || currentRoom !== soloRoom) return undefined;
+        const timer = window.setTimeout(() => setSoloRoom(null), 800);
+        return () => window.clearTimeout(timer);
+    }, [soloRoom, currentRoom]);
 
     // 深链直接进房间：入口不参与渲染，省掉 49 张门面贴图与首次编译
     const showEntrance = !hasEntered && !initialRoom;
@@ -120,7 +129,8 @@ const Experience = ({ onSceneReady }) => {
             )}
 
             {/* === INFINITE CORRIDOR (deferred until door click / already inside) === */}
-            {(corridorRequested || hasEntered) && (
+            {/* 深链目标房间就在第 0 段：随场景一起挂载，让走廊贴图与编译在海报覆盖期并行完成 */}
+            {(corridorRequested || hasEntered || Boolean(initialRoom)) && (
                 initialRoom ? (
                     <Suspense fallback={null}>
                         <InfiniteCorridorManager
@@ -129,6 +139,7 @@ const Experience = ({ onSceneReady }) => {
                             clipSegmentNeg1={!hasEntered}
                             setCameraOverride={setCameraOverride}
                             initialSegments={[0]}
+                            soloRoom={soloRoom}
                         />
                     </Suspense>
                 ) : (
