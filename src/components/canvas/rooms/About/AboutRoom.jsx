@@ -8,6 +8,7 @@ import { useScene } from '../../../../context/useScene';
 import { useAchievements } from '../../../../context/useAchievements';
 import { useAudio } from '../../../../context/useAudio';
 import { useReducedMotion } from '../../../../utils/motion';
+import { isTouchDevice } from '../../../../utils/deviceDetect';
 
 // Chunk length for looping flight effect (matches SkyChunk)
 const CHUNK_LENGTH = 40;
@@ -32,9 +33,11 @@ const AboutRoom = ({ onReady, isExiting, isWarmup }) => {
     const { camera, scene } = useThree();
     const { isTeleporting, overlayContent } = useScene();
     const { unlockAchievement, hidePopup } = useAchievements();
-    const { globalVolume, isMuted } = useAudio();
+    const { globalVolume, isMuted, audioEnabled } = useAudio();
     const reducedMotion = useReducedMotion();
     const effectiveVolume = isMuted ? 0 : AUDIO_SETTINGS.volume * globalVolume;
+    // 触屏端等首次交互后再拉风声，避免和天空块贴图抢带宽
+    const mediaReady = !isTouchDevice() || audioEnabled;
 
     const audioRef = useRef();
     useEffect(() => {
@@ -271,7 +274,7 @@ const AboutRoom = ({ onReady, isExiting, isWarmup }) => {
 
     return (
         <group ref={roomRef} position={[0, 0, -25]}>
-            {!isWarmup && (
+            {!isWarmup && mediaReady && (
                 <PositionalAudio
                     ref={audioRef}
                     url="/sounds/szumwiatru.mp3"

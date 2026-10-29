@@ -7,7 +7,7 @@
     background-color: $paper-cream;
     background-image:
         linear-gradient(rgba(245, 240, 230, 0.82), rgba(245, 240, 230, 0.9)),
-        url('/textures/paper-texture.webp');
+        var(--paper-texture);
     background-size: auto, 512px;
     font-family: $font-cjk;
 

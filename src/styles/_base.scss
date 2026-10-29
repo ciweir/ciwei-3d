@@ -5,6 +5,17 @@
 @use 'variables' as *;
 @use 'mixins' as *;
 
+// 纸张纹理：所有纸面背景统一走这个变量；触屏端用 768px 小变体（129KB → 39KB）
+:root {
+    --paper-texture: url('/textures/paper-texture.webp');
+}
+
+@include mobile {
+    :root {
+        --paper-texture: url('/textures/paper-texture-mobile.webp');
+    }
+}
+
 // 本地可变字体：wght 100–900，供 3D Text 与 DOM 阅读室/UI 共用
 @font-face {
     font-family: 'Noto Sans SC';

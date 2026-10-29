@@ -14,6 +14,7 @@ import { useStudioContent } from '../../../../hooks/useSanityData';
 import { smallSrc } from '../../../../utils/colorTexture';
 import { usePaintMaterial } from '../Gallery/usePaintMaterial';
 import { useReducedMotion } from '../../../../utils/motion';
+import { isTouchDevice } from '../../../../utils/deviceDetect';
 
 const STUDIO_ENTER_DISTANCE = 8;
 const BASE_FALL_SPEED = 0.04;
@@ -514,7 +515,9 @@ const StudioRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
 
     const { openOverlay, overlayContent, isTeleporting } = useScene();
     const { showTutorial, unlockAchievement, hidePopup } = useAchievements();
-    const { globalVolume, isMuted } = useAudio();
+    const { globalVolume, isMuted, audioEnabled } = useAudio();
+    // 触屏端等首次交互后再拉环境声与主屏视频（0.35MB 音频 + 0.38MB 视频），别和片墙封面抢带宽
+    const mediaReady = !isTouchDevice() || audioEnabled;
     const reducedMotion = useReducedMotion();
     const effectiveVolume = isMuted ? 0 : AUDIO_SETTINGS.volume * globalVolume;
 
@@ -914,7 +917,7 @@ const StudioRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
             rotation={[0, stageFrame.yaw, 0]}
             onPointerDown={handlePointerDown}
         >
-                {!isWarmup && (
+                {!isWarmup && mediaReady && (
                     <PositionalAudio
                         ref={audioRef}
                         url="/sounds/szummonitorow.mp3"
@@ -1029,14 +1032,16 @@ const StudioRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
                         paintUniforms={paintUniforms}
                     />
 
-                    <HeroVideoScreen
-                        src={heroItem.preview}
-                        width={heroItem.width}
-                        height={heroItem.height}
-                        depth={heroItem.depth}
-                        position={[0, heroItem.baseY, 0]}
-                        active={!selectedMonitor && !overlayContent && !isExiting && !isTeleporting}
-                    />
+                    {mediaReady && (
+                        <HeroVideoScreen
+                            src={heroItem.preview}
+                            width={heroItem.width}
+                            height={heroItem.height}
+                            depth={heroItem.depth}
+                            position={[0, heroItem.baseY, 0]}
+                            active={!selectedMonitor && !overlayContent && !isExiting && !isTeleporting}
+                        />
+                    )}
 
                     {/* 主屏下三分之一信息条 */}
                     <group position={[0, labelY, labelZ]}>

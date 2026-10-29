@@ -8,6 +8,7 @@ import GalleryClouds from '../Gallery/GalleryClouds';
 import { useAchievements } from '../../../../context/useAchievements';
 import { useAudio } from '../../../../context/useAudio';
 import { SOCIAL } from '../../../../config/site-config';
+import { isTouchDevice } from '../../../../utils/deviceDetect';
 
 // ============================================
 // ============================================
@@ -97,9 +98,11 @@ const ContactRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
     const { camera } = useThree();
     const { isTeleporting } = useScene();
     const { hidePopup } = useAchievements();
-    const { globalVolume, isMuted } = useAudio();
+    const { globalVolume, isMuted, audioEnabled } = useAudio();
     const reducedMotion = useReducedMotion();
     const effectiveVolume = isMuted ? 0 : AUDIO_SETTINGS.volume * globalVolume;
+    // 触屏端等首次交互后再拉海声（0.83MB），别和海面/云朵贴图抢带宽
+    const mediaReady = !isTouchDevice() || audioEnabled;
 
     const audioRef = useRef();
     useEffect(() => {
@@ -329,7 +332,7 @@ const ContactRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
 
     return (
         <group ref={groupRef} position={[0, -0.7, -5]}>
-            {!isWarmup && (
+            {!isWarmup && mediaReady && (
                 <PositionalAudio
                     ref={audioRef}
                     url="/sounds/szummorza.mp3"

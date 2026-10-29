@@ -10,7 +10,7 @@
     padding: 18px 20px 16px;
     background:
         linear-gradient(rgba($paper, 0.82), rgba($paper, 0.82)),
-        url('/textures/paper-texture.webp') center center;
+        var(--paper-texture) center center;
     background-size: cover;
     border: 1.5px solid rgba($ink, 0.86);
     border-radius: 3px 8px 4px 10px;

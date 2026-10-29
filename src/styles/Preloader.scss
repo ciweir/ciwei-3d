@@ -19,7 +19,7 @@
         width: 100%; // Each half takes full width but is clipped
         height: 100%;
         background-color: $color-white;
-        background-image: url('/textures/paper-texture.webp');
+        background-image: var(--paper-texture);
         background-size: cover;
         background-position: center;
         // background-blend-mode: multiply; // Optional depending on look
