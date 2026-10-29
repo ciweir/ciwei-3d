@@ -83,6 +83,7 @@ const GalleryText = forwardRef(({ children, ...props }, ref) => {
             object={troikaMesh}
             ref={ref}
             text={text}
+            sdfGlyphSize={128}
             {...props}
         >
             {nodes}
@@ -1292,7 +1293,7 @@ const ProjectCard = memo(forwardRef(({ index, project, clothespinTexture, curren
                 </mesh>
                 <GalleryText
                     position={[0, -0.04, 0.01]}
-                    fontSize={0.065}
+                    fontSize={0.075}
                     color="#8a7a5e"
                     font="/fonts/NotoSansSC-3D.woff"
                     anchorX="center"
@@ -1312,7 +1313,7 @@ const ProjectCard = memo(forwardRef(({ index, project, clothespinTexture, curren
                 </GalleryText>
                 <GalleryText
                     position={[0, -0.48, 0.01]}
-                    fontSize={0.08}
+                    fontSize={0.11}
                     color="#4d4a43"
                     font="/fonts/NotoSansSC-3D.woff"
                     anchorX="center"
@@ -1608,7 +1609,7 @@ const ProjectCard = memo(forwardRef(({ index, project, clothespinTexture, curren
                     <GalleryText
                         ref={labelMetaTextRef}
                         position={[0, -0.875, 0.07]}
-                        fontSize={0.055}
+                        fontSize={0.07}
                         color="#6b6254"
                         font="/fonts/NotoSansSC-3D.woff"
                         anchorX="center"

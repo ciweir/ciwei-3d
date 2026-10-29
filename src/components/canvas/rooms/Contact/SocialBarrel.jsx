@@ -147,6 +147,7 @@ const SocialBarrel = ({ position, rotation = [0, 0, 0], texturePath, label, onCl
                     rotation={[0, 0, 0.03]} // Slight tilt to match a drawn wooden board
                     fontSize={scale[0] * 0.14}
                     font="/fonts/NotoSansSC-3D.woff"
+                    sdfGlyphSize={128}
                     color="#111111"
                     fillOpacity={paintUniforms ? 0 : 1}
                     anchorX="center"

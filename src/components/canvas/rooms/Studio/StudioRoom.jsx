@@ -401,6 +401,7 @@ const HeroCaption = ({ width, height, title, meta, titleSize, metaSize }) => {
                 anchorY="middle"
                 position={[-width / 2 + 0.34, 0.072, 0.018]}
                 maxWidth={width - 0.42}
+                sdfGlyphSize={128}
                 raycast={() => null}
             >
                 {title}
@@ -413,6 +414,7 @@ const HeroCaption = ({ width, height, title, meta, titleSize, metaSize }) => {
                 anchorY="middle"
                 position={[-width / 2 + 0.34, -0.112, 0.018]}
                 maxWidth={width - 0.42}
+                sdfGlyphSize={128}
                 raycast={() => null}
             >
                 {meta}
@@ -449,32 +451,35 @@ const WallPlaque = ({ width, height, isMobile, currentIndex, totalCount }) => {
                 anchorY="middle"
                 position={[0, 0.17, 0.03]}
                 letterSpacing={0.04}
+                sdfGlyphSize={128}
                 raycast={() => null}
             >
                 STUDIO 01
             </Text>
-            <mesh position={[-width * 0.24, -0.15, 0.03]} raycast={() => null}>
+            <mesh position={[-width * 0.24, -0.14, 0.03]} raycast={() => null}>
                 <circleGeometry args={[0.026, 20]} />
                 <meshBasicMaterial color="#9a3b2c" />
             </mesh>
             <Text
                 font="/fonts/NotoSansSC-3D.woff"
-                fontSize={isMobile ? 0.15 : 0.185}
+                fontSize={isMobile ? 0.17 : 0.21}
                 color="#5f584d"
                 anchorX="left"
                 anchorY="middle"
-                position={[-width * 0.21, -0.13, 0.03]}
+                position={[-width * 0.21, -0.14, 0.03]}
+                sdfGlyphSize={128}
                 raycast={() => null}
             >
                 {`放映 ${current} / ${total}`}
             </Text>
             <Text
                 font="/fonts/NotoSansSC-3D.woff"
-                fontSize={isMobile ? 0.135 : 0.17}
+                fontSize={isMobile ? 0.16 : 0.19}
                 color="#6a6256"
                 anchorX="center"
                 anchorY="middle"
-                position={[0, -0.31, 0.03]}
+                position={[0, -0.375, 0.03]}
+                sdfGlyphSize={128}
                 raycast={() => null}
             >
                 点侧屏换片 · 点主屏看详情
@@ -876,7 +881,7 @@ const StudioRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
         .filter(Boolean)
         .join(' · ');
     const titleSize = Math.min(0.125, Math.max(0.075, (labelWidth - 0.62) / Math.max(title.length, 1) * 1.05));
-    const metaSize = Math.max(0.058, titleSize * 0.6);
+    const metaSize = Math.max(0.065, titleSize * 0.6);
     const heroVisible = !selectedMonitor || selectedMonitor.isHero;
 
     const stage = (
