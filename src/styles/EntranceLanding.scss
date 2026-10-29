@@ -48,14 +48,15 @@
         font-size: 0.85rem;
         letter-spacing: 0.08em;
         white-space: nowrap;
-        opacity: 0;
-        transition: opacity 0.3s ease;
+        opacity: 1;
+        transition: opacity 0.3s ease, transform 0.3s ease;
         pointer-events: none;
     }
 
     &:hover &__hint,
     &:focus-visible &__hint {
         opacity: 1;
+        transform: translateX(-50%) translateY(-2px);
     }
 
     @include mobile {

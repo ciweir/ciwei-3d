@@ -141,151 +141,39 @@ const InfiniteSkyManager = ({ scrollProgressRef }) => {
  * Elements spread apart as they approach camera
  */
 const IntroMilestone = ({ z, scrollProgressRef }) => {
-    // Load avatar texture
     const avatarTexture = useColorTexture('/textures/about/awatarnachmurce.webp');
-    // Refs for all animated elements
     const groupRef = useRef();
-    const titleRef = useRef();
-    const brandRef = useRef();
-    const avatarRef = useRef();
-    const motto1Ref = useRef();
-    const motto2Ref = useRef();
 
-    // Base positions
-    const baseY = 2;
+    const avatarWidth = 5.2;
+    const avatarHeight = avatarWidth / (2816 / 1536);
 
-    // Calculate aspect ratio
-    // LEGACY FIX: Use original dimensions (2816x1536) to prevent stretching
-    const legacyAspectRatio = 2816 / 1536; 
-    const avatarWidth = 6; // 放大云上头像尺寸
-    const avatarHeight = avatarWidth / legacyAspectRatio;
-
-    // Animation: floating + spread apart when close
     useFrame((state) => {
         if (!groupRef.current) return;
 
-        const time = state.clock.elapsedTime;
-
-        // === 硬裁剪线（手动计算世界 Z）===
-        // worldZ = 房间(-25) + scrollProgress + milestone 本地位置
         const scrollProgress = scrollProgressRef?.current || 0;
         const worldZ = ROOM_Z + scrollProgress + z;
         groupRef.current.visible = worldZ < MILESTONE_CORRIDOR_CLIP_Z;
-
-        // Skip rest if not visible
         if (!groupRef.current.visible) return;
 
-        // FIX: Use consistent distance based on scrollProgress + offset
-        // This ensures animations work IDENTICALLY regardless of chunk/camera position
-        // Base Start Z (-15) + Scroll (0) - Offset (55) = -70 (Matches "Working" Chunk 0 feel)
-        const distanceZ = z + scrollProgress - 55;
-
-        // Spread effect: starts at z = -25, full spread at z = -5
-        // This makes elements spread BEFORE they reach the camera
-        // === 此处调整（INTRO）===
-        // 增大 Start 与 End 的间距可让动画更慢
-        const spreadStart = -70; // 更早开始
-        const spreadEnd = -50;   // 更晚结束
-        let spreadFactor = 0;
-
-        if (distanceZ > spreadStart && distanceZ < spreadEnd) {
-            // Calculate spread: 0 at spreadStart, 1 at spreadEnd
-            spreadFactor = (distanceZ - spreadStart) / (spreadEnd - spreadStart);
-            spreadFactor = Math.min(1, Math.max(0, spreadFactor));
-            // Ease out for smoother animation
-            spreadFactor = spreadFactor * spreadFactor;
-        } else if (distanceZ >= spreadEnd) {
-            spreadFactor = 1;
-        }
-
-        // Apply spread to elements (move left/right) - MORE AGGRESSIVE
-        const maxSpread = 15; // How far elements spread (increased!)
-
-        if (titleRef.current) {
-            titleRef.current.position.x = -spreadFactor * maxSpread * 0.8;
-        }
-        if (brandRef.current) {
-            brandRef.current.position.x = spreadFactor * maxSpread * 0.6;
-        }
-        if (avatarRef.current) {
-            // Avatar: floating + spread upward
-            avatarRef.current.position.y = baseY + Math.sin(time * 0.8) * 0.15 + spreadFactor * 3;
-            avatarRef.current.position.x = -spreadFactor * maxSpread * 0.3;
-        }
-        if (motto1Ref.current) {
-            motto1Ref.current.position.x = spreadFactor * maxSpread * 0.7;
-        }
-        if (motto2Ref.current) {
-            motto2Ref.current.position.x = -spreadFactor * maxSpread * 0.5;
-        }
+        const time = state.clock.elapsedTime;
+        groupRef.current.position.y = Math.sin(time * 0.5) * 0.1;
+        groupRef.current.rotation.z = Math.sin(time * 0.3) * 0.006;
     });
 
     return (
         <group ref={groupRef} position={[0, 0, z]}>
-            {/* Main title - Name (spreads left) */}
-            <Text
-                ref={titleRef}
-                position={[0, 5, 0.1]}
-                fontSize={0.8}
-                color="#1a1a1a"
-                anchorX="center"
-                anchorY="middle"
-                font="/fonts/NotoSansSC.woff"
-            >
-                此唯
-            </Text>
-
-            {/* Subtitle - Brand (spreads right) */}
-            <Text
-                ref={brandRef}
-                position={[0, 4.3, 0.1]}
-                fontSize={0.45}
-                color="#4a4a4a"
-                anchorX="center"
-                anchorY="middle"
-                font="/fonts/NotoSansSC.woff"
-            >
-                （视频导演）
-            </Text>
-
-            {/* Avatar on cloud - floating + spreads up-left */}
-            <mesh ref={avatarRef} position={[0, baseY, 0]}>
+            <mesh position={[0, 2.1, 0]} renderOrder={25}>
                 <planeGeometry args={[avatarWidth, avatarHeight]} />
                 <meshBasicMaterial color="#e0e0e0"
                     map={avatarTexture}
                     transparent
                     side={THREE.DoubleSide}
+                    depthTest={false}
                     depthWrite={false}
+                    fog={false}
+                    toneMapped={false}
                 />
             </mesh>
-
-            {/* Motto - Line 1 (spreads right) */}
-            <Text
-                ref={motto1Ref}
-                position={[0, 0, 0.1]}
-                fontSize={0.32}
-                color="#555555"
-                anchorX="center"
-                anchorY="middle"
-                font="/fonts/NotoSansSC.woff"
-                fontStyle="italic"
-            >
-                "把素材变成
-            </Text>
-
-            {/* Motto - Line 2 (spreads left) */}
-            <Text
-                ref={motto2Ref}
-                position={[0, -0.5, 0]}
-                fontSize={0.32}
-                color="#555555"
-                anchorX="center"
-                anchorY="middle"
-                font="/fonts/NotoSansSC.woff"
-                fontStyle="italic"
-            >
-                能被看完的东西"
-            </Text>
         </group>
     );
 };
@@ -371,28 +259,39 @@ const JourneyMilestone = ({ z, scrollProgressRef }) => {
 
     return (
         <group ref={groupRef} position={[0, 0, z]}>
-            {/* Title */}
+            <mesh position={[0, 4.6, 0.1]}>
+                <planeGeometry args={[7, 1.8]} />
+                <meshBasicMaterial color="#f7f1e5" transparent opacity={0.94} />
+            </mesh>
             <Text
-                position={[0, 5, 0.3]}
-                fontSize={1.2}
+                position={[-3.15, 5.25, 0.4]}
+                fontSize={0.16}
+                color="#6a6256"
+                anchorX="left"
+                anchorY="middle"
+                font="/fonts/NotoSansSC.woff"
+            >
+                02 / 03
+            </Text>
+            <Text
+                position={[0, 4.85, 0.4]}
+                fontSize={1.1}
                 color="#1a1a1a"
                 anchorX="center"
                 anchorY="middle"
                 font="/fonts/NotoSansSC.woff"
             >
-                JOURNEY
+                经历
             </Text>
-
-            {/* Subtitle */}
             <Text
-                position={[0, 4.2, 0.3]}
-                fontSize={0.35}
-                color="#555555"
+                position={[0, 4.05, 0.4]}
+                fontSize={0.33}
+                color="#4a4a4a"
                 anchorX="center"
                 anchorY="middle"
                 font="/fonts/NotoSansSC.woff"
             >
-                My path so far...
+                商业影片 · 自媒体长期供稿
             </Text>
 
             {/* === UO ISLAND (Left) === */}
@@ -842,28 +741,39 @@ const SkillsMilestone = ({ z, scrollProgressRef }) => {
 
     return (
         <group ref={groupRef} position={[0, 0, z]}>
-            {/* Title */}
+            <mesh position={[0, 5.6, 0.1]}>
+                <planeGeometry args={[7, 1.8]} />
+                <meshBasicMaterial color="#f7f1e5" transparent opacity={0.94} />
+            </mesh>
             <Text
-                position={[0, 6, 0.5]}
-                fontSize={1.2}
+                position={[-3.15, 6.25, 0.4]}
+                fontSize={0.16}
+                color="#6a6256"
+                anchorX="left"
+                anchorY="middle"
+                font="/fonts/NotoSansSC.woff"
+            >
+                03 / 03
+            </Text>
+            <Text
+                position={[0, 5.85, 0.4]}
+                fontSize={1.1}
                 color="#1a1a1a"
                 anchorX="center"
                 anchorY="middle"
                 font="/fonts/NotoSansSC.woff"
             >
-                SKILLS
+                手艺
             </Text>
-
-            {/* Subtitle */}
             <Text
-                position={[0, 5.2, 0.5]}
-                fontSize={0.35}
-                color="#555555"
+                position={[0, 5.05, 0.4]}
+                fontSize={0.33}
+                color="#4a4a4a"
                 anchorX="center"
                 anchorY="middle"
                 font="/fonts/NotoSansSC.woff"
             >
-                Technologies I love working with
+                剪辑 · 调色 · 影像叙事
             </Text>
 
             {/* === FLOATING BALLOONS === */}

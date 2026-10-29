@@ -5,7 +5,7 @@ const EntranceLanding = ({ onEnter }) => (
         onClick={onEnter}
         aria-label="进入 3D 世界"
     >
-        <span className="entrance-landing__hint">点击门 · 开始布景</span>
+        <span className="entrance-landing__hint">点击进入布景</span>
     </button>
 );
 

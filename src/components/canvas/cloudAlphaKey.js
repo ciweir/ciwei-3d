@@ -9,7 +9,7 @@ export const applyCloudAlphaKey = (shader) => {
         '#include <dithering_fragment>',
         `#include <dithering_fragment>
         float cloudLum = dot(gl_FragColor.rgb, vec3(0.299, 0.587, 0.114));
-        float cloudKey = smoothstep(0.66, 0.80, cloudLum);
+        float cloudKey = smoothstep(0.50, 0.68, cloudLum);
         gl_FragColor.a *= 1.0 - cloudKey;
         `
     );

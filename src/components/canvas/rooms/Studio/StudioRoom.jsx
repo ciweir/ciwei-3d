@@ -119,7 +119,8 @@ const buildHeroItem = (content, layout) => {
 };
 
 const buildBackgroundItems = (content, heroItem, layout) => {
-    const source = content.filter((item) => item.id !== heroItem?.id);
+    // 侧屏是完整片单，不随主屏选择重排；主屏当前项也会在循环片墙里出现。
+    const source = content;
     if (source.length === 0) return [];
     const items = [];
     const maxColumn = Math.max(...layout.columns.map((value) => Math.abs(value)), 1);
@@ -420,9 +421,11 @@ const HeroCaption = ({ width, height, title, meta, titleSize, metaSize }) => {
     );
 };
 
-const WallPlaque = ({ width, height, isMobile }) => {
+const WallPlaque = ({ width, height, isMobile, currentIndex, totalCount }) => {
     const geometry = useMemo(() => makeTornPanelGeometry(width, height, 0.018), [width, height]);
     const edges = useMemo(() => new THREE.EdgesGeometry(geometry, 30), [geometry]);
+    const current = String(currentIndex).padStart(2, '0');
+    const total = String(totalCount).padStart(2, '0');
 
     useEffect(() => () => {
         geometry.dispose();
@@ -440,30 +443,41 @@ const WallPlaque = ({ width, height, isMobile }) => {
             </lineSegments>
             <Text
                 font="/fonts/CabinSketch-Bold.woff"
-                fontSize={isMobile ? 0.4 : 0.5}
+                fontSize={isMobile ? 0.4 : 0.48}
                 color="#26231e"
                 anchorX="center"
                 anchorY="middle"
-                position={[0, 0.14, 0.03]}
+                position={[0, 0.17, 0.03]}
                 letterSpacing={0.04}
                 raycast={() => null}
             >
                 STUDIO 01
             </Text>
-            <mesh position={[-width * 0.24, -0.23, 0.03]} raycast={() => null}>
-                <circleGeometry args={[0.028, 20]} />
+            <mesh position={[-width * 0.24, -0.15, 0.03]} raycast={() => null}>
+                <circleGeometry args={[0.026, 20]} />
                 <meshBasicMaterial color="#9a3b2c" />
             </mesh>
             <Text
                 font="/fonts/NotoSansSC.woff"
-                fontSize={isMobile ? 0.14 : 0.17}
+                fontSize={isMobile ? 0.15 : 0.185}
                 color="#5f584d"
                 anchorX="left"
                 anchorY="middle"
-                position={[-width * 0.21, -0.23, 0.03]}
+                position={[-width * 0.21, -0.13, 0.03]}
                 raycast={() => null}
             >
-                作品放映室 · 正在放映
+                {`放映 ${current} / ${total}`}
+            </Text>
+            <Text
+                font="/fonts/NotoSansSC.woff"
+                fontSize={isMobile ? 0.135 : 0.17}
+                color="#6a6256"
+                anchorX="center"
+                anchorY="middle"
+                position={[0, -0.31, 0.03]}
+                raycast={() => null}
+            >
+                点侧屏换片 · 点主屏看详情
             </Text>
             <mesh position={[-width / 2 + 0.15, height / 2 - 0.1, 0.035]} rotation={[0, 0, 0.06]} raycast={() => null}>
                 <planeGeometry args={[0.36, 0.11]} />
@@ -486,6 +500,8 @@ const StudioRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
     const [stageFrame, setStageFrame] = useState(null);
     const [selectedMonitor, setSelectedMonitor] = useState(null);
     const [isAnimating, setIsAnimating] = useState(false);
+    const [activeProjectId, setActiveProjectId] = useState(null);
+    const [activeWallSlot, setActiveWallSlot] = useState(null);
 
     const { openOverlay, overlayContent, isTeleporting } = useScene();
     const { showTutorial, unlockAchievement, hidePopup } = useAchievements();
@@ -495,16 +511,43 @@ const StudioRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
     const sanityContent = useStudioContent();
     const activeContent = sanityContent || CONTENT_DATA;
 
-    const heroItem = useMemo(() => {
+    const selectedContent = useMemo(() => {
         if (!activeContent?.length) return null;
-        const latest = [...activeContent].sort((a, b) => new Date(b.date) - new Date(a.date))[0];
-        return buildHeroItem(latest, layout);
-    }, [activeContent, layout]);
+        const selected = activeProjectId
+            ? activeContent.find((item) => item.id === activeProjectId)
+            : null;
+        if (selected) return selected;
+        return [...activeContent].sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+    }, [activeContent, activeProjectId]);
+
+    const heroItem = useMemo(
+        () => buildHeroItem(selectedContent, layout),
+        [selectedContent, layout]
+    );
 
     const backgroundItems = useMemo(
         () => buildBackgroundItems(activeContent || [], heroItem, layout),
         [activeContent, heroItem, layout]
     );
+
+    const playlistPositions = useMemo(
+        () => new Map((activeContent || []).map((item, index) => [item.id, index + 1])),
+        [activeContent]
+    );
+    const activePlaylistIndex = playlistPositions.get(heroItem?.id) || 1;
+    const totalWorks = activeContent?.length || 0;
+
+    // 换片时把主屏状态同步给读屏层，也让 DOM 验收能读到真实选中项。
+    useEffect(() => {
+        if (!heroItem) return;
+        window.dispatchEvent(new CustomEvent('ciwei:studio-program', {
+            detail: {
+                title: heroItem.title,
+                index: activePlaylistIndex,
+                total: totalWorks,
+            },
+        }));
+    }, [heroItem, activePlaylistIndex, totalWorks]);
 
     // 屏幕里始终是彩色成片；提前拉当前设备版本的封面，避免相机落位后主屏才出图
     useMemo(() => {
@@ -561,9 +604,14 @@ const StudioRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
         return undefined;
     }, [showRoom, stageFrame, heroItem, camera, layout.heroDist]);
 
+    const backgroundCount = backgroundItems.length;
     useEffect(() => {
-        monitorOffsets.current = backgroundItems.map(() => 0);
-    }, [backgroundItems]);
+        // 选片只改主屏内容；片墙槽位和已滚动位置保持不变。
+        monitorOffsets.current = Array.from(
+            { length: backgroundCount },
+            (_, index) => monitorOffsets.current[index] ?? 0
+        );
+    }, [backgroundCount]);
 
     useEffect(() => {
         if (showRoom && !isWarmup) {
@@ -707,9 +755,12 @@ const StudioRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
         openScreen(item, heroRef);
     }, [openScreen]);
 
-    const handleBackgroundClick = useCallback((item) => {
-        openScreen(item, { current: monitorRefs.current[item.index] });
-    }, [openScreen]);
+    const handleBackgroundClick = useCallback((item, index) => {
+        if (dragDistance.current > 6 || isAnimating) return;
+        setActiveProjectId(item.id);
+        setActiveWallSlot(index);
+        unlockAchievement('studio_interact');
+    }, [isAnimating, unlockAchievement]);
 
     const returnCamera = useCallback(() => {
         const home = cameraHome.current;
@@ -811,7 +862,7 @@ const StudioRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
     const benchDepth = Math.max(heroItem.depth + 0.6, 1.9);
     const signWidth = layout.kind === 'mobile' ? 3.0 : 4.0;
     const signHeight = layout.kind === 'mobile' ? 0.85 : 0.95;
-    const signY = heroItem.baseY + heroItem.height / 2 + (layout.kind === 'mobile' ? 1.15 : 1.55);
+    const signY = heroItem.baseY + heroItem.height / 2 + (layout.kind === 'mobile' ? 1.42 : 2.0);
     const labelWidth = Math.min(Math.max(heroItem.width * 0.66, 1.0), 2.7);
     const labelHeight = labelWidth < 1.5 ? 0.44 : 0.48;
     const labelY = heroItem.baseY - heroItem.height / 2 + labelHeight / 2 + 0.15;
@@ -820,7 +871,7 @@ const StudioRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
     const meta = [
         heroItem.category,
         heroItem.durationSeconds ? `${heroItem.durationSeconds} 秒` : null,
-        layout.kind === 'mobile' ? '轻触播放' : '点击播放',
+        layout.kind === 'mobile' ? '轻点主屏 · 看详情' : '点主屏 · 看详情',
     ]
         .filter(Boolean)
         .join(' · ');
@@ -895,6 +946,8 @@ const StudioRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
                         width={signWidth}
                         height={signHeight}
                         isMobile={layout.kind === 'mobile'}
+                        currentIndex={activePlaylistIndex}
+                        totalCount={totalWorks}
                     />
                 </group>
 
@@ -977,8 +1030,11 @@ const StudioRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
                             key={`${item.id}-${index}`}
                             item={item}
                             meshRef={(element) => { monitorRefs.current[index] = element; }}
-                            isSelected={selectedMonitor?.index === index && !selectedMonitor?.isHero}
-                            onMonitorClick={handleBackgroundClick}
+                            isSelected={activeWallSlot === index}
+                            isCurrent={activeWallSlot === index}
+                            playlistIndex={playlistPositions.get(item.id) || 1}
+                            totalCount={totalWorks}
+                            onMonitorClick={(clickedItem) => handleBackgroundClick(clickedItem, index)}
                             disabled={isAnimating}
                             paintOnBeforeCompile={paintOnBeforeCompile}
                             paintUniforms={paintUniforms}

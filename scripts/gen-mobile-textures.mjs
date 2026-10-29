@@ -12,6 +12,7 @@ import sharp from 'sharp';
 
 const PUB = 'public';
 const MANIFEST = 'src/config/mobileTextureManifest.js';
+const manifestOnly = process.argv.includes('--manifest-only');
 const TARGETS = [
     { dir: 'covers', width: 512 },
     { dir: 'textures', width: 768, recurse: true },
@@ -48,11 +49,15 @@ for (const target of TARGETS) {
             continue;
         }
         const out = file.replace(/\.webp$/i, '-mobile.webp');
+        const publicPath = '/' + file.replace(/\\/g, '/').replace(/^public\//, '');
+        if (manifestOnly) {
+            if (fs.existsSync(out)) manifest.push(publicPath);
+            continue;
+        }
         await sharp(file)
             .resize({ width: target.width, withoutEnlargement: true })
             .webp({ quality: 78, effort: 6 })
             .toFile(out);
-        const publicPath = '/' + file.replace(/\\/g, '/').replace(/^public\//, '');
         manifest.push(publicPath);
         generated += 1;
     }

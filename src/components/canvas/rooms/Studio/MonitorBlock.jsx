@@ -1,5 +1,6 @@
-import { memo, useRef, useMemo, useEffect, useCallback } from 'react';
+import { memo, useRef, useMemo, useEffect, useCallback, useState } from 'react';
 import { useLoader } from '@react-three/fiber';
+import { Html } from '@react-three/drei';
 import * as THREE from 'three';
 import gsap from 'gsap';
 import { TextureLoader } from 'three';
@@ -8,11 +9,35 @@ import { isTouchDevice } from '../../../../utils/deviceDetect';
 import { useColorEnabled } from '../../../../utils/colorMode';
 import { useColorOnlyTexture, useTexturePair, mobileSrc } from '../../../../utils/colorTexture';
 import { STUDIO_PAINT_CONFIG } from './studioPaintConfig';
+import '../../../../styles/StudioProgramTag.scss';
 import '../../shaders/RevealMaterial';
 
 const shellSrc = (src) => mobileSrc(src);
+const pad2 = (value) => String(value || 0).padStart(2, '0');
 
-const MonitorBlock = memo(({ item, meshRef, isSelected, onMonitorClick, disabled, paintOnBeforeCompile, paintUniforms }) => {
+/* 侧屏悬停时才挂载的纸质片签；固定像素尺寸，远端侧屏也能读清。 */
+const ProgramHoverTag = ({ item, index, total, isCurrent }) => (
+    <Html
+        position={[0, -item.height / 2 - 0.2, item.depth / 2 + 0.08]}
+        center
+        zIndexRange={[140, 110]}
+        style={{ pointerEvents: 'none' }}
+    >
+        <div className={`studio-program-tag ${isCurrent ? 'is-current' : ''}`}>
+            <span className="studio-program-tag__index">{pad2(index)}</span>
+            <span className="studio-program-tag__copy">
+                <strong>{item.title}</strong>
+                <em>
+                    {isCurrent
+                        ? `正在主屏放映 · ${pad2(index)} / ${pad2(total)}`
+                        : `点击换到主屏 · ${pad2(index)} / ${pad2(total)}`}
+                </em>
+            </span>
+        </div>
+    </Html>
+);
+
+const MonitorBlock = memo(({ item, meshRef, isSelected, isCurrent, playlistIndex, totalCount, onMonitorClick, disabled, paintOnBeforeCompile, paintUniforms }) => {
     const paintedBoxRef = useRef();
     const hideDelayRef = useRef();
     const matRef0 = useRef();
@@ -171,6 +196,13 @@ const MonitorBlock = memo(({ item, meshRef, isSelected, onMonitorClick, disabled
     }, [faceConfig, paintOnBeforeCompile]);
 
     const isHoveredRef = useRef(false);
+    const [isHovered, setIsHovered] = useState(false);
+    const groupRef = useRef();
+    const setGroupRef = useCallback((node) => {
+        groupRef.current = node;
+        if (typeof meshRef === 'function') meshRef(node);
+        else if (meshRef) meshRef.current = node;
+    }, [meshRef]);
 
     const updatePaintState = useCallback(() => {
         if (!faceConfig) return;
@@ -218,20 +250,42 @@ const MonitorBlock = memo(({ item, meshRef, isSelected, onMonitorClick, disabled
 
     return (
         <group
-            ref={meshRef}
+            ref={setGroupRef}
             position={[item.x, item.baseY, item.z]}
             rotation={[0, item.rot, 0]}
             onPointerOver={(e) => {
                 if (disabled) return;
                 e.stopPropagation();
                 isHoveredRef.current = true;
+                setIsHovered(true);
                 updatePaintState();
                 document.body.style.cursor = 'pointer';
+                if (!item.isHero && groupRef.current) {
+                    gsap.to(groupRef.current.scale, {
+                        x: 1.055,
+                        y: 1.055,
+                        z: 1.055,
+                        duration: 0.28,
+                        ease: 'power2.out',
+                        overwrite: true,
+                    });
+                }
             }}
             onPointerOut={() => {
                 isHoveredRef.current = false;
+                setIsHovered(false);
                 updatePaintState();
                 document.body.style.cursor = 'auto';
+                if (!item.isHero && groupRef.current) {
+                    gsap.to(groupRef.current.scale, {
+                        x: 1,
+                        y: 1,
+                        z: 1,
+                        duration: 0.3,
+                        ease: 'power2.out',
+                        overwrite: true,
+                    });
+                }
             }}
             onPointerUp={(e) => {
                 if (disabled) return;
@@ -286,6 +340,28 @@ const MonitorBlock = memo(({ item, meshRef, isSelected, onMonitorClick, disabled
                     );
                 })}
             </mesh>
+
+            {isCurrent && (
+                <group position={[item.width / 2 + 0.035, item.height / 2 - 0.035, item.depth / 2 + 0.07]}>
+                    <mesh raycast={() => null} renderOrder={26}>
+                        <circleGeometry args={[0.06, 24]} />
+                        <meshBasicMaterial color="#f7f0e3" depthWrite={false} />
+                    </mesh>
+                    <mesh position={[0, 0, 0.002]} raycast={() => null} renderOrder={27}>
+                        <circleGeometry args={[0.032, 20]} />
+                        <meshBasicMaterial color="#9a3b2c" depthWrite={false} />
+                    </mesh>
+                </group>
+            )}
+
+            {isHovered && !item.isHero && !disabled && (
+                <ProgramHoverTag
+                    item={item}
+                    index={playlistIndex}
+                    total={totalCount}
+                    isCurrent={isCurrent}
+                />
+            )}
         </group>
     );
 });

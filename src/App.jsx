@@ -118,10 +118,8 @@ function AppContent() {
     const params = new URLSearchParams(window.location.search);
     return params.has('preview') || Boolean(window.sessionStorage.getItem('ciwei-preview'));
   });
-  const [entryFromLanding, setEntryFromLanding] = useState(false);
 
   const request3D = useCallback(() => {
-    setEntryFromLanding(true);
     setSceneRequested(true);
   }, []);
 
@@ -150,22 +148,7 @@ function AppContent() {
     return () => window.clearTimeout(timer);
   }, [bootMode, sceneRequested, sceneReady]);
 
-  // 从 2D 入口点击进入：场景就绪后自动推门，避免让用户再点一次
-  // 入场/门动画可能仍在进行，重复派发几次，由 EntranceDoors 的 isOpen/isAnimating 守卫去重
-  useEffect(() => {
-    if (!isLoaded || !entryFromLanding) return undefined;
-    let attempts = 0;
-    const timer = window.setInterval(() => {
-      window.dispatchEvent(new CustomEvent('ciwei:auto-enter'));
-      attempts += 1;
-      if (attempts >= 8) {
-        window.clearInterval(timer);
-        setEntryFromLanding(false);
-      }
-    }, 900);
-    return () => window.clearInterval(timer);
-  }, [isLoaded, entryFromLanding]);
-
+  // 从 2D 入口点击进入：只负责挂载 3D 入口，推门动作仍由用户点击 3D 门触发
   const handleSceneReady = useCallback(() => {
     requestAnimationFrame(() => {
       setSceneReady(true);

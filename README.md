@@ -23,7 +23,7 @@
 ## 🚀 Key Performance Architectures
 
 1. **Invisible Semantic SEO Fallback:** Bypasses WebGL canvas SEO limitations via strategic `sr-only-seo` indexing DOM injections, rendering fully visible semantic trees to native search-engine crawlers without mounting heavy bundles.
-2. **Asynchronous Shader Compilation:** Enforces `gl.compileAsync` during the Preloading phase inside a hidden `RoomWarmup` Suspense boundary. This allows Three.js to pre-compile complex materials asynchronously without blocking the main React update thread.
+2. **On-demand 3D Boot:** The first screen is a 2D entrance poster and button. `SceneCanvas` is requested only after that click; the user then opens the 3D door by pointer or keyboard. Room assets load when a room is entered.
 3. **Baked Global Tinting & Lighting Extraction:** Replaced real-time WebGL shadow maps and infinite light rays with baked-in global textures, dropping the GPU compute overhead entirely while maintaining visual depth.
 4. **DOM Mutation Bypassing:** Critical animation properties write directly to `ref.current.style`, intentionally bypassing React's `setState` render cycles to conserve CPU.
 5. **Adaptive Device Tiering:** Auto-detects `navigator.deviceMemory`, hardware concurrency, and viewport sizes to scale WebGL resolutions (`dpr`), antialiasing algorithms, and texture loading strictness on the fly.
@@ -35,11 +35,11 @@
 ```mermaid
 graph TD;
     A[App.jsx] --> B[SceneProvider Context];
-    A --> C[canvas];
+    A --> L[EntranceLanding 2D button];
+    L -->|click| C[Lazy SceneCanvas];
     A --> D[2D DOM / SEO / HUD];
 
     C --> E[Experience.jsx];
-    E --> F[RoomWarmup Pre-compiler];
     E --> G[Infinite Corridor Manager];
 
     G --> H[Gallery Room];
@@ -47,8 +47,8 @@ graph TD;
     G --> J[Contact Room];
     G --> K[About Room];
 
-    H -.-> L{useTexture & useGLTF};
-    L -.-> M(GPU Memory);
+    H -.-> M{useTexture & useGLTF};
+    M -.-> N(GPU Memory);
 ```
 
 ---
@@ -62,6 +62,8 @@ npm run build      # 生产构建（含构建期资产生成与 SEO 插件）
 npm run preview
 ```
 
+进入流程：首屏按钮只负责装载 3D 布景；随后点击 3D 门进入。键盘用户可 Tab 到「推门进入 3D 世界」按钮后按回车。
+
 常用脚本：
 
 | 脚本 | 作用 |
@@ -71,6 +73,8 @@ npm run preview
 | `node pipeline/make-favicon.mjs` | 构建期生成「此」字 favicon |
 | `node scripts/gen-preload-list.mjs` | 扫描 `public/` 重新生成贴图预加载清单 |
 | `node export-ciwei.mjs` | 从主站 `placeholder.ts` 导出 `ciwei-projects.json` |
+
+字体与文案更新：完整源字体保留在本地 `pipeline/fonts-source/`（不纳入 Git）。改完中文文案后运行 `npm run gen:fonts`，会按当前源码重建 Noto 子集并执行 `audit:fonts`；缺字会直接失败。
 
 配置见 `src/config/site-config.js`（域名与社交账号单一来源，占位符在 `seo-config.template.md`）。
 

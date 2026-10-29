@@ -45,9 +45,15 @@
     background: $ink;
     color: $paper;
     font-size: 14px;
-    font-family: 'Inter', sans-serif;
+    font-family: $font-primary;
     font-weight: 600;
     border-radius: 8px;
     text-decoration: none;
     box-shadow: 0 4px 12px rgba($black, 0.3);
+}
+
+.sr-enter-door:focus {
+    top: 56px;
+    border: 1px solid $paper;
+    cursor: pointer;
 }

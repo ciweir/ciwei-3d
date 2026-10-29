@@ -2,8 +2,9 @@ import React, { Suspense, useRef, useState, useMemo, useEffect, useLayoutEffect,
 import { Text as TroikaText } from 'troika-three-text';
 import { useThree, useFrame } from '@react-three/fiber';
 // 全站彩色：桌面端自动取 _painted 彩色版（见 utils/colorTexture.js）
-import { useColorTexture as useTexture, useTexturePair } from '../../../../utils/colorTexture';
+import { useColorTexture as useTexture, useTexturePair, mobileSrc } from '../../../../utils/colorTexture';
 import { useColorEnabled } from '../../../../utils/colorMode';
+import { isTouchDevice } from '../../../../utils/deviceDetect';
 import * as THREE from 'three';
 import gsap from 'gsap';
 import { Observer } from 'gsap/all';
@@ -45,6 +46,8 @@ const FALLBACK_PROJECTS = ciweiProjectsFallback.slice(0, 4);
 
 // PROJECT_COUNT 已移至组件内动态计算（长廊分段：卡片 + 类间隔断，见 GalleryRoom 内）
 const GAP = 2.5;
+// 手机竖屏挂绳斜置角度：既能看到相邻卡片纵深，又不至于让当前卡过度透视。
+const MOBILE_LINE_SKEW = 0.3;
 
 // 调整这些值以匹配小鸟比例（旧比例 1.41）
 const BIRD_WIDTH = 0.49;
@@ -140,13 +143,15 @@ const GalleryRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
                 setIsTransitioning(true);
                 // resetPaint() in case we re-enter
                 resetPaint();
+                // 手机端缩短“上色揭幕”：2.5s 在长屏上会像卡住，1.3s 仍然保留笔触感。
+                const paintDuration = isTouchDevice() ? 1.3 : 2.5;
                 // Start the paint animation with a slight delay so it happens *during* fly-in
-                animatePaint(0.2, 2.5);
-                
+                animatePaint(0.2, paintDuration);
+
                 // Re-enable interactions once painting finishes
                 setTimeout(() => {
                     setIsTransitioning(false);
-                }, 2700); // 0.2 + 2.5
+                }, (0.2 + paintDuration) * 1000);
             }
         } else {
             // Immediately reveal for warmup or hide if not showing
@@ -260,17 +265,54 @@ const GalleryRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
     /* 槽位数 = 卡片 + 隔断（分段后动态） */
     const PROJECT_COUNT = projectsWithDividers.length;
 
-    // 手机首屏只容得下一张卡：从第一张作品开始，避免停在不可点击的分类隔断
+    // 手机竖屏首屏优先停在“左右都有作品”的位置，
+    // 避免一进来就贴着分类隔断（隔断只有标签，看起来像半张被裁掉的卡）。
+    const mobileStartIndex = useMemo(() => {
+        const firstProjectIndex = projectsWithDividers.findIndex((p) => !p.isDivider);
+        let startIndex = firstProjectIndex;
+        if (projectsWithDividers[startIndex + 1]?.isDivider) {
+            const nextProject = projectsWithDividers.findIndex((p, i) => i > startIndex && !p.isDivider);
+            if (nextProject !== -1) startIndex = nextProject;
+        }
+        return Math.max(0, startIndex);
+    }, [projectsWithDividers]);
+
     const didInitTouchScroll = useRef(false);
     useEffect(() => {
         if (canHover || didInitTouchScroll.current) return;
-        const firstProjectIndex = projectsWithDividers.findIndex((p) => !p.isDivider);
-        if (firstProjectIndex > 0) {
-            targetScroll.current = firstProjectIndex * GAP;
-            currentScroll.current = firstProjectIndex * GAP;
+        if (mobileStartIndex > 0) {
+            targetScroll.current = mobileStartIndex * GAP;
+            currentScroll.current = mobileStartIndex * GAP;
         }
         didInitTouchScroll.current = true;
-    }, [canHover, projectsWithDividers]);
+    }, [canHover, mobileStartIndex]);
+
+    // 竖屏首屏只显示纸卡与天空：等房间稳定后把“上色”会用到的可见贴图
+    // 悄悄暖进浏览器缓存，点调色盘时不用再等 30 多张图排队。
+    const didWarmColor = useRef(false);
+    useEffect(() => {
+        if (canHover || colorEnabled || isWarmup || didWarmColor.current) return undefined;
+        if (navigator.connection?.saveData) return undefined;
+        const timer = window.setTimeout(() => {
+            didWarmColor.current = true;
+            const urls = new Set([
+                '/textures/gallery/domki_painted.webp',
+                '/textures/gallery/miastotlo_painted.webp',
+                '/textures/gallery/railing_painted.webp',
+            ]);
+            projectsWithDividers
+                .slice(mobileStartIndex, mobileStartIndex + 3)
+                .forEach((project) => {
+                    if (!project.isDivider && project.painted) urls.add(project.painted);
+                });
+            urls.forEach((url) => {
+                const img = new Image();
+                img.decoding = 'async';
+                img.src = mobileSrc(url);
+            });
+        }, 2200);
+        return () => window.clearTimeout(timer);
+    }, [canHover, colorEnabled, isWarmup, projectsWithDividers, mobileStartIndex]);
 
     // 首屏只挂载视野内的卡片（开头 6 张 + 环绕到左侧的末尾 3 张），
     // 房间就绪后再分批补齐其余卡片：30 张卡的几何/材质/标题文字是首次编译的大头。
@@ -526,7 +568,12 @@ const GalleryRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
                 </mesh>
 
                 {/* === CLOTHESLINE SYSTEM === */}
-                <group position={[0, 1.6, -4]}>
+                {/* 手机竖屏：正面挂绳只能看到一张占满屏幕的卡；把绳线绕 Y 轴斜置，
+                    让卡片向纵深退去，首屏同时露出相邻作品，同时保持相机/打开动画居中。 */}
+                <group
+                    position={[0, 1.6, -4]}
+                    rotation={[0, canHover ? 0 : MOBILE_LINE_SKEW, 0]}
+                >
                     <mesh geometry={ropeGeometry} material={materials.rope} />
 
                     {/* Proj Cards：每张卡独立 Suspense，单卡依赖（字体/视频/技术栈图标）不阻塞整个房间 */}
@@ -868,6 +915,15 @@ const ProjectCard = memo(forwardRef(({ index, project, clothespinTexture, curren
 
                 const localBaseY = -1.1;
 
+                // 打开时纸卡转正为 -skew，收回挂绳时要一起转回，避免一张卡直挺挺挂着
+                if (isMobile) {
+                    timeline.to(cardRef.current.rotation, {
+                        x: 0, y: 0, z: 0,
+                        duration: 0.35,
+                        ease: 'power2.in'
+                    }, 0);
+                }
+
                 timeline.to(paperRef.current.position, {
                     y: localBaseY + 0.6,
                     x: 0,
@@ -929,15 +985,22 @@ const ProjectCard = memo(forwardRef(({ index, project, clothespinTexture, curren
                     setIsAnimating(true);
                     playPaperSound();
 
-                    const isMobile = window.innerWidth < 768;
+                    const isNarrow = window.innerWidth < 768;
                     const targetX_World = 0;
-                    const targetY_World = isMobile ? -0.2 : 0.1;
-                    const targetZ_World = isMobile ? 0.5 : 1.5;
+                    const targetY_World = isNarrow ? -0.2 : 0.1;
+                    // 手机竖屏不再把纸怼到镜头前：留出左右纸边与阅读余量
+                    const targetZ_World = isNarrow ? 0.15 : 1.5;
 
                     const parentPos = cardRef.current.position;
-                    const targetX = targetX_World - parentPos.x;
-                    const targetY = targetY_World - parentPos.y;
-                    const targetZ = targetZ_World - parentPos.z;
+                    const rawTargetX = targetX_World - parentPos.x;
+                    const rawTargetY = targetY_World - parentPos.y;
+                    const rawTargetZ = targetZ_World - parentPos.z;
+                    // 卡片转为正面朝向时，整张纸绕卡组原点转回 -skew；
+                    // 纸的相对目标位置要先反向补偿，否则会被旋转甩到屏幕左侧。
+                    const openSkew = isMobile ? MOBILE_LINE_SKEW : 0;
+                    const targetX = rawTargetX * Math.cos(openSkew) + rawTargetZ * Math.sin(openSkew);
+                    const targetY = rawTargetY;
+                    const targetZ = -rawTargetX * Math.sin(openSkew) + rawTargetZ * Math.cos(openSkew);
 
                     const timeline = gsap.timeline({
                         onComplete: () => {
@@ -947,7 +1010,9 @@ const ProjectCard = memo(forwardRef(({ index, project, clothespinTexture, curren
                     });
 
                     timeline.to(cardRef.current.rotation, {
-                        x: 0, y: 0, z: 0,
+                        x: 0,
+                        y: isMobile ? -MOBILE_LINE_SKEW : 0,
+                        z: 0,
                         duration: 0.3,
                         ease: 'power2.out'
                     }, 0);
@@ -1037,9 +1102,9 @@ const ProjectCard = memo(forwardRef(({ index, project, clothespinTexture, curren
                     }
 
                     timeline.to(paperRef.current.scale, {
-                        x: 1.1,
-                        y: 1.1,
-                        z: 1.1,
+                        x: isMobile ? 1.0 : 1.1,
+                        y: isMobile ? 1.0 : 1.1,
+                        z: isMobile ? 1.0 : 1.1,
                         duration: 0.3,
                         ease: 'sine.out'
                     }, '-=0.4');
@@ -1199,8 +1264,8 @@ const ProjectCard = memo(forwardRef(({ index, project, clothespinTexture, curren
         // Visibility Check (fade out if too far)
         const dist = Math.abs(displayX);
         const scale = THREE.MathUtils.clamp(1 - (dist / 50), 0.7, 1);
-        // 移动端卡片整体放大 16%，让作品在小屏上更有存在感
-        cardRef.current.scale.setScalar(scale * (isMobile ? 1.16 : 1));
+        // 移动端保持原始尺寸：斜置挂绳已经提供了纵深，再放大会重新变成“大屏”
+        cardRef.current.scale.setScalar(scale * (isMobile ? 1.0 : 1));
     });
 
     /* === 1d-ii 隔断渲染分支（长廊分段的"门楣"）——无交互、无贴图、无视频 === */

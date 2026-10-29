@@ -46,11 +46,12 @@ for (const project of projects) {
 }
 
 for (const font of [
-    'NotoSansSC.ttf',
-    'CabinSketch-Bold.ttf',
-    'CabinSketch-Regular.ttf',
+    'NotoSansSC.woff',
+    'NotoSerifSC-Headings.woff',
+    'CabinSketch-Bold.woff',
+    'CabinSketch-Regular.woff',
     'MeowSubset.ttf',
-    'RubikScribble-Regular.ttf',
+    'RubikScribble-Regular.woff',
 ]) {
     check(`/fonts/${font}`, 'font');
 }

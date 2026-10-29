@@ -21,7 +21,7 @@ const CLOUD_TEXTURES = [
  * GalleryClouds Component
  * Static clouds scattered randomly above the gallery room
  */
-const GalleryClouds = ({ count = 12, seed = 42, rotationOffset = [0, -Math.PI / 3, 0] }) => {
+const GalleryClouds = ({ count = 12, seed = 42, rotationOffset = [0, -Math.PI / 3, 0], keyBackground = false }) => {
     // Movement boundaries - must match StaticCloud
     const startX = 40;
     const endX = -40;
@@ -69,6 +69,7 @@ const GalleryClouds = ({ count = 12, seed = 42, rotationOffset = [0, -Math.PI / 
                     driftSpeed={cloud.driftSpeed}
                     initialOffset={cloud.initialOffset}
                     rotationOffset={rotationOffset}
+                    keyBackground={keyBackground}
                 />
             ))}
         </group>
@@ -76,9 +77,10 @@ const GalleryClouds = ({ count = 12, seed = 42, rotationOffset = [0, -Math.PI / 
 };
 
 // Static cloud component (billboard with continuous drift)
-const StaticCloud = ({ position, scale, opacity, textureIndex, driftSpeed, initialOffset, rotationOffset }) => {
+const StaticCloud = ({ position, scale, opacity, textureIndex, driftSpeed, initialOffset, rotationOffset, keyBackground = false }) => {
     const meshRef = useRef();
     const isTouch = isTouchDevice();
+    const keyCloud = isTouch || keyBackground;
     const basePosition = useRef(position);
 
     // Movement boundaries
@@ -134,8 +136,8 @@ const StaticCloud = ({ position, scale, opacity, textureIndex, driftSpeed, initi
                 opacity={opacity}
                 depthWrite={false}
                 side={THREE.DoubleSide}
-                onBeforeCompile={isTouch ? applyCloudAlphaKey : undefined}
-                customProgramCacheKey={isTouch ? () => CLOUD_ALPHA_KEY : undefined}
+                onBeforeCompile={keyCloud ? applyCloudAlphaKey : undefined}
+                customProgramCacheKey={keyCloud ? () => CLOUD_ALPHA_KEY : undefined}
             />
         </mesh>
     );

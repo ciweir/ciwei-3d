@@ -2,7 +2,6 @@ import { useMemo, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { useCloudTexture } from '../../../../utils/colorTexture';
-import { isTouchDevice } from '../../../../utils/deviceDetect';
 import { applyCloudAlphaKey, CLOUD_ALPHA_KEY } from '../../cloudAlphaKey';
 
 /**
@@ -99,7 +98,6 @@ const Cloud = ({
 }) => {
     const meshRef = useRef();
     const materialRef = useRef();
-    const isTouch = isTouchDevice();
     const { camera } = useThree();
 
     // Store base position for animation
@@ -186,8 +184,8 @@ const Cloud = ({
                 opacity={baseOpacity}
                 depthWrite={false}
                 side={THREE.DoubleSide}
-                onBeforeCompile={isTouch ? applyCloudAlphaKey : undefined}
-                customProgramCacheKey={isTouch ? () => CLOUD_ALPHA_KEY : undefined}
+                onBeforeCompile={applyCloudAlphaKey}
+                customProgramCacheKey={() => CLOUD_ALPHA_KEY}
             />
         </mesh>
     );

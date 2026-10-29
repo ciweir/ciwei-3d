@@ -18,17 +18,18 @@ const MIN_BYTES = 512;
 const EXTS = ['.webp', '.jpg', '.jpeg', '.png', '.mp3', '.wav', '.ogg', '.gif'];
 const OUT = 'src/config/texturePreloadList.js';
 
-/* 列出目录内的素材；recurse=true 时递归子目录 */
-function filesIn(dir, { recurse = false } = {}) {
+/* 列出目录内的素材；recurse=true 时递归子目录。
+   -mobile 变体默认交给 mobileTextureManifest 管理；首帧海报需要保留移动/彩色变体。 */
+function filesIn(dir, { recurse = false, includeMobileVariants = false } = {}) {
   if (!fs.existsSync(dir)) return [];
   const out = [];
   for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
     const p = path.join(dir, e.name);
     if (e.isDirectory()) {
-      if (recurse) out.push(...filesIn(p, { recurse }));
+      if (recurse) out.push(...filesIn(p, { recurse, includeMobileVariants }));
     } else if (
       EXTS.includes(path.extname(e.name).toLowerCase()) &&
-      !e.name.endsWith('-mobile.webp') &&
+      (includeMobileVariants || !e.name.endsWith('-mobile.webp')) &&
       fs.statSync(p).size >= MIN_BYTES
     ) {
       out.push('/' + p.replace(/\\/g, '/').replace(/^public\//, ''));
@@ -63,7 +64,9 @@ const G = {
     ...filesIn(`${PUB}/textures/corridor/decorations`, { recurse: true }),
   ]),
   UI_TEXTURES: uniq(filesIn(`${PUB}/textures/corridor/avatar_anim`, { recurse: true })),
-  IMAGE_ASSETS: uniq(filesIn(`${PUB}/images`, { recurse: true })),
+  IMAGE_ASSETS: uniq(
+    filesIn(`${PUB}/images`, { recurse: true, includeMobileVariants: true })
+  ),
   GALLERY_TEXTURES: uniq([
     ...filesIn(`${PUB}/textures/gallery`, { recurse: true }),
     ...filesIn(`${PUB}/covers`, { recurse: true }), // 画廊卡片正反面（数据桥产出的真实素材）
@@ -144,9 +147,14 @@ export const filterTexturesByDevice = (list, usePainted) => {
             if (path.endsWith('_painted.webp')) return !isTouchDevice() && usePainted;
             return isTouchDevice() || !usePainted;
         }
-        // 首帧海报只预载当前设备对应的一套；地图彩色图层在触屏端不渲染。
-        if (path.includes('/images/entrance-poster') || path.includes('/images/gallery-entry')) {
-            return path.endsWith('-mobile.webp') ? isTouchDevice() : !isTouchDevice();
+        // 首帧海报只预载当前设备、当前配色对应的一套；地图彩色图层在触屏端不渲染。
+        if (path.includes('/images/entrance-poster')) {
+            return path.includes('-mobile') ? isTouchDevice() : !isTouchDevice();
+        }
+        if (path.includes('/images/gallery-entry')) {
+            const deviceMatch = path.includes('-mobile') ? isTouchDevice() : !isTouchDevice();
+            const colorMatch = path.includes('-color') ? usePainted : !usePainted;
+            return deviceMatch && colorMatch;
         }
         if (isTouchDevice() && path.startsWith('/images/') && path.endsWith('_painted.webp')) {
             return false;

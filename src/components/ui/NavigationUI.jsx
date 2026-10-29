@@ -7,6 +7,8 @@ import { useAchievements } from '../../context/useAchievements';
 import AchievementPopup from './AchievementPopup';
 import AchievementsPanel from './AchievementsPanel';
 import GallerySwipeHint from './GallerySwipeHint';
+import ContactCard from './ContactCard';
+import AboutCard from './AboutCard';
 import { useColorEnabled, toggleColorEnabled, setColorLoadScope } from '../../utils/colorMode';
 import { useColorLoadPending } from '../../utils/colorLoadStatus';
 import { isTouchDevice } from '../../utils/deviceDetect';
@@ -52,7 +54,8 @@ const NavigationUI = () => {
     const [isAchievementsOpen, setIsAchievementsOpen] = useState(false);
     const [bgmVol, setBgmVol] = useState(0.3);
     const [isUIHidden, setIsUIHidden] = useState(false);
-    const [studioHintReady, setStudioHintReady] = useState(false);
+    const [roomHintReady, setRoomHintReady] = useState(false);
+    const [aboutStarted, setAboutStarted] = useState(false);
 
     // Refs for focus management
     const mapPanelRef = useRef();
@@ -63,21 +66,35 @@ const NavigationUI = () => {
         setColorLoadScope(currentRoom || 'corridor');
     }, [currentRoom]);
 
-    // 首访先让成就提示说完，再出现常驻浏览纸签
+    // About 资料卡只在首屏，开始飞行后收起
     useEffect(() => {
-        if (!(hasEntered && isInRoom && currentRoom === 'studio')) {
-            setStudioHintReady(false);
+        if (currentRoom !== 'about') {
+            setAboutStarted(false);
             return undefined;
         }
-        const timer = window.setTimeout(() => setStudioHintReady(true), 3000);
+        setAboutStarted(false);
+        const handleAboutStart = () => setAboutStarted(true);
+        window.addEventListener('ciwei:about-scroll-start', handleAboutStart);
+        return () => window.removeEventListener('ciwei:about-scroll-start', handleAboutStart);
+    }, [currentRoom]);
+
+    // 首访先让成就提示说完，再出现常驻浏览纸签（工作室）
+    useEffect(() => {
+        if (!(hasEntered && isInRoom && currentRoom === 'studio')) {
+            setRoomHintReady(false);
+            return undefined;
+        }
+        const timer = window.setTimeout(() => setRoomHintReady(true), 3000);
         return () => window.clearTimeout(timer);
     }, [hasEntered, isInRoom, currentRoom]);
 
     const showStudioVeil = hasEntered && isInRoom && currentRoom === 'studio' && !isExiting;
-    const showStudioHint = showStudioVeil
-        && studioHintReady
-        && !activePopup
-        && !isUIHidden;
+    const showRoomHint = hasEntered
+        && isInRoom
+        && !isExiting
+        && !isUIHidden
+        && roomHintReady
+        && currentRoom === 'studio';
 
     useEffect(() => {
         const handleInspectChange = (e) => {
@@ -548,15 +565,21 @@ const NavigationUI = () => {
 
             <GallerySwipeHint />
 
-            {showStudioHint && (
-                <div className="studio-browse-hint">
+            {hasEntered && isInRoom && currentRoom === 'contact' && !isExiting && <ContactCard />}
+            {hasEntered && isInRoom && currentRoom === 'about' && !isExiting && !aboutStarted && <AboutCard />}
+
+            {showRoomHint && (
+                <div className={`room-browse-hint ${activePopup ? 'has-open-popup' : ''}`}>
                     <svg viewBox="0 0 24 24" aria-hidden="true">
                         <path d="M9 4v16M6 7l3-3 3 3M15 20V4M12 17l3 3 3-3" />
                     </svg>
-                    <span>
-                        {touchDevice
-                            ? `上下拖动 · 浏览 ${STUDIO_WORK_COUNT} 部作品`
-                            : `滚动 / 拖动 · 浏览 ${STUDIO_WORK_COUNT} 部作品`}
+                    <span className="room-browse-hint__copy">
+                        <span className="room-browse-hint__title">
+                            {touchDevice
+                                ? `上下拖动 · 浏览 ${STUDIO_WORK_COUNT} 部片单`
+                                : `滚动 / 拖动 · 浏览 ${STUDIO_WORK_COUNT} 部片单`}
+                        </span>
+                        <span className="room-browse-hint__detail">点侧屏换片 · 点主屏看详情</span>
                     </span>
                 </div>
             )}

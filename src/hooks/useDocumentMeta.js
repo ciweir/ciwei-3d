@@ -40,7 +40,7 @@ const ROOM_META = {
     contact: {
         path: '/contact',
         title: '联系 —— 此唯作品集',
-        description: '与此唯取得联系：社交媒体、邮箱与联系方式，都在 3D 世界的联系房间里。',
+        description: '与此唯取得联系：邮箱与联系方式，都在 3D 世界的联系房间里。',
     },
 };
 

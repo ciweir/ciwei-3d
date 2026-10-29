@@ -2,7 +2,6 @@ import { useRef, useState, useEffect } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import { Text, PositionalAudio } from '@react-three/drei';
 import * as THREE from 'three';
-import MessagePaper from './MessagePaper';
 import SocialBarrel from './SocialBarrel';
 import { useScene } from '../../../../context/useScene';
 import GalleryClouds from '../Gallery/GalleryClouds';
@@ -96,7 +95,7 @@ const PHASE = {
 const ContactRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
     const { camera } = useThree();
     const { isTeleporting } = useScene();
-    const { showTutorial, unlockAchievement, hidePopup } = useAchievements();
+    const { hidePopup } = useAchievements();
     const { globalVolume, isMuted } = useAudio();
     const effectiveVolume = isMuted ? 0 : AUDIO_SETTINGS.volume * globalVolume;
 
@@ -195,7 +194,6 @@ const ContactRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
 
     // Phase state
     const [, setCurrentPhase] = useState(PHASE.ENTERING);
-    const [showSelection, setShowSelection] = useState(true);
 
     const hasAnimatedDown = useRef(false);
     // Latch exit state to prevent glitch
@@ -225,7 +223,6 @@ const ContactRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
             targetRotY.current = 0;
             targetRotZ.current = 0;
             setCurrentPhase(PHASE.ENTERING);
-            setShowSelection(true); // Reset selection menu
         }
     }, [isTeleporting]);
 
@@ -244,47 +241,12 @@ const ContactRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
                 setCurrentPhase(PHASE.ENTERING);
                 targetRotX.current = 0;
                 targetRotZ.current = 0;
-                setShowSelection(true);
             }
         }
     }, [hasSignaledReady.current, showRoom, camera]);
 
     const handleMailSelect = () => {
         if (SOCIAL.email) window.location.href = `mailto:${SOCIAL.email}`;
-
-        /* 
-        setShowSelection(false);
-
-        // Trigger the look down sequence
-        hasAnimatedDown.current = true;
-        hasExitTriggered.current = false;
-
-        // Capture landing rotation (usually 0,0,0)
-        targetRotX.current = camera.rotation.x;
-        targetRotY.current = camera.rotation.y;
-        targetRotZ.current = camera.rotation.z;
-
-        // Start sequence directly
-        setCurrentPhase(PHASE.LOOKING_DOWN);
-
-        // 1. SET X (Looking down)
-        targetRotX.current = CAMERA_SETTINGS.lookDownAngle;
-
-        // 2. SET Y (Turning)
-        if (CAMERA_SETTINGS.forceCenterY !== null) {
-            targetRotY.current = CAMERA_SETTINGS.forceCenterY;
-        }
-
-        // 3. SET Z (Tilt)
-        if (CAMERA_SETTINGS.forceStraightZ !== null) {
-            targetRotZ.current = CAMERA_SETTINGS.forceStraightZ;
-        }
-
-        // Phase transition
-        setTimeout(() => {
-            setCurrentPhase(PHASE.WRITING);
-        }, 1500);
-        */
     };
 
     // Frame Loop
@@ -297,7 +259,6 @@ const ContactRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
             if (frameCount.current >= FRAMES_TO_WAIT) {
                 hasSignaledReady.current = true;
                 onReady?.();
-                if (!isWarmup) setTimeout(() => showTutorial('contact_submit'), 2000);
             }
         }
 
@@ -380,7 +341,7 @@ const ContactRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
             )}
 
             {/* ☁️ CLOUDS */}
-            <GalleryClouds count={45} seed={88} rotationOffset={[0, 1, 0]} />
+            <GalleryClouds count={45} seed={88} rotationOffset={[0, 1, 0]} keyBackground />
 
             {/* 🌊 OCEAN WAVE LAYERS */}
             <group position={[0, -1, -8]}>
@@ -476,20 +437,6 @@ const ContactRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
                     onBeforeCompile={onBeforeCompile}
                 />
             </mesh>
-
-            {/* 📜 INTERACTIVE MESSAGE PAPER */}
-            {/* Only show when not selecting or when diving in? 
-                Actually we want it there but enabled only after selection
-            */}
-            <group visible={!showSelection}>
-                <MessagePaper
-                    position={[0, 0.07, 2]}
-                    onSend={() => {
-                        unlockAchievement('contact_submit');
-                    }}
-                />
-            </group>
-
 
         </group>
     );

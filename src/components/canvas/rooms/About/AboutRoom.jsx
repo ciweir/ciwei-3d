@@ -1,10 +1,9 @@
 import { useRef, useEffect } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
-import { Text, PositionalAudio } from '@react-three/drei';
+import { PositionalAudio } from '@react-three/drei';
 import * as THREE from 'three';
 import PaperAirplane from './PaperAirplane';
 import InfiniteSkyManager from './InfiniteSkyManager';
-import StoryMilestone from './StoryMilestone';
 import { useScene } from '../../../../context/useScene';
 import { useAchievements } from '../../../../context/useAchievements';
 import { useAudio } from '../../../../context/useAudio';
@@ -23,21 +22,15 @@ const AUDIO_SETTINGS = {
     rolloff: 0.8
 };
 
-// Story sections - positions define where each milestone appears
-// Using CHUNK_LENGTH to create looping story (every ~40 units restarts)
-/* 中文化（2026-10-12 审核发现）：原为 ITom 的学历/技能/获奖——全部替换为
-   此唯的真实数据（siteSettings.stats + heroLines + 项目分类），零编造 */
-const STORY_MILESTONES = [
-    { id: 'intro', position: [0, 0, -15], type: 'intro', title: '此唯', subtitle: '< 视频导演 / 剪辑创作者 />' },
-    { id: 'awards', position: [0, 0, -55], type: 'awards', title: '作品', subtitle: '产品片 · 快剪 · 信息流 · 口播 · 直播切片 · 探店' },
-    { id: 'journey', position: [0, 0, -95], type: 'journey', title: '经历', subtitle: '6 年从业 · 1.2M 累计播放 · 18 位合作客户' },
-    { id: 'skills', position: [0, 0, -135], type: 'skills', title: '手艺', subtitle: '剪辑 · 调色 · 影像叙事' },
-];
+// 卡片自身可滚动时，不能把读简介的操作误当成“飞过故事”
+const isFromAboutCard = (target) =>
+    target instanceof Element && Boolean(target.closest('.about-card'));
+const hasBlockingUi = () => Boolean(document.querySelector('.map-panel.open'));
 
 const AboutRoom = ({ onReady, isExiting, isWarmup }) => {
-    const { camera } = useThree();
+    const { camera, scene } = useThree();
     const { isTeleporting, overlayContent } = useScene();
-    const { showTutorial, unlockAchievement, hidePopup } = useAchievements();
+    const { unlockAchievement, hidePopup } = useAchievements();
     const { globalVolume, isMuted } = useAudio();
     const effectiveVolume = isMuted ? 0 : AUDIO_SETTINGS.volume * globalVolume;
 
@@ -47,6 +40,15 @@ const AboutRoom = ({ onReady, isExiting, isWarmup }) => {
             audioRef.current.setVolume(effectiveVolume);
         }
     }, [effectiveVolume]);
+
+    // 飞行故事的第一屏在雾里会读不清；本房间关闭雾，离开时恢复
+    useEffect(() => {
+        const originalFog = scene.fog;
+        scene.fog = null;
+        return () => {
+            scene.fog = originalFog;
+        };
+    }, [scene]);
 
     // Use ref to track overlay state for event listeners (avoids stale closures)
     const overlayRef = useRef(overlayContent);
@@ -68,6 +70,7 @@ const AboutRoom = ({ onReady, isExiting, isWarmup }) => {
     // Momentum-based scroll state
     const scrollPosition = useRef(0);
     const scrollVelocity = useRef(0);
+    const aboutScrollStarted = useRef(false);
 
     // Save base camera rotation on first render
     const baseCameraRotation = useRef({ x: 0, y: 0, z: 0 });
@@ -115,10 +118,6 @@ const AboutRoom = ({ onReady, isExiting, isWarmup }) => {
 
                 hasSignaledReady.current = true;
                 onReady?.();
-                // trigger achievement hint when showing the room
-                if (!isTeleporting && !isExiting) {
-                    if (!isWarmup) setTimeout(() => showTutorial('about_fly'), 2000);
-                }
             }
         }
 
@@ -131,6 +130,11 @@ const AboutRoom = ({ onReady, isExiting, isWarmup }) => {
         // Apply velocity to position (momentum)
         scrollPosition.current += scrollVelocity.current * delta * 60;
         // No clamp - allow flying backward too!
+
+        if (!aboutScrollStarted.current && scrollPosition.current > 0.6) {
+            aboutScrollStarted.current = true;
+            window.dispatchEvent(new CustomEvent('ciwei:about-scroll-start'));
+        }
 
         // Friction
         scrollVelocity.current *= 0.95;
@@ -201,7 +205,7 @@ const AboutRoom = ({ onReady, isExiting, isWarmup }) => {
     // Handle scroll wheel (desktop)
     useEffect(() => {
         const handleWheel = (e) => {
-            if (overlayRef.current) return; // BLOCK SCROLL IF OVERLAY IS OPEN
+            if (overlayRef.current || hasBlockingUi() || isFromAboutCard(e.target)) return;
             scrollVelocity.current += e.deltaY * 0.002;
         };
 
@@ -213,13 +217,14 @@ const AboutRoom = ({ onReady, isExiting, isWarmup }) => {
     const lastTouchY = useRef(0);
     useEffect(() => {
         const handleTouchStart = (e) => {
+            if (hasBlockingUi() || isFromAboutCard(e.target)) return;
             if (e.touches.length === 1) {
                 lastTouchY.current = e.touches[0].clientY;
             }
         };
 
         const handleTouchMove = (e) => {
-            if (overlayRef.current) return; // BLOCK SCROLL IF OVERLAY IS OPEN
+            if (overlayRef.current || hasBlockingUi() || isFromAboutCard(e.target)) return;
             if (e.touches.length === 1) {
                 const deltaY = lastTouchY.current - e.touches[0].clientY;
                 lastTouchY.current = e.touches[0].clientY;
@@ -234,6 +239,27 @@ const AboutRoom = ({ onReady, isExiting, isWarmup }) => {
             window.removeEventListener('touchstart', handleTouchStart);
             window.removeEventListener('touchmove', handleTouchMove);
         };
+    }, []);
+
+    // 键盘等价路径：方向键/PageUp/PageDown 控制同一飞行速度
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (overlayRef.current || hasBlockingUi()) return;
+            if (e.target instanceof Element && e.target.closest(
+                'button, a, input, textarea, select, [contenteditable="true"], .about-card'
+            )) return;
+
+            const forward = e.key === 'ArrowDown' || e.key === 'PageDown';
+            const backward = e.key === 'ArrowUp' || e.key === 'PageUp';
+            if (!forward && !backward) return;
+
+            e.preventDefault();
+            const amount = e.key.startsWith('Page') ? 1.2 : e.shiftKey ? 0.7 : 0.35;
+            scrollVelocity.current += forward ? amount : -amount;
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
     }, []);
 
     return (

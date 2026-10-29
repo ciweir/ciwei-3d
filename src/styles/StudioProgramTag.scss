@@ -1,0 +1,88 @@
+@use 'variables' as *;
+
+.studio-program-tag {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    width: 244px;
+    box-sizing: border-box;
+    padding: 9px 12px 8px 9px;
+    background:
+        linear-gradient(rgba($paper, 0.9), rgba($paper, 0.9)),
+        url('/textures/paper-texture.webp') center / cover;
+    border: 1.5px solid rgba($ink, 0.9);
+    border-radius: 2px 6px 3px 7px;
+    box-shadow: 3px 4px 0 rgba($ink, 0.18);
+    color: $ink;
+    font-family: $font-primary;
+    transform: rotate(-0.35deg);
+
+    &__index {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 34px;
+        height: 34px;
+        flex: 0 0 34px;
+        background: $ink;
+        color: #f7f0e3;
+        font-family: $font-handwritten;
+        font-size: 19px;
+        line-height: 1;
+    }
+
+    &__copy {
+        display: flex;
+        min-width: 0;
+        flex-direction: column;
+        gap: 3px;
+
+        strong {
+            overflow: hidden;
+            font-size: 13px;
+            line-height: 1.25;
+            font-weight: 700;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        em {
+            color: #6a6256;
+            font-size: 10px;
+            line-height: 1.3;
+            font-style: normal;
+            white-space: nowrap;
+        }
+    }
+
+    &.is-current {
+        border-color: #9a3b2c;
+
+        .studio-program-tag__index {
+            background: #9a3b2c;
+        }
+
+        em {
+            color: #9a3b2c;
+        }
+    }
+}
+
+@media (max-width: 768px) {
+    .studio-program-tag {
+        width: 205px;
+        padding: 8px 10px 7px 8px;
+
+        &__index {
+            width: 30px;
+            height: 30px;
+            flex-basis: 30px;
+            font-size: 17px;
+        }
+
+        &__copy {
+            strong { font-size: 12px; }
+            em { font-size: 9px; }
+        }
+    }
+}

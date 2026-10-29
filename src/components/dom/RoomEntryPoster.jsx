@@ -1,9 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { useScene } from '../../context/useScene';
+import { useColorEnabled } from '../../utils/colorMode';
+import { isTouchDevice } from '../../utils/deviceDetect';
 import '../../styles/RoomEntryPoster.scss';
 
 const FALLBACK_HIDE_MS = 9000;
 const LEAVE_MS = 360;
+const STATUS_DELAY_MS = 1500;
 
 /**
  * 点击画廊后的即时首帧：3D 房间就绪前先显示静态画廊，
@@ -11,9 +14,16 @@ const LEAVE_MS = 360;
  */
 const RoomEntryPoster = () => {
     const { teleportTarget, teleportPhase, isTeleporting, currentRoom, readingProject } = useScene();
+    const colorEnabled = useColorEnabled();
     const [phase, setPhase] = useState('hidden'); // hidden | visible | leaving
+    const [showStatus, setShowStatus] = useState(false);
     const fallbackTimer = useRef(null);
     const doorEntryTimer = useRef(null);
+
+    // 静态首帧跟随当前配色，避免“线稿海报 → 彩色房间”的二次染色错觉
+    const posterSrc = isTouchDevice()
+        ? `/images/gallery-entry-mobile${colorEnabled ? '-color' : ''}.webp`
+        : `/images/gallery-entry${colorEnabled ? '-color' : ''}.webp`;
 
     useEffect(() => {
         if (readingProject) {
@@ -71,6 +81,16 @@ const RoomEntryPoster = () => {
         return () => clearTimeout(timer);
     }, [phase]);
 
+    // 慢路径才出“正在布置”：缓存命中、房间瞬间就绪时不闪文字。
+    useEffect(() => {
+        if (phase !== 'visible') {
+            setShowStatus(false);
+            return undefined;
+        }
+        const timer = setTimeout(() => setShowStatus(true), STATUS_DELAY_MS);
+        return () => clearTimeout(timer);
+    }, [phase]);
+
     if (phase === 'hidden') return null;
 
     return (
@@ -78,10 +98,13 @@ const RoomEntryPoster = () => {
             className={`room-entry-poster ${phase === 'visible' ? 'is-visible' : ''}`}
             aria-hidden="true"
         >
-            <picture>
-                <source media="(max-width: 767px)" srcSet="/images/gallery-entry-mobile.webp" />
-                <img src="/images/gallery-entry.webp" alt="" draggable="false" />
-            </picture>
+            <img className="room-entry-poster__image" src={posterSrc} alt="" draggable="false" />
+            {showStatus && (
+                <div className="room-entry-poster__status">
+                    <span>画廊 · 正在布置</span>
+                    <i />
+                </div>
+            )}
         </div>
     );
 };

@@ -10,7 +10,8 @@
     "audit:assets": "node scripts/audit-assets.mjs",
     "preview": "vite preview",
     "gen:mobile": "node scripts/gen-mobile-textures.mjs",
-    "gen:fonts": "node scripts/gen-font-subsets.mjs"
+    "gen:fonts": "node scripts/gen-font-subsets.mjs && node scripts/audit-font-glyphs.mjs",
+    "audit:fonts": "node scripts/audit-font-glyphs.mjs"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.7",

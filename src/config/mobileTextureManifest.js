@@ -64,8 +64,6 @@ export const MOBILE_TEXTURES = [
     '/textures/contact/latarnia_painted.webp',
     '/textures/contact/molo.webp',
     '/textures/contact/molo_painted.webp',
-    '/textures/contact/paper_form.webp',
-    '/textures/contact/paper_form_painted.webp',
     '/textures/contact/statek.webp',
     '/textures/contact/statek_painted.webp',
     '/textures/corridor/bokilampy_painted.webp',

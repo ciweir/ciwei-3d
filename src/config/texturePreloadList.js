@@ -5,7 +5,7 @@
  * 规则：小于 512 B 的文件视为占位块（256×256 纯米色），不纳入预加载。
  * 补齐贴图后重跑生成脚本，清单会自动收录新素材。
  *
- * 本次扫描结果：ENTRANCE_TEXTURES     49 项 ｜ CORRIDOR_TEXTURES     80 项 ｜ UI_TEXTURES     9 项 ｜ IMAGE_ASSETS     10 项 ｜ GALLERY_TEXTURES     63 项 ｜ CONTACT_TEXTURES     14 项 ｜ STUDIO_TEXTURES     28 项 ｜ ABOUT_TEXTURES     42 项
+ * 本次扫描结果：ENTRANCE_TEXTURES     49 项 ｜ CORRIDOR_TEXTURES     80 项 ｜ UI_TEXTURES     9 项 ｜ IMAGE_ASSETS     14 项 ｜ GALLERY_TEXTURES     63 项 ｜ CONTACT_TEXTURES     10 项 ｜ STUDIO_TEXTURES     28 项 ｜ ABOUT_TEXTURES     42 项
  */
 import { isTouchDevice } from '../utils/deviceDetect.js';
 
@@ -161,8 +161,12 @@ export const UI_TEXTURES = [
 
 // 标准 HTML 图片（<img> 预载）
 export const IMAGE_ASSETS = [
-    '/images/entrance-poster-mobile.webp',
-    '/images/entrance-poster.webp',
+    '/images/entrance-poster-mobile-v2.webp',
+    '/images/entrance-poster-v2.webp',
+    '/images/gallery-entry-color.webp',
+    '/images/gallery-entry-mobile-color.webp',
+    '/images/gallery-entry-mobile.webp',
+    '/images/gallery-entry.webp',
     '/images/ink-splash.webp',
     '/images/map.webp',
     '/images/map_about_painted.webp',
@@ -250,10 +254,6 @@ export const CONTACT_TEXTURES = [
     '/textures/contact/latarnia_painted.webp',
     '/textures/contact/molo.webp',
     '/textures/contact/molo_painted.webp',
-    '/textures/contact/paper_form.webp',
-    '/textures/contact/paper_form_painted.webp',
-    '/textures/contact/send_button.webp',
-    '/textures/contact/send_button_painted.webp',
     '/textures/contact/statek.webp',
     '/textures/contact/statek_painted.webp',
 ];
@@ -388,8 +388,6 @@ export const PAINTED_TEXTURES = [
     '/textures/contact/faletopdown_painted.webp',
     '/textures/contact/latarnia_painted.webp',
     '/textures/contact/molo_painted.webp',
-    '/textures/contact/paper_form_painted.webp',
-    '/textures/contact/send_button_painted.webp',
     '/textures/contact/statek_painted.webp',
     '/textures/corridor/bokilampy_painted.webp',
     '/textures/corridor/ceiling_texture_painted.webp',
@@ -482,10 +480,10 @@ export const PAINTED_TEXTURES = [
 ];
 
 /**
- * 按设备是否支持 hover 过滤贴图清单：
- * 触摸设备跳过 _painted（彩色）版本，只加载素描版，节省移动端内存。
+ * 按当前颜色模式过滤贴图清单：
+ * 线稿模式跳过 _painted（彩色）版本，只加载素描版，节省移动端内存。
  * @param {string[]} list 贴图路径清单
- * @param {boolean} usePainted 是否保留 _painted 版本
+ * @param {boolean} usePainted 是否保留彩色版本
  * @returns {string[]} 过滤后的清单
  */
 export const filterTexturesByDevice = (list, usePainted) => {
@@ -501,9 +499,14 @@ export const filterTexturesByDevice = (list, usePainted) => {
             if (path.endsWith('_painted.webp')) return !isTouchDevice() && usePainted;
             return isTouchDevice() || !usePainted;
         }
-        // 首帧海报只预载当前设备对应的一套；地图彩色图层在触屏端不渲染。
-        if (path.includes('/images/entrance-poster') || path.includes('/images/gallery-entry')) {
-            return path.endsWith('-mobile.webp') ? isTouchDevice() : !isTouchDevice();
+        // 首帧海报只预载当前设备、当前配色对应的一套；地图彩色图层在触屏端不渲染。
+        if (path.includes('/images/entrance-poster')) {
+            return path.includes('-mobile') ? isTouchDevice() : !isTouchDevice();
+        }
+        if (path.includes('/images/gallery-entry')) {
+            const deviceMatch = path.includes('-mobile') ? isTouchDevice() : !isTouchDevice();
+            const colorMatch = path.includes('-color') ? usePainted : !usePainted;
+            return deviceMatch && colorMatch;
         }
         if (isTouchDevice() && path.startsWith('/images/') && path.endsWith('_painted.webp')) {
             return false;

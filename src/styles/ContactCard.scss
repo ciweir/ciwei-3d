@@ -1,0 +1,210 @@
+@use 'variables' as *;
+
+.contact-card {
+    position: fixed;
+    left: 24px;
+    bottom: 24px;
+    z-index: 90;
+    width: min(360px, calc(100vw - 28px));
+    max-height: calc(100dvh - 48px);
+    overflow-y: auto;
+    box-sizing: border-box;
+    padding: 18px 18px 14px;
+    background:
+        linear-gradient(rgba($paper, 0.62), rgba($paper, 0.62)),
+        url('/textures/paper-texture.webp') center center;
+    background-size: cover;
+    border: 1.5px solid rgba($ink, 0.86);
+    border-radius: 3px 8px 4px 10px;
+    box-shadow: 3px 5px 0 rgba($ink, 0.14);
+    transform: rotate(-0.35deg);
+    color: $ink;
+    font-family: $font-primary;
+    pointer-events: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba($ink, 0.35) transparent;
+
+    &::-webkit-scrollbar {
+        width: 4px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background: rgba($ink, 0.3);
+    }
+
+    .contact-card__eyebrow {
+        margin: 0 0 6px;
+        color: #6a6256;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+    }
+
+    h2 {
+        margin: 0 0 8px;
+        font-family: $font-display;
+        font-size: 22px;
+        font-weight: 600;
+        line-height: 1.25;
+    }
+
+    .contact-card__intro {
+        margin: 0 0 10px;
+        color: #4a4a4a;
+        font-size: 12px;
+        line-height: 1.6;
+    }
+
+    .contact-card__email {
+        display: block;
+        margin-bottom: 10px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid rgba($ink, 0.28);
+        color: $ink;
+        font-size: 14px;
+        font-weight: 700;
+        text-decoration: none;
+        word-break: break-all;
+
+        &:hover {
+            text-decoration: underline;
+            text-underline-offset: 3px;
+        }
+    }
+
+    .contact-card__actions {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .contact-card__primary,
+    .contact-card__secondary,
+    .contact-card__toggle,
+    .contact-card__submit {
+        font-family: $font-primary;
+        font-size: 12px;
+        cursor: pointer;
+    }
+
+    .contact-card__primary,
+    .contact-card__submit {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 8px 12px;
+        border: 1px solid $ink;
+        border-radius: 2px 5px 2px 4px;
+        background: $ink;
+        color: $paper;
+        font-weight: 700;
+        text-decoration: none;
+    }
+
+    .contact-card__secondary {
+        padding: 7px 10px;
+        border: 1px solid rgba($ink, 0.5);
+        border-radius: 2px;
+        background: transparent;
+        color: $ink;
+    }
+
+    .contact-card__toggle {
+        padding: 0 0 2px;
+        border: none;
+        border-bottom: 1px dashed rgba($ink, 0.5);
+        background: none;
+        color: #5f584d;
+    }
+
+    .contact-card__social {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 10px;
+        font-size: 11px;
+
+        a {
+            color: #4a4a4a;
+            text-decoration: underline;
+            text-underline-offset: 2px;
+        }
+    }
+
+    .contact-card__form {
+        display: grid;
+        gap: 8px;
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px dashed rgba($ink, 0.25);
+    }
+
+    label {
+        display: grid;
+        gap: 4px;
+        color: #5f584d;
+        font-size: 10.5px;
+        font-weight: 700;
+        letter-spacing: 0.03em;
+    }
+
+    input,
+    textarea {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 8px;
+        border: 1px solid rgba($ink, 0.28);
+        border-radius: 2px;
+        background: rgba(255, 255, 255, 0.45);
+        color: $ink;
+        font: inherit;
+        font-size: 14px;
+    }
+
+    textarea {
+        min-height: 72px;
+        resize: vertical;
+    }
+
+    .contact-card__note {
+        margin: 0;
+        color: #6a6256;
+        font-size: 10px;
+        line-height: 1.5;
+    }
+
+    .contact-card__status,
+    .contact-card__error {
+        margin: 8px 0 0;
+        font-size: 11px;
+        line-height: 1.5;
+    }
+
+    .contact-card__status {
+        color: #5f584d;
+
+        &:empty {
+            margin: 0;
+        }
+    }
+
+    .contact-card__error {
+        color: #9a3b2c;
+    }
+}
+
+@media (max-width: 768px) {
+    .contact-card {
+        left: calc(14px + env(safe-area-inset-left, 0px));
+        right: calc(14px + env(safe-area-inset-right, 0px));
+        bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+        width: auto;
+        max-height: calc(72dvh - env(safe-area-inset-bottom, 0px));
+        padding: 14px;
+        transform: rotate(-0.25deg);
+        h2 { font-size: 19px; }
+        input, textarea { font-size: 16px; }
+    }
+}

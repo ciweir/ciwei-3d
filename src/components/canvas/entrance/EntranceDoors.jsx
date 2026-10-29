@@ -373,23 +373,20 @@ const EntranceDoors = ({
         }, 0.3);
     };
 
-    // 首屏 2D 入口点击后，3D 就绪时自动推门
+    // 键盘/读屏入口：与点击门复用同一套开门状态机
+    const handleClickRef = useRef(handleClick);
     useEffect(() => {
-        let timer;
-        const handleAutoEnter = () => {
-            clearTimeout(timer);
-            timer = setTimeout(() => {
-                if (!isOpen && !isAnimating) {
-                    handleClick({ stopPropagation: () => { } });
-                }
-            }, 700);
+        handleClickRef.current = handleClick;
+    });
+
+    useEffect(() => {
+        const handleManualEnter = () => {
+            if (isOpen || isAnimating) return;
+            handleClickRef.current({ stopPropagation: () => { } });
         };
-        window.addEventListener('ciwei:auto-enter', handleAutoEnter);
-        return () => {
-            clearTimeout(timer);
-            window.removeEventListener('ciwei:auto-enter', handleAutoEnter);
-        };
-    }, [isOpen, isAnimating, handleClick]);
+        window.addEventListener('ciwei:manual-enter', handleManualEnter);
+        return () => window.removeEventListener('ciwei:manual-enter', handleManualEnter);
+    }, [isOpen, isAnimating]);
 
     // Handle hover - doors slightly open to indicate interactivity
     const handlePointerEnter = () => {
@@ -724,6 +721,17 @@ const EntranceDoors = ({
                     roughness={0.9}
                     depthWrite={false}
                 />
+            </mesh>
+
+            {/* 整扇门都可点：覆盖门缝和把手，避免点中间没反应 */}
+            <mesh
+                position={[0, doorCenterY, 0.13]}
+                onClick={handleClick}
+                onPointerEnter={handlePointerEnter}
+                onPointerLeave={handlePointerLeave}
+            >
+                <planeGeometry args={[doorOpeningWidth, doorHeight]} />
+                <meshBasicMaterial transparent opacity={0} depthWrite={false} />
             </mesh>
 
             {/* LEFT DOOR */}
