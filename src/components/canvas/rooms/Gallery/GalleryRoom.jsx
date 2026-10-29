@@ -96,21 +96,21 @@ GalleryText.displayName = 'GalleryText';
 const GalleryRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
     const { isTeleporting } = useScene();
     const { showTutorial, unlockAchievement, hidePopup } = useAchievements();
-    const { play, audioEnabled } = useAudio();
+    const { play, audioEnabled, isMuted } = useAudio();
     const reducedMotion = useReducedMotion();
     const playRef = useRef(play);
     playRef.current = play;
-    // 触屏端等首次交互后再拉城市声（0.64MB），别和纸卡/云朵贴图抢带宽
-    const mediaReady = !isTouchDevice() || audioEnabled;
+    // 触屏端等首次交互后再拉城市声（0.64MB），别和纸卡/云朵贴图抢带宽；静音时干脆不拉
+    const ambientAllowed = (!isTouchDevice() || audioEnabled) && !isMuted;
 
     // 环境声改用 HTMLAudio（原 drei PositionalAudio 会用 useLoader 挂起整个房间，
     // 深链进画廊时纸张要等音频解码完才打开）。
     // 深链没有用户手势，首播可能被浏览器拦截；首次交互后 audioEnabled 变真，重试一次。
     useEffect(() => {
-        if (isWarmup || !mediaReady) return undefined;
+        if (isWarmup || !ambientAllowed) return undefined;
         const handle = playRef.current('szummiasta', { loop: true, volume: AUDIO_SETTINGS.volume });
         return () => handle?.stop();
-    }, [isWarmup, audioEnabled, mediaReady]);
+    }, [isWarmup, audioEnabled, ambientAllowed]);
 
     const groupRef = useRef();
     const targetScroll = useRef(0);

@@ -36,8 +36,8 @@ const AboutRoom = ({ onReady, isExiting, isWarmup }) => {
     const { globalVolume, isMuted, audioEnabled } = useAudio();
     const reducedMotion = useReducedMotion();
     const effectiveVolume = isMuted ? 0 : AUDIO_SETTINGS.volume * globalVolume;
-    // 触屏端等首次交互后再拉风声，避免和天空块贴图抢带宽
-    const mediaReady = !isTouchDevice() || audioEnabled;
+    // 触屏端等首次交互后再拉风声，避免和天空块贴图抢带宽；静音时干脆不拉
+    const ambientAllowed = (!isTouchDevice() || audioEnabled) && !isMuted;
 
     const audioRef = useRef();
     useEffect(() => {
@@ -275,7 +275,7 @@ const AboutRoom = ({ onReady, isExiting, isWarmup }) => {
     return (
         <group ref={roomRef} position={[0, 0, -25]}>
             {/* 音频延后挂载会触发 useLoader 挂起，套独立 Suspense 免得住场景一起消失 */}
-            {!isWarmup && mediaReady && (
+            {!isWarmup && ambientAllowed && (
                 <Suspense fallback={null}>
                     <PositionalAudio
                         ref={audioRef}

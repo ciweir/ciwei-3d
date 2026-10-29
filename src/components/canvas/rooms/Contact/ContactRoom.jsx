@@ -101,8 +101,8 @@ const ContactRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
     const { globalVolume, isMuted, audioEnabled } = useAudio();
     const reducedMotion = useReducedMotion();
     const effectiveVolume = isMuted ? 0 : AUDIO_SETTINGS.volume * globalVolume;
-    // 触屏端等首次交互后再拉海声（0.83MB），别和海面/云朵贴图抢带宽
-    const mediaReady = !isTouchDevice() || audioEnabled;
+    // 触屏端等首次交互后再拉海声（0.83MB），别和海面/云朵贴图抢带宽；静音时干脆不拉
+    const ambientAllowed = (!isTouchDevice() || audioEnabled) && !isMuted;
 
     const audioRef = useRef();
     useEffect(() => {
@@ -333,7 +333,7 @@ const ContactRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
     return (
         <group ref={groupRef} position={[0, -0.7, -5]}>
             {/* 音频延后挂载会触发 useLoader 挂起，套独立 Suspense 免得住场景一起消失 */}
-            {!isWarmup && mediaReady && (
+            {!isWarmup && ambientAllowed && (
                 <Suspense fallback={null}>
                     <PositionalAudio
                         ref={audioRef}

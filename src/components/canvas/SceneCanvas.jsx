@@ -106,12 +106,18 @@ const INITIAL_TEXTURES = DEEP_LINK_ROOM
         ...(DEEP_LINK_ROOM === 'gallery'
             ? GALLERY_SHARED_TEXTURES
             : DEEP_LINK_ROOM === 'studio'
-                ? [...(ROOM_TEXTURES.studio || []).map(smallSrc), ...STUDIO_FIRST_SCREEN_COVERS]
+                ? (ROOM_TEXTURES.studio || []).map(smallSrc)
                 : (ROOM_TEXTURES[DEEP_LINK_ROOM] || [])),
         ...UI_TEXTURES,
     ]
     : [...ENTRANCE_TEXTURES, ...UI_TEXTURES];
-const filteredInitial = filterTexturesByDevice(INITIAL_TEXTURES, getColorEnabled());
+// 工作室屏幕里始终是彩色成片（见 StudioRoom 的 buildBackgroundItems），
+// 与“线稿/彩色”显示模式无关，必须在 filterTexturesByDevice 之后再并回去，
+// 否则触屏默认线稿模式会把它们当彩色封面整条过滤掉，预载等于没做。
+const filteredInitial = [
+    ...filterTexturesByDevice(INITIAL_TEXTURES, getColorEnabled()),
+    ...(DEEP_LINK_ROOM === 'studio' ? STUDIO_FIRST_SCREEN_COVERS : []),
+];
 
 filteredInitial.forEach((path) => useTexture.preload(path));
 

@@ -518,6 +518,8 @@ const StudioRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
     const { globalVolume, isMuted, audioEnabled } = useAudio();
     // 触屏端等首次交互后再拉环境声与主屏视频（0.35MB 音频 + 0.38MB 视频），别和片墙封面抢带宽
     const mediaReady = !isTouchDevice() || audioEnabled;
+    // 静音状态下环境声只是静音播放，没有理由为它花 0.35MB
+    const ambientAllowed = mediaReady && !isMuted;
     const reducedMotion = useReducedMotion();
     const effectiveVolume = isMuted ? 0 : AUDIO_SETTINGS.volume * globalVolume;
 
@@ -644,9 +646,22 @@ const StudioRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
         );
     }, [backgroundCount]);
 
+    // 传送进房时纸面已经遮住画面、片墙在传送中就已完成上色；
+    // 传送结束后 isTeleporting 变 false，若不记住这次传送，会重新把进度归零再画一遍（室内一片黑）。
+    // 锁存只在房间真正退场时清空——挂载那一刻 showRoom 还是 false，此时清空会把传送标记抹掉。
+    const wasTeleportedRef = useRef(false);
+    const hadShownRoom = useRef(false);
+    useEffect(() => {
+        if (isTeleporting) wasTeleportedRef.current = true;
+    }, [isTeleporting]);
+    useEffect(() => {
+        if (hadShownRoom.current && !showRoom) wasTeleportedRef.current = false;
+        hadShownRoom.current = showRoom;
+    }, [showRoom]);
+
     useEffect(() => {
         if (showRoom && !isWarmup) {
-            if (isTeleporting || reducedMotion) {
+            if (wasTeleportedRef.current || isTeleporting || reducedMotion) {
                 paintUniforms.uPaintProgress.value = 1.0;
             } else {
                 resetPaint();
@@ -918,7 +933,7 @@ const StudioRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
             onPointerDown={handlePointerDown}
         >
                 {/* 音频延后挂载会触发 useLoader 挂起，套独立 Suspense 免得住场景一起消失 */}
-                {!isWarmup && mediaReady && (
+                {!isWarmup && ambientAllowed && (
                     <Suspense fallback={null}>
                         <PositionalAudio
                             ref={audioRef}
