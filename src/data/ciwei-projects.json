@@ -629,7 +629,7 @@
   {
     "techStack": [],
     "role": [
-      "AI 生成",
+      "数字影像",
       "后期加工"
     ],
     "client": "",
@@ -646,7 +646,7 @@
     "front": "/covers/ciwei-ai-sketch.webp",
     "painted": "/covers/ciwei-ai.webp",
     "url": "#ciwei-ai",
-    "description": "AI 生成的影像，后期加工。",
+    "description": "数字影像，后期合成。",
     "preview": "/media/preview/ciwei-ai.mp4",
     "category": "AI视频",
     "durationSeconds": 10,
@@ -662,7 +662,7 @@
   {
     "techStack": [],
     "role": [
-      "AI 生成",
+      "数字影像",
       "后期加工"
     ],
     "client": "",
@@ -679,7 +679,7 @@
     "front": "/covers/zhian-ai-sketch.webp",
     "painted": "/covers/zhian-ai.webp",
     "url": "#zhian-ai",
-    "description": "AI 生成的影像，后期加工。",
+    "description": "数字影像，后期合成。",
     "preview": "/media/preview/zhian-ai.mp4",
     "category": "AI视频",
     "durationSeconds": 10,
@@ -695,7 +695,7 @@
   {
     "techStack": [],
     "role": [
-      "AI 生成",
+      "数字影像",
       "后期加工"
     ],
     "client": "",
@@ -712,7 +712,7 @@
     "front": "/covers/destined-sketch.webp",
     "painted": "/covers/destined.webp",
     "url": "#destined",
-    "description": "AI 生成的叙事影像，后期加工；完整版 2 分 37 秒。",
+    "description": "数字叙事影像，后期合成；完整版 2 分 37 秒。",
     "preview": "/media/preview/destined.mp4",
     "category": "Vibe Coding",
     "durationSeconds": 157,

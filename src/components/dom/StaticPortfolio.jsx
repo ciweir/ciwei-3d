@@ -30,7 +30,7 @@ const StaticPortfolio = ({ canRetry3D, onRetry }) => {
         <header className="sp-hero">
             <p className="sp-eyebrow">2D 目录 · 影像作品集</p>
             <h1 className="sp-title">{SITE.author}</h1>
-            <p className="sp-role">{SITE.jobTitle} · 剪辑 · 调色 · 深圳</p>
+            <p className="sp-role">{SITE.jobTitle} · 剪辑 · 调色 · 济南</p>
             <p className="sp-intro">{SITE.aboutMe}</p>
             <div className="sp-actions">
                 {canRetry3D && (
@@ -96,7 +96,7 @@ const StaticPortfolio = ({ canRetry3D, onRetry }) => {
         <footer className="sp-footer">
             <p>2D 目录用于低带宽或当前浏览器不支持 WebGL 的环境。</p>
             <p>
-                © {new Date().getFullYear()} {SITE.author} · 深圳
+                © {new Date().getFullYear()} {SITE.author} · 济南
             </p>
         </footer>
     </div>
