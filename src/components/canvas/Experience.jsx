@@ -120,7 +120,7 @@ const Experience = ({ onSceneReady }) => {
             )}
 
             {/* === INFINITE CORRIDOR (deferred until door click / already inside) === */}
-            {(corridorRequested || hasEntered || Boolean(initialRoom)) && (
+            {(corridorRequested || hasEntered) && (
                 initialRoom ? (
                     <Suspense fallback={null}>
                         <InfiniteCorridorManager

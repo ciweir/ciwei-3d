@@ -244,7 +244,9 @@ export default function App() {
     // Eagerly preload Sanity CMS data and images
     loadSanityData();
 
-    const filteredImages = filterTexturesByDevice(IMAGE_ASSETS, getColorEnabled());
+    const filteredImages = filterTexturesByDevice(IMAGE_ASSETS, getColorEnabled())
+        // 首屏海报由 index.html 的 <img> 直接加载；地图只在打开地图时按需加载，避免每个房间都拉 400KB+
+        .filter((path) => !/entrance-poster|gallery-entry|\/images\/map/.test(path));
     filteredImages.forEach(path => preloadBrowserImage(path));
   }, []);
 

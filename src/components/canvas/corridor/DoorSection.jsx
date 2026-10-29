@@ -406,11 +406,11 @@ const DoorSection = ({
             return;
         }
 
-        // 普通开门进画廊：提前通知首帧遮住房间编译等待（地图传送另有 teleportTo 路径）
+        // 普通开门进房间：提前通知首帧遮住房间编译等待（地图传送另有 teleportTo 路径）
         galleryDoorEntryRef.current = !isTeleport && doorId === 'gallery';
-        if (galleryDoorEntryRef.current) {
+        if (!isTeleport) {
             window.dispatchEvent(new CustomEvent('ciwei:room-entry-start', {
-                detail: { roomId: 'gallery' }
+                detail: { roomId: doorId }
             }));
         }
 

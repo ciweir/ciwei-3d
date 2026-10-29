@@ -24,6 +24,13 @@ export const mobileSrc = (src) => {
     return src.replace(/\.webp$/i, '-mobile.webp');
 };
 
+/** 强制使用小尺寸变体（桌面也生效）：用于远景屏幕、墙面等不需要全分辨率的贴图 */
+export const smallSrc = (src) => {
+    if (typeof src !== 'string' || !src.endsWith('.webp')) return src;
+    if (!MOBILE_SET.has(src)) return src;
+    return src.replace(/\.webp$/i, '-mobile.webp');
+};
+
 /** 线稿 URL → 彩色版 URL；无对应彩色版时原样返回 */
 export const paintedSrc = (src) => {
     if (typeof src !== 'string') return src;
@@ -268,7 +275,7 @@ export const useTexturePair = (sketchUrl, paintedUrl) => {
 export const useColorOnlyTexture = (url) => {
     const colorEnabled = useColorEnabled();
     const scope = useColorLoadScope();
-    const src = mobileSrc(url);
+    const src = smallSrc(url);
     const [state, setState] = useState(null);
     const ready = Boolean(state && state.key === src);
     const needsLoad = colorEnabled && src && !ready && scopeMatches(scope, src);

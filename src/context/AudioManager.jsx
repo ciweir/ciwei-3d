@@ -89,9 +89,17 @@ export const AudioProvider = ({ children }) => {
         };
         const path = soundPaths[soundName] || `/sounds/${soundName}.mp3`;
 
-        // In "simulation mode" or if file missing, this might error.
-        // We'll trust the browser to handle 404s without crashing JS.
-        const audio = new Audio(path);
+        // 同一个音频文件只创建一次 Audio 元素（pencil / tear 共用 papersound），
+        // 避免重复请求与多个 Audio 实例叠加；再次播放时重置时间与参数。
+        const pathKey = path;
+        let audio = activeSounds.current[pathKey];
+        if (audio) {
+            audio.pause();
+            audio.currentTime = 0;
+        } else {
+            audio = new Audio(path);
+            activeSounds.current[pathKey] = audio;
+        }
 
         // Store metadata
         audio.loop = loop;
@@ -102,11 +110,8 @@ export const AudioProvider = ({ children }) => {
         let targetVol = volume * globalVolume;
         audio.volume = Math.max(0, Math.min(1, targetVol));
 
-        // Store reference (clearing old one if exists with same name for simplicity)
-        if (activeSounds.current[soundName]) {
-            activeSounds.current[soundName].pause();
-        }
-        activeSounds.current[soundName] = audio;
+        // Store reference (clearing old one if exists with same path for simplicity)
+        activeSounds.current[pathKey] = audio;
 
         // Attempt to play
         const playPromise = audio.play();
@@ -128,12 +133,12 @@ export const AudioProvider = ({ children }) => {
             stop: () => {
                 audio.pause();
                 audio.currentTime = 0;
-                delete activeSounds.current[soundName];
+                delete activeSounds.current[pathKey];
             },
             fade: () => {
                 // For now just stop
                 audio.pause();
-                delete activeSounds.current[soundName];
+                delete activeSounds.current[pathKey];
             }
         };
     }, [isMuted, globalVolume]);

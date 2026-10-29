@@ -4,7 +4,6 @@
 <head>
   <meta charset="UTF-8" />
   <link rel="preload" as="font" type="font/woff" href="/fonts/NotoSansSC.woff" crossorigin>
-  <link rel="preload" as="font" type="font/woff" href="/fonts/NotoSerifSC-Headings.woff" crossorigin>
   <link rel="preload" as="font" type="font/woff" href="/fonts/CabinSketch-Bold.woff" crossorigin>
   <link rel="icon" type="image/png" href="/favico.png" />
   <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
@@ -99,8 +98,15 @@
         return;
       }
 
-      // 深链 / 阅读室返回画廊：首帧直接显示画廊，而不是入口海报
-      if (location.pathname === '/gallery') {
+      // 深链进房间：首帧直接显示对应房间，而不是入口海报
+      const ROOM_POSTERS = {
+        '/gallery': { base: 'gallery-entry', mobile: 'gallery-entry-mobile' },
+        '/studio': { base: 'studio-entry', mobile: 'studio-entry-mobile' },
+        '/about': { base: 'about-entry', mobile: 'about-entry-mobile' },
+        '/contact': { base: 'contact-entry', mobile: 'contact-entry-mobile' },
+      };
+      const config = ROOM_POSTERS[location.pathname];
+      if (config) {
         const poster = document.getElementById('boot-poster');
         if (!poster) return;
         const source = poster.querySelector('source');
@@ -111,14 +117,11 @@
           const stored = localStorage.getItem('ciwei-color-mode');
           if (stored === 'sketch' || stored === 'color') mode = stored;
         } catch { }
+        const suffix = mode === 'color' ? '-color' : '';
         if (mobile) {
-          source.setAttribute('srcset', mode === 'color'
-            ? '/images/gallery-entry-mobile-color.webp'
-            : '/images/gallery-entry-mobile.webp');
+          source.setAttribute('srcset', `/images/${config.mobile}${suffix}.webp`);
         }
-        image.setAttribute('src', mode === 'color'
-          ? '/images/gallery-entry-color.webp'
-          : '/images/gallery-entry.webp');
+        image.setAttribute('src', `/images/${config.base}${suffix}.webp`);
       }
     })();
   </script>

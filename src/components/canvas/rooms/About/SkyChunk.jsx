@@ -184,6 +184,9 @@ const Cloud = ({
                 opacity={baseOpacity}
                 depthWrite={false}
                 side={THREE.DoubleSide}
+                alphaTest={0.01}
+                toneMapped={false}
+                fog={false}
                 onBeforeCompile={applyCloudAlphaKey}
                 customProgramCacheKey={() => CLOUD_ALPHA_KEY}
             />

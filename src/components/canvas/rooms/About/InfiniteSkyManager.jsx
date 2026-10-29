@@ -170,6 +170,7 @@ const IntroMilestone = ({ z, scrollProgressRef }) => {
                     side={THREE.DoubleSide}
                     depthTest={false}
                     depthWrite={false}
+                    alphaTest={0.01}
                     fog={false}
                     toneMapped={false}
                 />
@@ -261,7 +262,7 @@ const JourneyMilestone = ({ z, scrollProgressRef }) => {
         <group ref={groupRef} position={[0, 0, z]}>
             <mesh position={[0, 4.6, 0.1]}>
                 <planeGeometry args={[7, 1.8]} />
-                <meshBasicMaterial color="#f7f1e5" transparent opacity={0.94} />
+                <meshBasicMaterial color="#f7f1e5" transparent opacity={0.94} side={THREE.DoubleSide} toneMapped={false} fog={false} />
             </mesh>
             <Text
                 position={[-3.15, 5.25, 0.4]}
@@ -302,6 +303,9 @@ const JourneyMilestone = ({ z, scrollProgressRef }) => {
                         map={uoTexture}
                         transparent
                         side={THREE.DoubleSide}
+                        alphaTest={0.01}
+                        toneMapped={false}
+                        fog={false}
                     />
                 </mesh>
                 {/* 岛上文字（UO）—— 此处调整 */}
@@ -325,6 +329,9 @@ const JourneyMilestone = ({ z, scrollProgressRef }) => {
                         map={freelanceTexture}
                         transparent
                         side={THREE.DoubleSide}
+                        alphaTest={0.01}
+                        toneMapped={false}
+                        fog={false}
                     />
                 </mesh>
                 {/* 岛上文字（Freelance）—— 此处调整 */}
@@ -614,8 +621,10 @@ const SkillBalloon = ({ config, revealFactorRef, spreadFactorRef, timeRef }) => 
                         transparent
                         opacity={0}
                         side={THREE.DoubleSide}
-                        alphaTest={0.5}
+                        alphaTest={0.01}
                         depthWrite={false}
+                        toneMapped={false}
+                        fog={false}
                     />
                 </mesh>
 
@@ -648,6 +657,9 @@ const SkillBalloon = ({ config, revealFactorRef, spreadFactorRef, timeRef }) => 
                         transparent
                         side={THREE.DoubleSide}
                         depthWrite={false}
+                        alphaTest={0.01}
+                        toneMapped={false}
+                        fog={false}
                         uProgress={0.0}
                     />
                 </mesh>
@@ -743,7 +755,7 @@ const SkillsMilestone = ({ z, scrollProgressRef }) => {
         <group ref={groupRef} position={[0, 0, z]}>
             <mesh position={[0, 5.6, 0.1]}>
                 <planeGeometry args={[7, 1.8]} />
-                <meshBasicMaterial color="#f7f1e5" transparent opacity={0.94} />
+                <meshBasicMaterial color="#f7f1e5" transparent opacity={0.94} side={THREE.DoubleSide} toneMapped={false} fog={false} />
             </mesh>
             <Text
                 position={[-3.15, 6.25, 0.4]}

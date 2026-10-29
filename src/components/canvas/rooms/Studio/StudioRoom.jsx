@@ -11,7 +11,7 @@ import { useScene } from '../../../../context/useScene';
 import { useAchievements } from '../../../../context/useAchievements';
 import { useAudio } from '../../../../context/useAudio';
 import { useStudioContent } from '../../../../hooks/useSanityData';
-import { mobileSrc } from '../../../../utils/colorTexture';
+import { smallSrc } from '../../../../utils/colorTexture';
 import { usePaintMaterial } from '../Gallery/usePaintMaterial';
 import { useReducedMotion } from '../../../../utils/motion';
 
@@ -136,7 +136,7 @@ const buildBackgroundItems = (content, heroItem, layout) => {
         const base = DEVICE_DIMENSIONS[device] || DEVICE_DIMENSIONS.tv;
         const deviceScale = layout.backgroundScale * (device === 'phone' ? 1.7 : 1);
         const scale = deviceScale * (1 + Math.sin(index * 2.17) * 0.03);
-        const paintedCover = contentItem.paintedFrontTexture || contentItem.frontTexture;
+        const paintedCover = smallSrc(contentItem.paintedFrontTexture || contentItem.frontTexture);
 
         items.push({
             ...contentItem,
@@ -556,13 +556,15 @@ const StudioRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
         }));
     }, [heroItem, activePlaylistIndex, totalWorks]);
 
-    // 屏幕里始终是彩色成片；提前拉当前设备版本的封面，避免相机落位后主屏才出图
+    // 屏幕里始终是彩色成片；片墙用 512px 小变体，主屏保留全分辨率
     useMemo(() => {
         (activeContent || []).forEach((item) => {
             const cover = item.paintedFrontTexture || item.frontTexture;
-            if (cover) useDreiTexture.preload(mobileSrc(cover));
+            if (cover) useDreiTexture.preload(smallSrc(cover));
         });
-    }, [activeContent]);
+        const heroCover = selectedContent?.paintedFrontTexture || selectedContent?.frontTexture;
+        if (heroCover) useDreiTexture.preload(heroCover);
+    }, [activeContent, selectedContent]);
 
     const heroRef = useRef();
     const monitorRefs = useRef([]);

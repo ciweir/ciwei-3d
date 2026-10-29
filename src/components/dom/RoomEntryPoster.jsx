@@ -8,22 +8,34 @@ const FALLBACK_HIDE_MS = 9000;
 const LEAVE_MS = 360;
 const STATUS_DELAY_MS = 1500;
 
+const ROOM_POSTERS = {
+    gallery: { base: 'gallery-entry', mobile: 'gallery-entry-mobile', label: '画廊' },
+    studio: { base: 'studio-entry', mobile: 'studio-entry-mobile', label: '工作室' },
+    about: { base: 'about-entry', mobile: 'about-entry-mobile', label: '关于' },
+    contact: { base: 'contact-entry', mobile: 'contact-entry-mobile', label: '联系' },
+};
+
+const posterSrcFor = (room, colorEnabled) => {
+    const config = ROOM_POSTERS[room] || ROOM_POSTERS.gallery;
+    const base = isTouchDevice() ? config.mobile : config.base;
+    return `/images/${base}${colorEnabled ? '-color' : ''}.webp`;
+};
+
 /**
- * 点击画廊后的即时首帧：3D 房间就绪前先显示静态画廊，
- * 避免用户面对纸张/空场景等待。只在画廊传送时出现。
+ * 房间入口首帧：3D 房间就绪前先显示对应房间的静态画面，
+ * 避免用户面对纸张/空场景等待。地图传送与普通开门都走同一接管。
  */
 const RoomEntryPoster = () => {
     const { teleportTarget, teleportPhase, isTeleporting, currentRoom, readingProject } = useScene();
     const colorEnabled = useColorEnabled();
     const [phase, setPhase] = useState('hidden'); // hidden | visible | leaving
+    const [activeRoom, setActiveRoom] = useState('gallery');
     const [showStatus, setShowStatus] = useState(false);
     const fallbackTimer = useRef(null);
     const doorEntryTimer = useRef(null);
 
-    // 静态首帧跟随当前配色，避免“线稿海报 → 彩色房间”的二次染色错觉
-    const posterSrc = isTouchDevice()
-        ? `/images/gallery-entry-mobile${colorEnabled ? '-color' : ''}.webp`
-        : `/images/gallery-entry${colorEnabled ? '-color' : ''}.webp`;
+    const posterSrc = posterSrcFor(activeRoom, colorEnabled);
+    const roomLabel = (ROOM_POSTERS[activeRoom] || ROOM_POSTERS.gallery).label;
 
     useEffect(() => {
         if (readingProject) {
@@ -31,22 +43,28 @@ const RoomEntryPoster = () => {
             return undefined;
         }
 
-        if (teleportTarget === 'gallery') {
+        if (teleportTarget && ROOM_POSTERS[teleportTarget]) {
+            setActiveRoom(teleportTarget);
             setPhase('visible');
             return undefined;
         }
 
-        if (teleportTarget && teleportTarget !== 'gallery') {
+        if (teleportTarget) {
             setPhase('leaving');
         }
         return undefined;
     }, [teleportTarget, readingProject]);
 
-    // 普通“开门”进入画廊：延迟 380ms 淡入，先让用户看到门/走近动作，
+    // 普通“开门”进入房间：延迟 380ms 淡入，先让用户看到门/走近动作，
     // 再由首帧接管房间编译与开门等待。
     useEffect(() => {
         const handleRoomEntryStart = (event) => {
-            if (event.detail?.roomId !== 'gallery' || teleportTarget) return;
+            const roomId = event.detail?.roomId;
+            if (!ROOM_POSTERS[roomId] || teleportTarget) return;
+            setActiveRoom(roomId);
+            // 提前拉首帧，避免 380ms 后才开始下载
+            const img = new Image();
+            img.src = posterSrcFor(roomId, colorEnabled);
             if (doorEntryTimer.current) clearTimeout(doorEntryTimer.current);
             doorEntryTimer.current = setTimeout(() => setPhase('visible'), 380);
         };
@@ -55,7 +73,7 @@ const RoomEntryPoster = () => {
             window.removeEventListener('ciwei:room-entry-start', handleRoomEntryStart);
             if (doorEntryTimer.current) clearTimeout(doorEntryTimer.current);
         };
-    }, [teleportTarget]);
+    }, [teleportTarget, colorEnabled]);
 
     // 兜底必须独立于 teleportTarget：进入过程中 target 会被提前清空
     useEffect(() => {
@@ -69,11 +87,11 @@ const RoomEntryPoster = () => {
     useEffect(() => {
         if (phase === 'hidden') return;
         const roomReady = teleportPhase === 'opening';
-        const teleportEnded = !isTeleporting && teleportPhase === null && currentRoom === 'gallery';
+        const teleportEnded = !isTeleporting && teleportPhase === null && currentRoom === activeRoom;
         if (roomReady || teleportEnded) {
             setPhase('leaving');
         }
-    }, [teleportPhase, isTeleporting, currentRoom, phase]);
+    }, [teleportPhase, isTeleporting, currentRoom, activeRoom, phase]);
 
     useEffect(() => {
         if (phase !== 'leaving') return undefined;
@@ -101,7 +119,7 @@ const RoomEntryPoster = () => {
             <img className="room-entry-poster__image" src={posterSrc} alt="" draggable="false" />
             {showStatus && (
                 <div className="room-entry-poster__status">
-                    <span>画廊 · 正在布置</span>
+                    <span>{roomLabel} · 正在布置</span>
                     <i />
                 </div>
             )}

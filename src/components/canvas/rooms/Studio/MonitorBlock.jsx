@@ -7,12 +7,12 @@ import { TextureLoader } from 'three';
 import { PLATFORM_CONFIG } from './contentData';
 import { isTouchDevice } from '../../../../utils/deviceDetect';
 import { useColorEnabled } from '../../../../utils/colorMode';
-import { useColorOnlyTexture, useTexturePair, mobileSrc } from '../../../../utils/colorTexture';
+import { useColorOnlyTexture, useTexturePair, smallSrc } from '../../../../utils/colorTexture';
 import { STUDIO_PAINT_CONFIG } from './studioPaintConfig';
 import '../../../../styles/StudioProgramTag.scss';
 import '../../shaders/RevealMaterial';
 
-const shellSrc = (src) => mobileSrc(src);
+const shellSrc = (src) => smallSrc(src);
 const pad2 = (value) => String(value || 0).padStart(2, '0');
 
 /* 侧屏悬停时才挂载的纸质片签；固定像素尺寸，远端侧屏也能读清。 */

@@ -6,7 +6,7 @@ import Experience from './Experience';
 import { useScene } from '../../context/useScene';
 import { getInitialRoomFromUrl } from '../../hooks/useDocumentMeta';
 import ciweiProjects from '../../data/ciwei-projects.json';
-import { useColorTexture as useTexture } from '../../utils/colorTexture';
+import { useColorTexture as useTexture, smallSrc } from '../../utils/colorTexture';
 import { getColorEnabled } from '../../utils/colorMode';
 import {
     ENTRANCE_TEXTURES,
@@ -82,13 +82,15 @@ const GALLERY_SHARED_TEXTURES = [
     ...buildInitialGalleryCovers(),
 ];
 
-// 深链直接进房间：只预载目标房间 + 走廊 + UI，不再预载用不到的入口门面
+// 深链直接进房间：只预载目标房间 + UI，不再一次性拉整条走廊；
+// 走廊按需挂载时只加载所在段需要的贴图
 const INITIAL_TEXTURES = DEEP_LINK_ROOM
     ? [
         ...(DEEP_LINK_ROOM === 'gallery'
             ? GALLERY_SHARED_TEXTURES
-            : (ROOM_TEXTURES[DEEP_LINK_ROOM] || [])),
-        ...CORRIDOR_TEXTURES,
+            : DEEP_LINK_ROOM === 'studio'
+                ? (ROOM_TEXTURES.studio || []).map(smallSrc)
+                : (ROOM_TEXTURES[DEEP_LINK_ROOM] || [])),
         ...UI_TEXTURES,
     ]
     : [...ENTRANCE_TEXTURES, ...UI_TEXTURES];

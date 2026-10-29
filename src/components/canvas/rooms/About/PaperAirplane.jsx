@@ -95,6 +95,8 @@ const PaperAirplane = ({ position = [0, 0, 0], rotation = [0, 0, 0], scale = 1, 
                 <meshBasicMaterial
                     color={color}
                     side={THREE.DoubleSide}
+                    toneMapped={false}
+                    fog={false}
                 />
                 <Edges
                     linewidth={2}
@@ -118,7 +120,7 @@ const PaperAirplane = ({ position = [0, 0, 0], rotation = [0, 0, 0], scale = 1, 
                         ])}
                     />
                 </bufferGeometry>
-                <lineBasicMaterial color="#888888" linewidth={2} />
+                <lineBasicMaterial color="#888888" linewidth={2} toneMapped={false} fog={false} />
             </line>
         </group>
     );
