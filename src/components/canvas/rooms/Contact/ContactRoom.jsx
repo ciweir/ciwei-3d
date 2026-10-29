@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect, Suspense } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import { Text, PositionalAudio } from '@react-three/drei';
 import * as THREE from 'three';
@@ -332,17 +332,20 @@ const ContactRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
 
     return (
         <group ref={groupRef} position={[0, -0.7, -5]}>
+            {/* 音频延后挂载会触发 useLoader 挂起，套独立 Suspense 免得住场景一起消失 */}
             {!isWarmup && mediaReady && (
-                <PositionalAudio
-                    ref={audioRef}
-                    url="/sounds/szummorza.mp3"
-                    distanceModel="exponential"
-                    refDistance={AUDIO_SETTINGS.distance}
-                    rolloffFactor={AUDIO_SETTINGS.rolloff}
-                    loop
-                    autoplay
-                    volume={effectiveVolume}
-                />
+                <Suspense fallback={null}>
+                    <PositionalAudio
+                        ref={audioRef}
+                        url="/sounds/szummorza.mp3"
+                        distanceModel="exponential"
+                        refDistance={AUDIO_SETTINGS.distance}
+                        rolloffFactor={AUDIO_SETTINGS.rolloff}
+                        loop
+                        autoplay
+                        volume={effectiveVolume}
+                    />
+                </Suspense>
             )}
 
             {/* ☁️ CLOUDS */}

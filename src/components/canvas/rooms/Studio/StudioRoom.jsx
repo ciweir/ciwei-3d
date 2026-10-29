@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect, useLayoutEffect, useMemo, useCallback } from 'react';
+import { useRef, useState, useEffect, useLayoutEffect, useMemo, useCallback, Suspense } from 'react';
 import { useFrame, useThree, createPortal } from '@react-three/fiber';
 import { Text, Edges, PositionalAudio, useTexture as useDreiTexture } from '@react-three/drei';
 import * as THREE from 'three';
@@ -917,18 +917,21 @@ const StudioRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
             rotation={[0, stageFrame.yaw, 0]}
             onPointerDown={handlePointerDown}
         >
+                {/* 音频延后挂载会触发 useLoader 挂起，套独立 Suspense 免得住场景一起消失 */}
                 {!isWarmup && mediaReady && (
-                    <PositionalAudio
-                        ref={audioRef}
-                        url="/sounds/szummonitorow.mp3"
-                        distanceModel="exponential"
-                        refDistance={AUDIO_SETTINGS.distance}
-                        rolloffFactor={AUDIO_SETTINGS.rolloff}
-                        loop
-                        autoplay
-                        volume={effectiveVolume}
-                        position={[0, heroItem.baseY, 0]}
-                    />
+                    <Suspense fallback={null}>
+                        <PositionalAudio
+                            ref={audioRef}
+                            url="/sounds/szummonitorow.mp3"
+                            distanceModel="exponential"
+                            refDistance={AUDIO_SETTINGS.distance}
+                            rolloffFactor={AUDIO_SETTINGS.rolloff}
+                            loop
+                            autoplay
+                            volume={effectiveVolume}
+                            position={[0, heroItem.baseY, 0]}
+                        />
+                    </Suspense>
                 )}
 
                 {/* 墙面 */}
