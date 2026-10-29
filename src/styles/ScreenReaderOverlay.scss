@@ -55,5 +55,5 @@
 .sr-enter-door:focus {
     top: 56px;
     border: 1px solid $paper;
-    cursor: pointer;
+    cursor: var(--cursor-ink-pointer);
 }

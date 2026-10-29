@@ -8,6 +8,11 @@
 // 纸张纹理：所有纸面背景统一走这个变量；触屏端用 768px 小变体（129KB → 39KB）
 :root {
     --paper-texture: url('/textures/paper-texture.webp');
+
+    // 墨点光标：默认是一圈淡墨环 + 实心墨点，可点击元素时墨点扩散一圈。
+    // 全部内联 SVG，不新增任何图片请求，也不依赖 JS 跟随。
+    --cursor-ink: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='5.4' fill='none' stroke='%231a1a1a' stroke-width='1' opacity='0.5'/%3E%3Ccircle cx='8' cy='8' r='2.1' fill='%231a1a1a'/%3E%3C/svg%3E") 8 8, auto;
+    --cursor-ink-pointer: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E%3Ccircle cx='10' cy='10' r='7.4' fill='none' stroke='%231a1a1a' stroke-width='1.2' opacity='0.6'/%3E%3Ccircle cx='10' cy='10' r='3' fill='%231a1a1a'/%3E%3C/svg%3E") 10 10, pointer;
 }
 
 @include mobile {
@@ -58,6 +63,32 @@ body {
     overflow: hidden; // No scroll - 3D handles it
     @include smooth-text;
     @include hide-scrollbar;
+}
+
+// === 墨点光标（2026-10-30）===
+// 只在有真实指针的桌面端启用；触屏与减少动效环境保持系统光标。
+// 3D 场景里的 hover 通过行内 var(--cursor-ink-pointer) 覆盖，
+// 因此各处「恢复默认」的行内样式写空字符串，交回这里。
+button,
+a,
+[role='button'],
+input[type='range'] {
+    cursor: pointer;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    body,
+    .canvas-wrapper,
+    canvas {
+        cursor: var(--cursor-ink);
+    }
+
+    button,
+    a,
+    [role='button'],
+    input[type='range'] {
+        cursor: var(--cursor-ink-pointer);
+    }
 }
 
 // App container
@@ -183,7 +214,6 @@ a {
 button {
     background: none;
     border: none;
-    cursor: pointer;
     font: inherit;
     color: inherit;
 }

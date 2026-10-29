@@ -112,7 +112,7 @@
                 font-family: 'Cabin Sketch', cursive, sans-serif;
                 font-size: 13px;
                 font-weight: 700;
-                cursor: pointer;
+                cursor: var(--cursor-ink-pointer);
                 text-decoration: underline;
                 text-decoration-style: dashed;
                 text-underline-offset: 3px;

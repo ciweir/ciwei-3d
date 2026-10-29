@@ -415,7 +415,7 @@ const DoorSection = ({
         }
 
         // Reset cursor on transition
-        document.body.style.cursor = "auto";
+        document.body.style.cursor = '';
 
         setIsAnimating(true);
 
@@ -845,7 +845,7 @@ const DoorSection = ({
     const handlePointerEnter = () => {
         if (isOpen || isAnimating) return;
         setIsHovered(true);
-        document.body.style.cursor = "pointer";
+        document.body.style.cursor = 'var(--cursor-ink-pointer)';
 
         if (hoverAudioRef.current && !isHovered) {
             const vol = isMuted ? 0 : DOOR_AUDIO_SETTINGS.hoverVolume * globalVolume;
@@ -903,7 +903,7 @@ const DoorSection = ({
     const handlePointerLeave = () => {
         if (isOpen || isAnimating) return;
         setIsHovered(false);
-        document.body.style.cursor = "auto";
+        document.body.style.cursor = '';
 
         if (hoverAudioRef.current && hoverAudioRef.current.isPlaying) {
             hoverAudioRef.current.stop();

@@ -1,6 +1,7 @@
 import { createContext, useState, useEffect, useCallback, useRef } from 'react';
 import posthog from 'posthog-js';
 import { ACHIEVEMENTS } from './achievementsData';
+import { playUnlock } from '../utils/sfx';
 
 /* 默认值：多个 Canvas 子树内的组件会直接解构本 context 的属性
    （例如 useInfiniteCamera 里的 unlockAchievement）。R3F 的上下文桥接
@@ -36,59 +37,6 @@ export const AchievementsProvider = ({ children }) => {
             return [];
         }
     });
-
-    // Lazy global AudioContext to avoid creating it on every unlock
-    const audioCtxRef = useRef(null);
-
-    // Simple WebAudio chime for achievement unlock
-    const playUnlockChime = useCallback(() => {
-        try {
-            const AudioCtx = window.AudioContext || window.webkitAudioContext;
-            if (!AudioCtx) return;
-
-            // Initialize once and reuse
-            if (!audioCtxRef.current) {
-                audioCtxRef.current = new AudioCtx();
-            }
-
-            const ctx = audioCtxRef.current;
-
-            // Resume context if suspended (browser auto-play policy)
-            // Note: This might still fail if not called directly from a click event,
-            // but we wrap it in a try/catch and silent fail for Awwwards.
-            if (ctx.state === 'suspended') {
-                ctx.resume().catch(() => {
-                    // Silently fail if still blocked by policy
-                });
-            }
-
-            if (ctx.state !== 'running') return;
-
-            const gain = ctx.createGain();
-            const osc = ctx.createOscillator();
-
-            osc.connect(gain);
-            gain.connect(ctx.destination);
-
-            osc.type = 'sine';
-
-            // Nice "ding-ding" interval (A4 -> E5)
-            osc.frequency.setValueAtTime(440, ctx.currentTime);
-            osc.frequency.setValueAtTime(659.25, ctx.currentTime + 0.15);
-
-            // Envelope for volume
-            gain.gain.setValueAtTime(0, ctx.currentTime);
-            gain.gain.linearRampToValueAtTime(0.3, ctx.currentTime + 0.05);
-            gain.gain.linearRampToValueAtTime(0.3, ctx.currentTime + 0.15);
-            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
-
-            // Audio is muted by start/stop being commented out, but we still ensure context logic is clean
-            // osc.start(ctx.currentTime);
-            // osc.stop(ctx.currentTime + 0.5);
-        } catch {
-            // console.warn('Failed to play unlock chime', err);
-        }
-    }, []);
 
     // Currently displayed popup
     // Structure: { id: 'corridor_enter', status: 'pending' | 'completed' | 'hiding' }
@@ -134,7 +82,7 @@ export const AchievementsProvider = ({ children }) => {
             }
 
             // Trigger sound effect
-            playUnlockChime();
+            playUnlock();
 
             setActivePopup(prev => {
                 // If this is the current active popup, transition it to 'completed' then hide
@@ -159,7 +107,7 @@ export const AchievementsProvider = ({ children }) => {
                 }
             });
         }
-    }, [playUnlockChime]);
+    }, [playUnlock]);
 
     const hidePopup = useCallback(() => {
         if (activePopup && activePopup.status !== 'hiding') {

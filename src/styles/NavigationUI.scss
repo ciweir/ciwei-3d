@@ -29,7 +29,7 @@
     padding-top: 8px; // Push content down since top is hidden
     background: transparent;
     border: none;
-    cursor: pointer;
+    cursor: var(--cursor-ink-pointer);
     transition: transform 0.2s ease;
     overflow: visible;
 
@@ -332,7 +332,7 @@
             flex: 0 0 38px;
             background: transparent;
             border: none;
-            cursor: pointer;
+            cursor: var(--cursor-ink-pointer);
             transition: transform 0.2s ease, opacity 0.2s ease;
             opacity: 0.82;
 
@@ -415,7 +415,7 @@
     .map-hover-zone {
         position: absolute;
         z-index: 2;
-        cursor: pointer;
+        cursor: var(--cursor-ink-pointer);
         // Reset button defaults (these are now <button> for accessibility)
         background: transparent;
         border: none;
@@ -643,7 +643,7 @@
             height: 24px;
             background: transparent;
             border: none;
-            cursor: pointer;
+            cursor: var(--cursor-ink-pointer);
             opacity: 0.6;
             transition: transform 0.2s, opacity 0.2s;
 
@@ -705,7 +705,7 @@
                 background: $line;
                 border-radius: 2px;
                 outline: none;
-                cursor: pointer;
+                cursor: var(--cursor-ink-pointer);
 
                 &::-webkit-slider-thumb {
                     appearance: none;
@@ -713,7 +713,7 @@
                     height: 16px;
                     border-radius: 50%;
                     background: $ink;
-                    cursor: pointer;
+                    cursor: var(--cursor-ink-pointer);
                     box-shadow: 1px 1px 2px rgba($black, 0.3);
                 }
 
@@ -722,7 +722,7 @@
                     height: 16px;
                     border-radius: 50%;
                     background: $ink;
-                    cursor: pointer;
+                    cursor: var(--cursor-ink-pointer);
                     box-shadow: 1px 1px 2px rgba($black, 0.3);
                     border: none;
                 }

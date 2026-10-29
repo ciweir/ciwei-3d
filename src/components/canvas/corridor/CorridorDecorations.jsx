@@ -135,8 +135,8 @@ const InspectableFrame = ({ frame, wallX, frameTexture, framePaintedTexture, CAB
     }, [isInspected, setCameraOverride]);
 
     useEffect(() => {
-        if (isHovered && !isMobile) document.body.style.cursor = 'pointer';
-        else document.body.style.cursor = 'auto';
+        if (isHovered && !isMobile) document.body.style.cursor = 'var(--cursor-ink-pointer)';
+        else document.body.style.cursor = '';
     }, [isHovered, isMobile]);
 
     useEffect(() => {

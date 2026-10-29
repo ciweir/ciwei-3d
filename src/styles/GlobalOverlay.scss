@@ -76,7 +76,7 @@
     height: 32px;
     background: transparent;
     border: none;
-    cursor: pointer;
+    cursor: var(--cursor-ink-pointer);
     transition: transform 0.2s ease, opacity 0.2s ease;
     opacity: 0.7;
     flex-shrink: 0;
@@ -154,7 +154,7 @@
     font-family: $font-cjk; // 按钮文案为中文（Cabin Sketch 无 CJK）
     letter-spacing: 0.3em;
     transition: all 0.2s;
-    cursor: pointer;
+    cursor: var(--cursor-ink-pointer);
     margin-top: auto;
 
     // Slight sketch styling

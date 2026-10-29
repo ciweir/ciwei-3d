@@ -423,9 +423,9 @@ const SkillBalloon = ({ config, revealFactorRef, spreadFactorRef, timeRef }) => 
     // Cursor handling
     useEffect(() => {
         if (hovered && !isPopping) {
-            document.body.style.cursor = 'pointer';
+            document.body.style.cursor = 'var(--cursor-ink-pointer)';
         } else {
-            document.body.style.cursor = 'auto';
+            document.body.style.cursor = '';
         }
     }, [hovered, isPopping]);
 

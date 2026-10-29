@@ -693,7 +693,7 @@ const StudioRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
 
     const handlePointerUp = useCallback(() => {
         isDraggingRef.current = false;
-        document.body.style.cursor = 'auto';
+        document.body.style.cursor = '';
     }, []);
 
     const handlePointerMove = useCallback((event) => {

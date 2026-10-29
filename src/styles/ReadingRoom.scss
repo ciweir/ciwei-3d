@@ -101,7 +101,7 @@
         color: #d8d2c4;
         font-size: 0.85rem;
         line-height: 1.2;
-        cursor: pointer;
+        cursor: var(--cursor-ink-pointer);
         transition: border-color $transition-fast, background $transition-fast, color $transition-fast;
 
         &:hover {

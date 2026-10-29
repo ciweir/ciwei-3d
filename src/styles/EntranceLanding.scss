@@ -11,7 +11,7 @@
     padding: 0;
     border: 0;
     background: transparent;
-    cursor: pointer;
+    cursor: var(--cursor-ink-pointer);
     -webkit-tap-highlight-color: transparent;
 
     &::after {

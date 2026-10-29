@@ -1127,13 +1127,13 @@ const ProjectCard = memo(forwardRef(({ index, project, clothespinTexture, curren
     // Cursor change on hover
     useEffect(() => {
         if (btnHovered && isSelected) {
-            document.body.style.cursor = 'pointer';
+            document.body.style.cursor = 'var(--cursor-ink-pointer)';
         } else if (hovered && !isSelected) {
-            document.body.style.cursor = 'pointer';
+            document.body.style.cursor = 'var(--cursor-ink-pointer)';
         } else {
-            document.body.style.cursor = 'auto';
+            document.body.style.cursor = '';
         }
-        return () => { document.body.style.cursor = 'auto'; };
+        return () => { document.body.style.cursor = ''; };
     }, [hovered, isSelected, btnHovered]);
 
     useFrame((state) => {

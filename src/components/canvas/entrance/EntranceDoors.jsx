@@ -194,7 +194,7 @@ const EntranceDoors = ({
         }
 
         setIsBugClicked(true);
-        document.body.style.cursor = "auto";
+        document.body.style.cursor = '';
 
         // Animate ink splash scale up
         if (inkSplashRef.current) {
@@ -322,7 +322,7 @@ const EntranceDoors = ({
         onEnterStart?.();
 
         // Reset cursor immediately on transition start
-        document.body.style.cursor = "auto";
+        document.body.style.cursor = '';
 
         setIsOpen(true);
         setIsAnimating(true);
@@ -392,7 +392,7 @@ const EntranceDoors = ({
     const handlePointerEnter = () => {
         if (isOpen || isAnimating || isMobile) return;
         setIsHovered(true);
-        document.body.style.cursor = "pointer";
+        document.body.style.cursor = 'var(--cursor-ink-pointer)';
 
         // Slightly open doors on hover
         gsap.to(leftDoorRef.current.rotation, {
@@ -468,7 +468,7 @@ const EntranceDoors = ({
     const handlePointerLeave = () => {
         if (isOpen || isAnimating || isMobile) return;
         setIsHovered(false);
-        document.body.style.cursor = "auto";
+        document.body.style.cursor = '';
 
         // Close doors back
         gsap.to(leftDoorRef.current.rotation, {
@@ -609,7 +609,7 @@ const EntranceDoors = ({
     const handleWindowEnter = (e) => {
         e.stopPropagation();
         setIsWindowHovered(true);
-        document.body.style.cursor = "pointer";
+        document.body.style.cursor = 'var(--cursor-ink-pointer)';
 
         if (windowAvatarRef.current) {
             gsap.to(windowAvatarRef.current.position, {
@@ -630,7 +630,7 @@ const EntranceDoors = ({
     const handleWindowLeave = (e) => {
         e.stopPropagation();
         setIsWindowHovered(false);
-        document.body.style.cursor = "auto";
+        document.body.style.cursor = '';
 
         if (windowAvatarRef.current) {
             gsap.to(windowAvatarRef.current.position, {
@@ -948,8 +948,8 @@ const EntranceDoors = ({
                 <mesh
                     position={[0.38, 0.1, 0.01]}
                     onClick={handleDuckClick}
-                    onPointerEnter={() => { document.body.style.cursor = "pointer"; }}
-                    onPointerLeave={() => { document.body.style.cursor = "auto"; }}
+                    onPointerEnter={() => { document.body.style.cursor = 'var(--cursor-ink-pointer)'; }}
+                    onPointerLeave={() => { document.body.style.cursor = ''; }}
                 >
                     <planeGeometry args={[0.6, 0.6]} />
                     <meshBasicMaterial color="#e0e0e0" transparent opacity={0} />
@@ -996,8 +996,8 @@ const EntranceDoors = ({
                     ref={bugRef}
                     position={[2.5, floorY + 2.8, 0.16]}
                     onClick={handleBugClick}
-                    onPointerEnter={() => { document.body.style.cursor = "pointer"; }}
-                    onPointerLeave={() => { document.body.style.cursor = "auto"; }}
+                    onPointerEnter={() => { document.body.style.cursor = 'var(--cursor-ink-pointer)'; }}
+                    onPointerLeave={() => { document.body.style.cursor = ''; }}
                 >
                     <planeGeometry args={[0.4, 0.4]} />
                     <meshBasicMaterial color="#e0e0e0"
@@ -1086,8 +1086,8 @@ const EntranceDoors = ({
                 position={[-1.5, floorY + 0.6, 0.8]}
                 ref={catGroupRef}
                 onClick={handleCatClick}
-                onPointerEnter={() => { document.body.style.cursor = 'pointer'; }}
-                onPointerLeave={() => { document.body.style.cursor = 'auto'; }}
+                onPointerEnter={() => { document.body.style.cursor = 'var(--cursor-ink-pointer)'; }}
+                onPointerLeave={() => { document.body.style.cursor = ''; }}
             >
                 {/* Body */}
                 <mesh>

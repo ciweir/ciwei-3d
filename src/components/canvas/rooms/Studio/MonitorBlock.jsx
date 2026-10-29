@@ -259,7 +259,7 @@ const MonitorBlock = memo(({ item, meshRef, isSelected, isCurrent, playlistIndex
                 isHoveredRef.current = true;
                 setIsHovered(true);
                 updatePaintState();
-                document.body.style.cursor = 'pointer';
+                document.body.style.cursor = 'var(--cursor-ink-pointer)';
                 if (!item.isHero && groupRef.current) {
                     gsap.to(groupRef.current.scale, {
                         x: 1.055,
@@ -275,7 +275,7 @@ const MonitorBlock = memo(({ item, meshRef, isSelected, isCurrent, playlistIndex
                 isHoveredRef.current = false;
                 setIsHovered(false);
                 updatePaintState();
-                document.body.style.cursor = 'auto';
+                document.body.style.cursor = '';
                 if (!item.isHero && groupRef.current) {
                     gsap.to(groupRef.current.scale, {
                         x: 1,

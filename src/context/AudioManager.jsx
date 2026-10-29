@@ -1,4 +1,5 @@
 import { createContext, useState, useEffect, useRef, useCallback } from 'react';
+import { playTick, playUnlock } from '../utils/sfx';
 
 // 导出 context 对象供 useAudio.js 使用；本文件只导出组件与 context 对象
 export const AudioContext = createContext({
@@ -75,6 +76,17 @@ export const AudioProvider = ({ children }) => {
     }, [audioEnabled]);
 
     const play = useCallback((soundName, { loop = false, volume = 1.0 } = {}) => {
+        // 界面层合成音：没有素材文件，也不值得为此新增网络请求。
+        // 与资源音效共用同一套静音/音量状态（见 utils/sfx.js）。
+        if (soundName === 'tick') {
+            playTick();
+            return { stop: () => { }, fade: () => { } };
+        }
+        if (soundName === 'unlock') {
+            playUnlock();
+            return { stop: () => { }, fade: () => { } };
+        }
+
         // Graceful degradation if files missing
         const soundPaths = {
             'szumwiatru': '/sounds/szumwiatru.mp3', // 风声（关于房间）
