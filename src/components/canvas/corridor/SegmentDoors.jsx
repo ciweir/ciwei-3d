@@ -160,7 +160,7 @@ const SegmentDoors = ({
             {/* === LEFT WALL PANEL (Brainstorming) === */}
             <mesh position={[-(doorOpeningWidth / 2 + sideWallWidth / 2), wallCenterY, 0]}>
                 <boxGeometry args={[sideWallWidth, corridorHeight, wallThickness]} />
-                <meshBasicMaterial color="#e0e0e0" map={wallTexture} roughness={0.95} />
+                <meshBasicMaterial color="#e0e0e0" map={wallTexture} roughness={0.95} toneMapped={false} side={THREE.DoubleSide} />
             </mesh>
             {/* Decoration Left (Idea Process) */}
             {/*
@@ -177,14 +177,14 @@ const SegmentDoors = ({
                     map={ideaTexture}
                     transparent={true}
                     roughness={0.9}
-                    alphaTest={0.1}
+                    alphaTest={0.1} toneMapped={false} side={THREE.DoubleSide}
                 />
             </mesh>
 
             {/* === RIGHT WALL PANEL (Coffee & Bug) === */}
             <mesh position={[(doorOpeningWidth / 2 + sideWallWidth / 2), wallCenterY, 0]}>
                 <boxGeometry args={[sideWallWidth, corridorHeight, wallThickness]} />
-                <meshBasicMaterial color="#e0e0e0" map={wallTexture} roughness={0.95} />
+                <meshBasicMaterial color="#e0e0e0" map={wallTexture} roughness={0.95} toneMapped={false} side={THREE.DoubleSide} />
             </mesh>
             {/* Decoration Right (Coffee) */}
             {/* 
@@ -199,14 +199,14 @@ const SegmentDoors = ({
                     map={coffeeTexture}
                     transparent={true}
                     roughness={0.9}
-                    alphaTest={0.1}
+                    alphaTest={0.1} toneMapped={false} side={THREE.DoubleSide}
                 />
             </mesh>
 
             {/* === TOP WALL PANEL (While True) === */}
             <mesh position={[0, topWallCenterY, 0]}>
                 <boxGeometry args={[doorOpeningWidth, topWallHeight, wallThickness]} />
-                <meshBasicMaterial color="#e0e0e0" map={wallTexture} roughness={0.95} />
+                <meshBasicMaterial color="#e0e0e0" map={wallTexture} roughness={0.95} toneMapped={false} side={THREE.DoubleSide} />
             </mesh>
             {/* Decoration Top (While True) */}
             <mesh position={[0, topWallCenterY, 0.07]}>
@@ -215,7 +215,7 @@ const SegmentDoors = ({
                     map={whileTrueTexture}
                     transparent={true}
                     roughness={0.9}
-                    alphaTest={0.1}
+                    alphaTest={0.1} toneMapped={false} side={THREE.DoubleSide}
                 />
             </mesh>
 
@@ -228,7 +228,7 @@ const SegmentDoors = ({
                     transparent={true}
                     alphaTest={0.1}
                     roughness={0.9}
-                    depthWrite={false}
+                    depthWrite={false} toneMapped={false} side={THREE.DoubleSide}
                 />
             </mesh>
 
@@ -237,7 +237,7 @@ const SegmentDoors = ({
                 {/* Solid 3D Door Body with edge texture */}
                 <mesh position={[doorWidth / 2, 0, 0.06]}>
                     <boxGeometry args={[doorWidth, doorHeight, 0.04]} />
-                    <meshBasicMaterial color="#e0e0e0" map={edgeTexture} roughness={0.9} />
+                    <meshBasicMaterial color="#e0e0e0" map={edgeTexture} roughness={0.9} toneMapped={false} side={THREE.DoubleSide} />
                 </mesh>
 
                 {/* Front Texture Face */}
@@ -247,7 +247,7 @@ const SegmentDoors = ({
                         map={doorLeftTexture}
                         transparent={true}
                         alphaTest={0.5}
-                        roughness={0.8}
+                        roughness={0.8} toneMapped={false} side={THREE.DoubleSide}
                     />
                 </mesh>
 
@@ -259,7 +259,7 @@ const SegmentDoors = ({
                         transparent={true}
                         alphaTest={0.5}
                         roughness={0.8}
-                        side={2}
+                        side={2} toneMapped={false}
                     />
                 </mesh>
 
@@ -271,7 +271,7 @@ const SegmentDoors = ({
                             map={handleLeftTexture}
                             transparent={true}
                             alphaTest={0.5}
-                            depthWrite={false}
+                            depthWrite={false} toneMapped={false} side={THREE.DoubleSide}
                         />
                     </mesh>
                 </group>
@@ -282,7 +282,7 @@ const SegmentDoors = ({
                 {/* Solid 3D Door Body with edge texture */}
                 <mesh position={[-doorWidth / 2, 0, 0.06]}>
                     <boxGeometry args={[doorWidth, doorHeight, 0.04]} />
-                    <meshBasicMaterial color="#e0e0e0" map={edgeTexture} roughness={0.9} />
+                    <meshBasicMaterial color="#e0e0e0" map={edgeTexture} roughness={0.9} toneMapped={false} side={THREE.DoubleSide} />
                 </mesh>
 
                 {/* Front Texture Face */}
@@ -292,7 +292,7 @@ const SegmentDoors = ({
                         map={doorRightTexture}
                         transparent={true}
                         alphaTest={0.5}
-                        roughness={0.8}
+                        roughness={0.8} toneMapped={false} side={THREE.DoubleSide}
                     />
                 </mesh>
 
@@ -303,7 +303,7 @@ const SegmentDoors = ({
                         map={doorBackTexture}
                         transparent={true}
                         alphaTest={0.5}
-                        roughness={0.8}
+                        roughness={0.8} toneMapped={false} side={THREE.DoubleSide}
                     />
                 </mesh>
 
@@ -315,7 +315,7 @@ const SegmentDoors = ({
                             map={handleRightTexture}
                             transparent={true}
                             alphaTest={0.5}
-                            depthWrite={false}
+                            depthWrite={false} toneMapped={false} side={THREE.DoubleSide}
                         />
                     </mesh>
                 </group>
@@ -358,7 +358,7 @@ const SegmentDoors = ({
                             map={threshTex}
                             roughness={0.9}
                             metalness={0}
-                            side={THREE.DoubleSide}
+                            side={THREE.DoubleSide} toneMapped={false}
                         />
                     </mesh>
                 );
@@ -374,7 +374,7 @@ const SegmentDoors = ({
                 return (
                     <mesh position={[-(doorOpeningWidth / 2 + sideWallWidth / 2), floorY + 0.075, wallThickness / 2 + 0.01]}>
                         <planeGeometry args={[sideWallWidth, 0.15]} />
-                        <meshBasicMaterial color="#e0e0e0" map={bbTex} roughness={0.8} side={THREE.DoubleSide} />
+                        <meshBasicMaterial color="#e0e0e0" map={bbTex} roughness={0.8} side={THREE.DoubleSide} toneMapped={false} />
                     </mesh>
                 );
             })()}
@@ -390,7 +390,7 @@ const SegmentDoors = ({
                 return (
                     <mesh position={[(doorOpeningWidth / 2 + sideWallWidth / 2), floorY + 0.075, wallThickness / 2 + 0.01]}>
                         <planeGeometry args={[sideWallWidth, 0.15]} />
-                        <meshBasicMaterial color="#e0e0e0" map={bbTex} roughness={0.8} side={THREE.DoubleSide} />
+                        <meshBasicMaterial color="#e0e0e0" map={bbTex} roughness={0.8} side={THREE.DoubleSide} toneMapped={false} />
                     </mesh>
                 );
             })()}

@@ -169,7 +169,7 @@ const SketchElement = ({
                     opacity={0.15}
                     side={THREE.DoubleSide}
                     depthWrite={false}
-                    alphaTest={0.5}
+                    alphaTest={0.5} toneMapped={false}
                 />
             </mesh>
             {/* Main element */}
@@ -180,7 +180,7 @@ const SketchElement = ({
                     transparent={true}
                     side={THREE.DoubleSide}
                     depthWrite={false}
-                    alphaTest={0.5}
+                    alphaTest={0.5} toneMapped={false}
                 />
             </mesh>
         </group>
@@ -208,7 +208,7 @@ const AnimatedStar = ({ position, scale = 0.1, speed = 0.5 }) => {
             {[0, 1, 2, 3].map((i) => (
                 <mesh key={i} rotation={[0, 0, (i * Math.PI) / 4]}>
                     <planeGeometry args={[1, 0.12]} />
-                    <meshBasicMaterial color="#2a2a2a" transparent opacity={0.7} side={2} />
+                    <meshBasicMaterial color="#2a2a2a" transparent opacity={0.7} side={2} toneMapped={false} />
                 </mesh>
             ))}
         </group>
@@ -233,7 +233,7 @@ const Squiggle = ({ position, rotation = 0 }) => {
             {[0, 1, 2, 3, 4, 5].map((i) => (
                 <mesh key={i} position={[i * 0.07, Math.sin(i * 1.5) * 0.035, 0]}>
                     <circleGeometry args={[0.015, 8]} />
-                    <meshBasicMaterial color="#444" transparent opacity={0.5} />
+                    <meshBasicMaterial color="#444" transparent opacity={0.5} toneMapped={false} />
                 </mesh>
             ))}
         </group>
@@ -257,7 +257,7 @@ const DoodleCircle = ({ position, scale = 0.08 }) => {
     return (
         <mesh ref={ref} position={position}>
             <ringGeometry args={[0.6, 1, 12]} />
-            <meshBasicMaterial color="#333" transparent opacity={0.4} side={2} />
+            <meshBasicMaterial color="#333" transparent opacity={0.4} side={2} toneMapped={false} />
         </mesh>
     );
 };
@@ -287,27 +287,27 @@ const ThoughtBubble = ({ position }) => {
             {/* Main bubble */}
             <mesh>
                 <circleGeometry args={[0.12, 16]} />
-                <meshBasicMaterial color="#fff" />
+                <meshBasicMaterial color="#fff" toneMapped={false} />
             </mesh>
             <mesh>
                 <ringGeometry args={[0.11, 0.13, 16]} />
-                <meshBasicMaterial color="#333" />
+                <meshBasicMaterial color="#333" toneMapped={false} />
             </mesh>
 
             {/* Small bubbles leading to main */}
             <mesh position={[-0.1, -0.1, 0]}>
                 <circleGeometry args={[0.035, 8]} />
-                <meshBasicMaterial color="#fff" />
+                <meshBasicMaterial color="#fff" toneMapped={false} />
             </mesh>
             <mesh position={[-0.1, -0.1, 0]}>
                 <ringGeometry args={[0.03, 0.04, 8]} />
-                <meshBasicMaterial color="#333" />
+                <meshBasicMaterial color="#333" toneMapped={false} />
             </mesh>
 
             {/* Content inside bubble - code icon */}
             <mesh ref={contentRef} position={[0, 0, 0.01]}>
                 <planeGeometry args={[0.05, 0.06]} />
-                <meshBasicMaterial color="#111111" transparent opacity={0.9} />
+                <meshBasicMaterial color="#111111" transparent opacity={0.9} toneMapped={false} />
             </mesh>
         </group>
     );

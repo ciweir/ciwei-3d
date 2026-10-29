@@ -6,7 +6,7 @@ import Experience from './Experience';
 import { useScene } from '../../context/useScene';
 import { getInitialRoomFromUrl } from '../../hooks/useDocumentMeta';
 import ciweiProjects from '../../data/ciwei-projects.json';
-import { useColorTexture as useTexture, smallSrc } from '../../utils/colorTexture';
+import { useColorTexture as useTexture, smallSrc, setLowResCorridor } from '../../utils/colorTexture';
 import { getColorEnabled } from '../../utils/colorMode';
 import {
     ENTRANCE_TEXTURES,
@@ -23,6 +23,8 @@ import {
 configureTextBuilder({ useWorker: false });
 
 const DEEP_LINK_ROOM = getInitialRoomFromUrl();
+// 深链直接进房间：走廊只在门后短暂出现，统一使用小变体贴图
+setLowResCorridor(Boolean(DEEP_LINK_ROOM));
 // 画廊额外依赖：隔断纸纹 + GalleryClouds 的 8 张云（不在生成器的 GALLERY 分组里）
 const GALLERY_EXTRA_TEXTURES = [
     '/textures/paper-texture.webp',

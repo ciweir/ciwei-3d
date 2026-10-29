@@ -67,7 +67,7 @@ const PictureContent = ({ imagePath, imagePaintedPath, width, height, isPainted 
                         transparent={true}
                         alphaTest={0.5}
                         side={THREE.DoubleSide}
-                        roughness={0.9}
+                        roughness={0.9} toneMapped={false}
                     />
                 </mesh>
             )}
@@ -81,7 +81,7 @@ const PictureContent = ({ imagePath, imagePaintedPath, width, height, isPainted 
                         alphaTest={0.1}
                         side={THREE.DoubleSide}
                         roughness={0.9}
-                        uProgress={0.0}
+                        uProgress={0.0} toneMapped={false}
                     />
                 ) : (
                     <meshBasicMaterial color="#e0e0e0"
@@ -89,7 +89,7 @@ const PictureContent = ({ imagePath, imagePaintedPath, width, height, isPainted 
                         transparent={true}
                         alphaTest={0.1} // 关键：修复透明（裁掉背景）
                         side={THREE.DoubleSide}
-                        roughness={0.5}
+                        roughness={0.5} toneMapped={false}
                     />
                 )}
             </mesh>
@@ -257,7 +257,7 @@ const InspectableFrame = ({ frame, wallX, frameTexture, framePaintedTexture, CAB
                 }}
             >
                 <planeGeometry args={[frame.width, frame.height]} />
-                <meshBasicMaterial color="#e0e0e0" transparent opacity={0} depthWrite={false} />
+                <meshBasicMaterial color="#e0e0e0" transparent opacity={0} depthWrite={false} toneMapped={false} />
             </mesh>
 
             {/* RAMKA PAINTED (behind sketch) */}
@@ -269,7 +269,7 @@ const InspectableFrame = ({ frame, wallX, frameTexture, framePaintedTexture, CAB
                         transparent={true}
                         alphaTest={0.5}
                         side={THREE.DoubleSide}
-                        roughness={0.9}
+                        roughness={0.9} toneMapped={false}
                     />
                 </mesh>
             )}
@@ -284,7 +284,7 @@ const InspectableFrame = ({ frame, wallX, frameTexture, framePaintedTexture, CAB
                     alphaTest={0.1}
                     side={THREE.DoubleSide}
                     roughness={0.9}
-                    uProgress={0.0}
+                    uProgress={0.0} toneMapped={false}
                 />
             </mesh>
 
@@ -473,11 +473,11 @@ const CorridorDecorations = ({ segmentLength, zOffset, corridorWidth = 4, corrid
                             <boxGeometry args={[2.0, 0.06, 0.5]} />
 
                             {/* Short sides (Right/Left) */}
-                            <meshBasicMaterial attach="material-0" color="#e8e8e8" roughness={0.6} />
-                            <meshBasicMaterial attach="material-1" color="#e8e8e8" roughness={0.6} />
+                            <meshBasicMaterial attach="material-0" color="#e8e8e8" roughness={0.6} toneMapped={false} />
+                            <meshBasicMaterial attach="material-1" color="#e8e8e8" roughness={0.6} toneMapped={false} />
 
                             {/* Top (Hidden) */}
-                            <meshBasicMaterial attach="material-2" color="#d0d0d0" roughness={0.8} />
+                            <meshBasicMaterial attach="material-2" color="#d0d0d0" roughness={0.8} toneMapped={false} />
 
                             {/* 底面——网格贴图
                                 用透明露出内部的光；网格本身为深色/金属质感。
@@ -489,12 +489,12 @@ const CorridorDecorations = ({ segmentLength, zOffset, corridorWidth = 4, corrid
                                 alphaTest={0.1}
                                 side={THREE.DoubleSide}
                                 color="#e0e0e0"
-                                roughness={0.5}
+                                roughness={0.5} toneMapped={false}
                             />
 
                             {/* Long sides (Front/Back) - Side Texture */}
-                            <meshBasicMaterial color="#e0e0e0" attach="material-4" map={lampSideTexture} roughness={0.6} />
-                            <meshBasicMaterial color="#e0e0e0" attach="material-5" map={lampSideTexture} roughness={0.6} />
+                            <meshBasicMaterial color="#e0e0e0" attach="material-4" map={lampSideTexture} roughness={0.6} toneMapped={false} />
+                            <meshBasicMaterial color="#e0e0e0" attach="material-5" map={lampSideTexture} roughness={0.6} toneMapped={false} />
                         </mesh>
 
                         {/* 内部发光面（LIGHT PANEL）
@@ -535,19 +535,19 @@ const CorridorDecorations = ({ segmentLength, zOffset, corridorWidth = 4, corrid
                 ].map((pos, i) => (
                     <mesh key={`leg-${i}`} position={[pos[0], tableConfig.height / 2, pos[1]]}>
                         <boxGeometry args={[tableConfig.legRadius * 2, tableConfig.height, tableConfig.legRadius * 2]} />
-                        <meshBasicMaterial color="#e0e0e0" map={legTexture} roughness={0.8} />
+                        <meshBasicMaterial color="#e0e0e0" map={legTexture} roughness={0.8} toneMapped={false} side={THREE.DoubleSide} />
                     </mesh>
                 ))}
 
                 {/* Blat stolika */}
                 <mesh position={[0, tableConfig.height + tableConfig.topThickness / 2, 0]}>
                     <boxGeometry args={[tableConfig.width, tableConfig.topThickness, tableConfig.depth]} />
-                    <meshBasicMaterial color="#e0e0e0" attach="material-0" map={woodTexture} /> {/* Right */}
-                    <meshBasicMaterial color="#e0e0e0" attach="material-1" map={woodTexture} /> {/* Left */}
-                    <meshBasicMaterial color="#e0e0e0" attach="material-2" map={tableTopTexture} roughness={0.5} /> {/* Top */}
-                    <meshBasicMaterial attach="material-3" color="#e0e0e0" />   {/* Bottom */}
-                    <meshBasicMaterial color="#e0e0e0" attach="material-4" map={woodTexture} /> {/* Front */}
-                    <meshBasicMaterial color="#e0e0e0" attach="material-5" map={woodTexture} /> {/* Back */}
+                    <meshBasicMaterial color="#e0e0e0" attach="material-0" map={woodTexture} toneMapped={false} /> {/* Right */}
+                    <meshBasicMaterial color="#e0e0e0" attach="material-1" map={woodTexture} toneMapped={false} /> {/* Left */}
+                    <meshBasicMaterial color="#e0e0e0" attach="material-2" map={tableTopTexture} roughness={0.5} toneMapped={false} /> {/* Top */}
+                    <meshBasicMaterial attach="material-3" color="#e0e0e0" toneMapped={false} />   {/* Bottom */}
+                    <meshBasicMaterial color="#e0e0e0" attach="material-4" map={woodTexture} toneMapped={false} /> {/* Front */}
+                    <meshBasicMaterial color="#e0e0e0" attach="material-5" map={woodTexture} toneMapped={false} /> {/* Back */}
                 </mesh>
 
                 {/* KWIATEK NA STOLE */}
@@ -561,7 +561,7 @@ const CorridorDecorations = ({ segmentLength, zOffset, corridorWidth = 4, corrid
                         transparent={true}
                         alphaTest={0.1}
                         side={THREE.DoubleSide}
-                        roughness={0.8}
+                        roughness={0.8} toneMapped={false}
                     />
                 </mesh>
             </group>
@@ -606,12 +606,12 @@ const CorridorDecorations = ({ segmentLength, zOffset, corridorWidth = 4, corrid
                     4: Front (+z) -> szafkaprzodgora.png (side)
                     5: Back (-z) -> szafkaprzodgora.png (side)
                 */}
-                <meshBasicMaterial color="#e0e0e0" attach="material-0" map={cabinetRestTexture} />
-                <meshBasicMaterial color="#e0e0e0" attach="material-1" map={cabinetFrontTexture} />
-                <meshBasicMaterial color="#e0e0e0" attach="material-2" map={cabinetRestTexture} />
-                <meshBasicMaterial color="#e0e0e0" attach="material-3" map={cabinetRestTexture} />
-                <meshBasicMaterial color="#e0e0e0" attach="material-4" map={cabinetRestTexture} />
-                <meshBasicMaterial color="#e0e0e0" attach="material-5" map={cabinetRestTexture} />
+                <meshBasicMaterial color="#e0e0e0" attach="material-0" map={cabinetRestTexture} toneMapped={false} />
+                <meshBasicMaterial color="#e0e0e0" attach="material-1" map={cabinetFrontTexture} toneMapped={false} />
+                <meshBasicMaterial color="#e0e0e0" attach="material-2" map={cabinetRestTexture} toneMapped={false} />
+                <meshBasicMaterial color="#e0e0e0" attach="material-3" map={cabinetRestTexture} toneMapped={false} />
+                <meshBasicMaterial color="#e0e0e0" attach="material-4" map={cabinetRestTexture} toneMapped={false} />
+                <meshBasicMaterial color="#e0e0e0" attach="material-5" map={cabinetRestTexture} toneMapped={false} />
             </mesh>
 
             {/* === 柜上立式相框（STANDING FRAME）=== */}
@@ -626,7 +626,7 @@ const CorridorDecorations = ({ segmentLength, zOffset, corridorWidth = 4, corrid
                     transparent={true}
                     alphaTest={0.1}
                     side={THREE.DoubleSide}
-                    roughness={0.8}
+                    roughness={0.8} toneMapped={false}
                 />
             </mesh>
 
@@ -643,7 +643,7 @@ const CorridorDecorations = ({ segmentLength, zOffset, corridorWidth = 4, corrid
                     transparent={true}
                     alphaTest={0.1}
                     side={THREE.DoubleSide}
-                    roughness={0.8}
+                    roughness={0.8} toneMapped={false}
                 />
             </mesh>
 
@@ -669,7 +669,7 @@ const CorridorDecorations = ({ segmentLength, zOffset, corridorWidth = 4, corrid
                             transparent={true}
                             alphaTest={0.1}
                             side={THREE.DoubleSide}
-                            roughness={0.8}
+                            roughness={0.8} toneMapped={false}
                         />
                     </mesh>
                 );

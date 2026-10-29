@@ -31,6 +31,18 @@ export const smallSrc = (src) => {
     return src.replace(/\.webp$/i, '-mobile.webp');
 };
 
+/* === 深链走廊降采样：深链直接进房间时走廊只在门后短暂出现，
+   走廊/门贴图统一走 768px 小变体，减少首开传输与解码 === */
+let lowResCorridor = false;
+export const setLowResCorridor = (value) => {
+    lowResCorridor = Boolean(value);
+};
+const corridorLowResSrc = (src) => {
+    if (!lowResCorridor || typeof src !== 'string') return src;
+    if (!src.startsWith('/textures/corridor/') && !src.startsWith('/textures/doors/')) return src;
+    return smallSrc(src);
+};
+
 /** 线稿 URL → 彩色版 URL；无对应彩色版时原样返回 */
 export const paintedSrc = (src) => {
     if (typeof src !== 'string') return src;
@@ -40,7 +52,7 @@ export const paintedSrc = (src) => {
 };
 
 export const resolveTextureSrc = (src, colorEnabled = getColorEnabled()) =>
-    mobileSrc(colorEnabled ? paintedSrc(src) : src);
+    corridorLowResSrc(mobileSrc(colorEnabled ? paintedSrc(src) : src));
 
 const mapInput = (input, mapper) => {
     if (typeof input === 'string') return mapper(input);
@@ -241,9 +253,9 @@ export const useTexturePair = (sketchUrl, paintedUrl) => {
     const colorEnabled = useColorEnabled();
     const scope = useColorLoadScope();
     const initialEnabled = useRef(colorEnabled);
-    const baseUrl = mobileSrc(initialEnabled.current && paintedUrl ? paintedUrl : sketchUrl);
+    const baseUrl = corridorLowResSrc(mobileSrc(initialEnabled.current && paintedUrl ? paintedUrl : sketchUrl));
     const base = useDreiTexture(baseUrl);
-    const targetUrl = mobileSrc(colorEnabled && paintedUrl ? paintedUrl : sketchUrl);
+    const targetUrl = corridorLowResSrc(mobileSrc(colorEnabled && paintedUrl ? paintedUrl : sketchUrl));
     const wantsAlt = targetUrl !== baseUrl;
     const [altState, setAltState] = useState(null);
     const altReady = Boolean(altState && altState.key === targetUrl);
@@ -275,7 +287,7 @@ export const useTexturePair = (sketchUrl, paintedUrl) => {
 export const useColorOnlyTexture = (url) => {
     const colorEnabled = useColorEnabled();
     const scope = useColorLoadScope();
-    const src = smallSrc(url);
+    const src = corridorLowResSrc(smallSrc(url));
     const [state, setState] = useState(null);
     const ready = Boolean(state && state.key === src);
     const needsLoad = colorEnabled && src && !ready && scopeMatches(scope, src);

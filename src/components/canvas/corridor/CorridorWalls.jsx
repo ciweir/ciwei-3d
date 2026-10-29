@@ -63,7 +63,7 @@ const DoorWallSegment = ({ position, baseRotationY, width, corridorHeight, wallT
     return (
         <mesh ref={meshRef} position={position}>
             <planeGeometry args={[width, corridorHeight]} />
-            <meshBasicMaterial color="#e0e0e0" map={segTexture} roughness={1} metalness={0} />
+            <meshBasicMaterial color="#e0e0e0" map={segTexture} roughness={1} metalness={0} toneMapped={false} side={THREE.DoubleSide} />
         </mesh>
     );
 };
@@ -320,7 +320,7 @@ const CorridorWalls = ({ zStart = 10, length = 80, doorPositions = [], zClip = 1
                                 map={floorTexture}
                                 side={THREE.DoubleSide}
                                 roughness={1}
-                                metalness={0}
+                                metalness={0} toneMapped={false}
                             />
                         </mesh>
                     );
@@ -338,7 +338,7 @@ const CorridorWalls = ({ zStart = 10, length = 80, doorPositions = [], zClip = 1
                                 map={leftSideTexture}
                                 side={THREE.DoubleSide}
                                 roughness={1}
-                                metalness={0}
+                                metalness={0} toneMapped={false}
                             />
                         </mesh>
                     );
@@ -356,7 +356,7 @@ const CorridorWalls = ({ zStart = 10, length = 80, doorPositions = [], zClip = 1
                                 map={rightSideTexture}
                                 side={THREE.DoubleSide}
                                 roughness={1}
-                                metalness={0}
+                                metalness={0} toneMapped={false}
                             />
                         </mesh>
                     );
@@ -400,7 +400,7 @@ const CorridorWalls = ({ zStart = 10, length = 80, doorPositions = [], zClip = 1
                                 map-repeat={[tileWidth / 2, tileLength / 2]}
                                 side={THREE.DoubleSide}
                                 roughness={1}
-                                metalness={0}
+                                metalness={0} toneMapped={false}
                             />
                         </mesh>
                     );
@@ -462,7 +462,7 @@ const CorridorWalls = ({ zStart = 10, length = 80, doorPositions = [], zClip = 1
                                 <meshBasicMaterial color="#e0e0e0"
                                     map={segTexture}
                                     roughness={1}
-                                    metalness={0}
+                                    metalness={0} toneMapped={false} side={THREE.DoubleSide}
                                 />
                             </mesh>
 
@@ -472,7 +472,7 @@ const CorridorWalls = ({ zStart = 10, length = 80, doorPositions = [], zClip = 1
                                 <meshBasicMaterial color="#e0e0e0"
                                     map={bbTexture}
                                     roughness={0.8}
-                                    side={THREE.DoubleSide}
+                                    side={THREE.DoubleSide} toneMapped={false}
                                 />
                             </mesh>
                         </group>

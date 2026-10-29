@@ -969,7 +969,7 @@ const DoorSection = ({
             <group ref={groupRef}>
                 {/* Wall segment with door hole */}
                 <mesh position={[wallOffsetX, 0, 0]} geometry={wallWithHoleGeometry}>
-                    <meshBasicMaterial color="#e0e0e0" map={wallTexture} roughness={1} metalness={0} side={THREE.DoubleSide} />
+                    <meshBasicMaterial color="#e0e0e0" map={wallTexture} roughness={1} metalness={0} side={THREE.DoubleSide} toneMapped={false} />
                 </mesh>
 
                 {/* === ARROW DECORATION === */}
@@ -991,7 +991,7 @@ const DoorSection = ({
                         transparent={true}
                         alphaTest={0.1}
                         side={THREE.DoubleSide}
-                        roughness={0.8}
+                        roughness={0.8} toneMapped={false}
                     />
                 </mesh>
 
@@ -1013,7 +1013,7 @@ const DoorSection = ({
                         transparent={true}
                         alphaTest={0.1}
                         side={THREE.DoubleSide}
-                        roughness={0.8}
+                        roughness={0.8} toneMapped={false}
                     />
                 </mesh>
 
@@ -1023,7 +1023,7 @@ const DoorSection = ({
                     <meshBasicMaterial color="#e0e0e0"
                         map={doorBbTexLeft}
                         roughness={0.8}
-                        side={THREE.DoubleSide}
+                        side={THREE.DoubleSide} toneMapped={false}
                     />
                 </mesh>
 
@@ -1033,7 +1033,7 @@ const DoorSection = ({
                     <meshBasicMaterial color="#e0e0e0"
                         map={doorBbTexRight}
                         roughness={0.8}
-                        side={THREE.DoubleSide}
+                        side={THREE.DoubleSide} toneMapped={false}
                     />
                 </mesh>
 
@@ -1058,7 +1058,7 @@ const DoorSection = ({
                                 map={threshTex}
                                 roughness={0.9}
                                 metalness={0}
-                                side={THREE.DoubleSide}
+                                side={THREE.DoubleSide} toneMapped={false}
                             />
                         </mesh>
                     );
@@ -1080,7 +1080,7 @@ const DoorSection = ({
                                 map={signTexture}
                                 transparent={true}
                                 alphaTest={0.1}
-                                roughness={0.8}
+                                roughness={0.8} toneMapped={false} side={THREE.DoubleSide}
                             />
                         </mesh>
 
@@ -1161,7 +1161,7 @@ const DoorSection = ({
                             map={frameTexture}
                             transparent={true}
                             alphaTest={0.1}
-                            roughness={0.9}
+                            roughness={0.9} toneMapped={false} side={THREE.DoubleSide}
                         />
                     </mesh>
 
@@ -1185,7 +1185,7 @@ const DoorSection = ({
                             onPointerLeave={handlePointerLeave}
                         >
                             <planeGeometry args={[doorWidth, doorHeight]} />
-                            <meshBasicMaterial color="#e0e0e0" transparent={true} opacity={0} depthWrite={false} />
+                            <meshBasicMaterial color="#e0e0e0" transparent={true} opacity={0} depthWrite={false} toneMapped={false} />
                         </mesh>
 
                         {/* Painted layer (behind sketch) - hidden after 2 frames to precompile shader */}
@@ -1199,7 +1199,7 @@ const DoorSection = ({
                                 map={doorPaintedTexture}
                                 transparent={true}
                                 alphaTest={0.5}
-                                roughness={0.8}
+                                roughness={0.8} toneMapped={false} side={THREE.DoubleSide}
                             />
                         </mesh>
 
@@ -1215,7 +1215,7 @@ const DoorSection = ({
                                 transparent={true}
                                 alphaTest={0.1}
                                 roughness={0.8}
-                                uProgress={0.0}
+                                uProgress={0.0} toneMapped={false}
                             />
                         </mesh>
 
@@ -1231,7 +1231,7 @@ const DoorSection = ({
                                 transparent={true}
                                 alphaTest={0.1}
                                 roughness={0.8}
-                                side={THREE.DoubleSide}
+                                side={THREE.DoubleSide} toneMapped={false}
                             />
                         </mesh>
 
@@ -1244,7 +1244,7 @@ const DoorSection = ({
                                     map={handlePaintedTexture}
                                     transparent={true}
                                     alphaTest={0.5}
-                                    depthWrite={false}
+                                    depthWrite={false} toneMapped={false} side={THREE.DoubleSide}
                                 />
                             </mesh>
                             {/* Sketch handle overlay (front) */}
@@ -1256,7 +1256,7 @@ const DoorSection = ({
                                     transparent={true}
                                     alphaTest={0.1}
                                     depthWrite={false}
-                                    uProgress={0.0}
+                                    uProgress={0.0} toneMapped={false}
                                 />
                             </mesh>
                         </group>

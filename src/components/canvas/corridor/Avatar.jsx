@@ -128,7 +128,7 @@ const Avatar = ({ position = [10, -20, 30] }) => {
                 <meshBasicMaterial color="#ffffff"
                     transparent={true}
                     side={THREE.DoubleSide}
-                    depthWrite={false}
+                    depthWrite={false} toneMapped={false}
                 />
             </mesh>
         </group>
