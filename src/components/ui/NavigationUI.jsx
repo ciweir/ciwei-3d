@@ -40,7 +40,7 @@ const STUDIO_WORK_COUNT = 22;
 
 const NavigationUI = () => {
     const { currentRoom, isInRoom, requestExit, hasEntered, teleportTo, isTeleporting } = useScene();
-    const { isMuted, globalVolume, setGlobalVolume, play } = useAudio();
+    const { isMuted, globalVolume, setGlobalVolume } = useAudio();
     const { showTutorial, activePopup } = useAchievements();
     const colorEnabled = useColorEnabled();
     const colorPending = useColorLoadPending();
@@ -274,14 +274,7 @@ const NavigationUI = () => {
     };
 
     return (
-        <div
-            className="navigation-ui"
-            // 界面按钮统一在按下时给一次纸面轻点，避免逐个按钮维护
-            onPointerDown={(e) => {
-                const target = e.target;
-                if (target.closest && target.closest('button')) play('tick');
-            }}
-        >
+        <div className="navigation-ui">
             {showStudioVeil && <div className="studio-top-veil" aria-hidden="true" />}
 
             {/* Global Achievement Popup */}
