@@ -94,7 +94,32 @@
     (() => {
       const isReading = /^\/read\/[^/]+/.test(location.pathname);
       const is2D = new URLSearchParams(location.search).has('2d');
-      if (isReading || is2D) document.getElementById('boot-poster')?.remove();
+      if (isReading || is2D) {
+        document.getElementById('boot-poster')?.remove();
+        return;
+      }
+
+      // 深链 / 阅读室返回画廊：首帧直接显示画廊，而不是入口海报
+      if (location.pathname === '/gallery') {
+        const poster = document.getElementById('boot-poster');
+        if (!poster) return;
+        const source = poster.querySelector('source');
+        const image = poster.querySelector('img');
+        const mobile = window.matchMedia('(max-width: 767px)').matches;
+        let mode = window.matchMedia('(hover: none)').matches ? 'sketch' : 'color';
+        try {
+          const stored = localStorage.getItem('ciwei-color-mode');
+          if (stored === 'sketch' || stored === 'color') mode = stored;
+        } catch { }
+        if (mobile) {
+          source.setAttribute('srcset', mode === 'color'
+            ? '/images/gallery-entry-mobile-color.webp'
+            : '/images/gallery-entry-mobile.webp');
+        }
+        image.setAttribute('src', mode === 'color'
+          ? '/images/gallery-entry-color.webp'
+          : '/images/gallery-entry.webp');
+      }
     })();
   </script>
 
