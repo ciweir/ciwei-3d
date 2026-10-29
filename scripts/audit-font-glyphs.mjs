@@ -95,6 +95,8 @@ let failed = false;
 for (const [font, text] of [
     ['public/fonts/NotoSansSC.woff', collectSansText()],
     ['public/fonts/NotoSerifSC-Headings.woff', collectSerifText()],
+    ['public/fonts/NotoSansSC-3D.woff', collectSansText()],
+    ['public/fonts/NotoSerifSC-Headings-3D.woff', collectSerifText()],
 ]) {
     const needs = neededChars(text);
     const available = cmapChars(font);

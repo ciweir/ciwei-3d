@@ -206,7 +206,7 @@ const FloatingCodeParticles = ({ towerRotationRef, fallOffsetRef }) => {
                     anchorX="center"
                     anchorY="middle"
                     fillOpacity={particle.opacity}
-                    font="/fonts/NotoSansSC.woff"
+                    font="/fonts/NotoSansSC-3D.woff"
                 >
                     {particle.symbol.text}
                 </Text>

@@ -1087,7 +1087,7 @@ const DoorSection = ({
                         {/* === DYNAMIC TEXT FOR SIGNS（中文化 2026-10-12：英文手写字体无中文字形，换 Noto Sans SC）=== */}
                         {label === 'THE GALLERY' && (
                             <Text
-                                font="/fonts/NotoSansSC.woff"
+                                font="/fonts/NotoSansSC-3D.woff"
                                 fontSize={0.38}
                                 color="#111111"
                                 anchorX="center"
@@ -1099,7 +1099,7 @@ const DoorSection = ({
                         )}
                         {label === 'THE STUDIO' && (
                             <Text
-                                font="/fonts/NotoSansSC.woff"
+                                font="/fonts/NotoSansSC-3D.woff"
                                 fontSize={0.38}
                                 color="#111111"
                                 anchorX="center"
@@ -1111,7 +1111,7 @@ const DoorSection = ({
                         )}
                         {label === 'THE ABOUT' && (
                             <Text
-                                font="/fonts/NotoSansSC.woff"
+                                font="/fonts/NotoSansSC-3D.woff"
                                 fontSize={0.42}
                                 color="#111111"
                                 anchorX="center"
@@ -1123,7 +1123,7 @@ const DoorSection = ({
                         )}
                         {label === "LET'S CONNECT" && (
                             <Text
-                                font="/fonts/NotoSansSC.woff"
+                                font="/fonts/NotoSansSC-3D.woff"
                                 fontSize={0.38}
                                 color="#111111"
                                 anchorX="center"
@@ -1141,7 +1141,7 @@ const DoorSection = ({
                         快路径 600ms 内就绪不显示（避免闪现）；就绪或超时强制开门后与门同步消失。 */}
                     {showLoadingHint && !roomReady && (
                         <Text
-                            font="/fonts/NotoSansSC.woff"
+                            font="/fonts/NotoSansSC-3D.woff"
                             fontSize={0.13}
                             color="#666666"
                             anchorX="center"

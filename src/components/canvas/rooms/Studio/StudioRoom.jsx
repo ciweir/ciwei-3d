@@ -394,7 +394,7 @@ const HeroCaption = ({ width, height, title, meta, titleSize, metaSize }) => {
                 <meshBasicMaterial color="#26231e" />
             </mesh>
             <Text
-                font="/fonts/NotoSansSC.woff"
+                font="/fonts/NotoSansSC-3D.woff"
                 fontSize={titleSize}
                 color="#26231e"
                 anchorX="left"
@@ -406,7 +406,7 @@ const HeroCaption = ({ width, height, title, meta, titleSize, metaSize }) => {
                 {title}
             </Text>
             <Text
-                font="/fonts/NotoSansSC.woff"
+                font="/fonts/NotoSansSC-3D.woff"
                 fontSize={metaSize}
                 color="#6a6256"
                 anchorX="left"
@@ -458,7 +458,7 @@ const WallPlaque = ({ width, height, isMobile, currentIndex, totalCount }) => {
                 <meshBasicMaterial color="#9a3b2c" />
             </mesh>
             <Text
-                font="/fonts/NotoSansSC.woff"
+                font="/fonts/NotoSansSC-3D.woff"
                 fontSize={isMobile ? 0.15 : 0.185}
                 color="#5f584d"
                 anchorX="left"
@@ -469,7 +469,7 @@ const WallPlaque = ({ width, height, isMobile, currentIndex, totalCount }) => {
                 {`放映 ${current} / ${total}`}
             </Text>
             <Text
-                font="/fonts/NotoSansSC.woff"
+                font="/fonts/NotoSansSC-3D.woff"
                 fontSize={isMobile ? 0.135 : 0.17}
                 color="#6a6256"
                 anchorX="center"

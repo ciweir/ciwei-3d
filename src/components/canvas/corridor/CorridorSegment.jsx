@@ -135,7 +135,7 @@ const CorridorSegment = ({
                     fontSize={0.12}
                     color="#ccc"
                     anchorX="center"
-                    font="/fonts/NotoSansSC.woff"
+                    font="/fonts/NotoSansSC-3D.woff"
                 >
                     #{segmentIndex}
                 </Text>

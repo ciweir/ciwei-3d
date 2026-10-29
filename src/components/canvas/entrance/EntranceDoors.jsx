@@ -12,7 +12,7 @@ import { isTouchDevice } from '../../../utils/deviceDetect';
 
 // Use same font as App.jsx preload (Inter) - works reliably
 // 中文化（2026-10-12）：Inter woff（外网 + 无中文字形）→ 本地 Noto Sans SC
-const FONT_URL = '/fonts/NotoSansSC.woff';
+const FONT_URL = '/fonts/NotoSansSC-3D.woff';
 
 
 

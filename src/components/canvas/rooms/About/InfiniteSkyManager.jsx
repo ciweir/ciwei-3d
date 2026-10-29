@@ -269,7 +269,7 @@ const JourneyMilestone = ({ z, scrollProgressRef }) => {
                 color="#6a6256"
                 anchorX="left"
                 anchorY="middle"
-                font="/fonts/NotoSansSC.woff"
+                font="/fonts/NotoSansSC-3D.woff"
             >
                 02 / 03
             </Text>
@@ -279,7 +279,7 @@ const JourneyMilestone = ({ z, scrollProgressRef }) => {
                 color="#1a1a1a"
                 anchorX="center"
                 anchorY="middle"
-                font="/fonts/NotoSansSC.woff"
+                font="/fonts/NotoSansSC-3D.woff"
             >
                 经历
             </Text>
@@ -289,7 +289,7 @@ const JourneyMilestone = ({ z, scrollProgressRef }) => {
                 color="#4a4a4a"
                 anchorX="center"
                 anchorY="middle"
-                font="/fonts/NotoSansSC.woff"
+                font="/fonts/NotoSansSC-3D.woff"
             >
                 商业影片 · 自媒体长期供稿
             </Text>
@@ -311,7 +311,7 @@ const JourneyMilestone = ({ z, scrollProgressRef }) => {
                     color="#1a1a1a"
                     anchorX="center"
                     anchorY="middle"
-                    font="/fonts/NotoSansSC.woff"
+                    font="/fonts/NotoSansSC-3D.woff"
                 >
                     2025-NOW
                 </Text>
@@ -334,7 +334,7 @@ const JourneyMilestone = ({ z, scrollProgressRef }) => {
                     color="#1a1a1a"
                     anchorX="center"
                     anchorY="middle"
-                    font="/fonts/NotoSansSC.woff"
+                    font="/fonts/NotoSansSC-3D.woff"
                 >
                     2023-NOW
                 </Text>
@@ -661,7 +661,7 @@ const SkillBalloon = ({ config, revealFactorRef, spreadFactorRef, timeRef }) => 
                         color="#1a1a1a"
                         anchorX="center"
                         anchorY="middle"
-                        font="/fonts/NotoSansSC.woff"
+                        font="/fonts/NotoSansSC-3D.woff"
                         fillOpacity={0}
                         outlineWidth={0.02}
                         outlineColor="#fff"
@@ -751,7 +751,7 @@ const SkillsMilestone = ({ z, scrollProgressRef }) => {
                 color="#6a6256"
                 anchorX="left"
                 anchorY="middle"
-                font="/fonts/NotoSansSC.woff"
+                font="/fonts/NotoSansSC-3D.woff"
             >
                 03 / 03
             </Text>
@@ -761,7 +761,7 @@ const SkillsMilestone = ({ z, scrollProgressRef }) => {
                 color="#1a1a1a"
                 anchorX="center"
                 anchorY="middle"
-                font="/fonts/NotoSansSC.woff"
+                font="/fonts/NotoSansSC-3D.woff"
             >
                 手艺
             </Text>
@@ -771,7 +771,7 @@ const SkillsMilestone = ({ z, scrollProgressRef }) => {
                 color="#4a4a4a"
                 anchorX="center"
                 anchorY="middle"
-                font="/fonts/NotoSansSC.woff"
+                font="/fonts/NotoSansSC-3D.woff"
             >
                 剪辑 · 调色 · 影像叙事
             </Text>

@@ -71,6 +71,44 @@ if (fs.existsSync(fullSerifSource)) {
     console.warn(`missing full font source: ${fullSerifSource}; reusing ${serifTtfPath}`);
 }
 
+/* 3D 场景字体：troika-three-text 的 Typr 解析器不处理可变字体的 fvar/gvar，
+   会直接按源字体的默认实例渲染（Noto Sans SC 默认 wght=100、Noto Serif 默认 200），
+   导致所有 3D 文字异常偏细、发虚。这里为 3D 单独固定字重并输出静态 WOFF，
+   与 DOM 使用的可变字体分开，互不影响。 */
+const D3_FONTS = [
+    {
+        src: sansTtfPath,
+        out: path.join(FONT_DIR, 'NotoSansSC-3D.woff'),
+        weight: 500,
+    },
+    {
+        src: serifTtfPath,
+        out: path.join(FONT_DIR, 'NotoSerifSC-Headings-3D.woff'),
+        weight: 600,
+    },
+];
+
+for (const item of D3_FONTS) {
+    if (!fs.existsSync(item.src)) {
+        console.warn('skip missing 3D font source', item.src);
+        continue;
+    }
+    const buffer = fs.readFileSync(item.src);
+    const subset = await subsetFont(buffer, undefined, {
+        targetFormat: 'woff',
+        keepAllGlyphs: true,
+        variationAxes: { wght: item.weight },
+        noHinting: true,
+    });
+    fs.writeFileSync(item.out, subset);
+    totalOut += subset.length;
+    console.log(
+        path.basename(item.out),
+        `wght ${item.weight}`,
+        `${Math.round(buffer.length / 1024)}KB -> ${Math.round(subset.length / 1024)}KB`
+    );
+}
+
 const INPUTS = [
     { file: 'NotoSansSC.ttf', keepAll: true },
     { file: 'NotoSerifSC-Headings.ttf', keepAll: true },

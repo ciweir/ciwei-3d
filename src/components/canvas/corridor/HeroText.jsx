@@ -6,7 +6,7 @@ import * as THREE from 'three';
 // Local fonts for sketch-style typography (TTF format required by troika)
 // 中文化（2026-10-12）：英文字体（Rubik Scribble/Cabin Sketch）无中文字形，
 // 统一换开源 Noto Sans SC（OFL 许可，可变字体，17.7MB 本地加载）
-const NOTO_SC_URL = '/fonts/NotoSansSC.woff';
+const NOTO_SC_URL = '/fonts/NotoSansSC-3D.woff';
 
 // Global flag - draw animation only happens ONCE per page load
 
