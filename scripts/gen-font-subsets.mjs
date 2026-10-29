@@ -11,7 +11,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import subsetFont from 'subset-font';
-import { collectSansText, collectSerifText } from './font-text.mjs';
+import { collectSansText, collectSerifText, collectSceneText } from './font-text.mjs';
 
 const FONT_DIR = 'public/fonts';
 const SOURCE_DIR = 'pipeline/fonts-source';
@@ -74,38 +74,45 @@ if (fs.existsSync(fullSerifSource)) {
 /* 3D 场景字体：troika-three-text 的 Typr 解析器不处理可变字体的 fvar/gvar，
    会直接按源字体的默认实例渲染（Noto Sans SC 默认 wght=100、Noto Serif 默认 200），
    导致所有 3D 文字异常偏细、发虚。这里为 3D 单独固定字重并输出静态 WOFF，
-   与 DOM 使用的可变字体分开，互不影响。 */
+   与 DOM 使用的可变字体分开，互不影响。
+
+   3D 字体只渲染场景文案（见 collectSceneText），不再沿用整站字符集：
+   项目长描述、阅读室栏目等 DOM 文本不进 3D 字体，244KB → 约 110KB。 */
+const sceneText = collectSceneText();
+const sceneSansBuffer = fs.existsSync(fullSansSource)
+    ? await subsetFont(fs.readFileSync(fullSansSource), sceneText, { targetFormat: 'truetype' })
+    : null;
+
 const D3_FONTS = [
     {
-        src: sansTtfPath,
-        out: path.join(FONT_DIR, 'NotoSansSC-3D.woff'),
+        label: 'NotoSansSC-3D.woff',
         weight: 500,
+        buffer: sceneSansBuffer,
     },
     {
-        src: serifTtfPath,
-        out: path.join(FONT_DIR, 'NotoSerifSC-Headings-3D.woff'),
+        label: 'NotoSerifSC-Headings-3D.woff',
         weight: 600,
+        buffer: fs.existsSync(serifTtfPath) ? fs.readFileSync(serifTtfPath) : null,
     },
 ];
 
 for (const item of D3_FONTS) {
-    if (!fs.existsSync(item.src)) {
-        console.warn('skip missing 3D font source', item.src);
+    if (!item.buffer) {
+        console.warn('skip missing 3D font source', item.label);
         continue;
     }
-    const buffer = fs.readFileSync(item.src);
-    const subset = await subsetFont(buffer, undefined, {
+    const subset = await subsetFont(item.buffer, undefined, {
         targetFormat: 'woff',
         keepAllGlyphs: true,
         variationAxes: { wght: item.weight },
         noHinting: true,
     });
-    fs.writeFileSync(item.out, subset);
+    fs.writeFileSync(path.join(FONT_DIR, item.label), subset);
     totalOut += subset.length;
     console.log(
-        path.basename(item.out),
+        item.label,
         `wght ${item.weight}`,
-        `${Math.round(buffer.length / 1024)}KB -> ${Math.round(subset.length / 1024)}KB`
+        `${Math.round(item.buffer.length / 1024)}KB -> ${Math.round(subset.length / 1024)}KB`
     );
 }
 

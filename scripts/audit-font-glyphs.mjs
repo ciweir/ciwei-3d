@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import zlib from 'node:zlib';
-import { collectSansText, collectSerifText } from './font-text.mjs';
+import { collectSansText, collectSerifText, collectSceneText } from './font-text.mjs';
 
 /* 只检查正文类型字符，避免源码里的罕见符号造成假阳性。 */
 const CHECKED = /[\u3400-\u9fff\u3000-\u303f\uff00-\uffef]/g;
@@ -95,7 +95,7 @@ let failed = false;
 for (const [font, text] of [
     ['public/fonts/NotoSansSC.woff', collectSansText()],
     ['public/fonts/NotoSerifSC-Headings.woff', collectSerifText()],
-    ['public/fonts/NotoSansSC-3D.woff', collectSansText()],
+    ['public/fonts/NotoSansSC-3D.woff', collectSceneText()],
     ['public/fonts/NotoSerifSC-Headings-3D.woff', collectSerifText()],
 ]) {
     const needs = neededChars(text);

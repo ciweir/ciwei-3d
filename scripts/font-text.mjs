@@ -11,8 +11,17 @@ function walk(dir) {
     });
 }
 
-/* 正文字体覆盖运行期源码与数据中的全部字符；注释也会被收录，
-   这是有意的冗余：宁可多几个字形，也不能让 3D 文案静默空白。 */
+/* 注释不会出现在运行期文本里，先剔除再去重字符可以少带一些字形。
+   只处理整行 // 注释与块注释，行尾注释保留 —— 宁可少省一点，也不误删字符串内容。 */
+function stripComments(text) {
+    return text
+        .replace(/\/\*[\s\S]*?\*\//g, '')
+        .replace(/^\s*\/\/[^\n]*$/gm, '');
+}
+
+/* 正文字体覆盖运行期源码与数据中的全部字符。
+   注释已剔除；数据文件（如 ciwei-projects.json 的长描述）仍整份收录，
+   因为阅读室与浮层会原样渲染它们。 */
 export function collectSansText(root = '.') {
     const files = [
         ...walk(path.join(root, 'src')),
@@ -22,8 +31,40 @@ export function collectSansText(root = '.') {
 
     const chars = new Set();
     for (const file of files) {
-        for (const ch of fs.readFileSync(file, 'utf8')) chars.add(ch);
+        for (const ch of stripComments(fs.readFileSync(file, 'utf8'))) chars.add(ch);
     }
+    return [...chars].join('');
+}
+
+/* 3D 场景字体（troika）只渲染场景内的文字：画布组件里的文案、
+   数据源里会被搬上屏幕的字段（项目标题/分类/客户/角色），以及数字与标点。
+   项目长描述只会出现在 DOM 阅读室，不进 3D 字体。 */
+export function collectSceneText(root = '.') {
+    const files = [
+        ...walk(path.join(root, 'src/components/canvas')),
+        ...walk(path.join(root, 'src/data')).filter((file) => file.endsWith('.js')),
+    ].filter((file) => file.endsWith('.js') || file.endsWith('.jsx'));
+
+    const chars = new Set();
+    for (const file of files) {
+        for (const ch of stripComments(fs.readFileSync(file, 'utf8'))) chars.add(ch);
+    }
+
+    const projects = JSON.parse(
+        fs.readFileSync(path.join(root, 'src/data/ciwei-projects.json'), 'utf8')
+    );
+    for (const project of projects) {
+        for (const field of ['title', 'category', 'client']) {
+            if (project[field]) for (const ch of project[field]) chars.add(ch);
+        }
+        (project.role || []).forEach((role) => {
+            for (const ch of role) chars.add(ch);
+        });
+        if (project.year) for (const ch of String(project.year)) chars.add(ch);
+    }
+
+    for (let code = 32; code <= 126; code += 1) chars.add(String.fromCharCode(code));
+    for (const ch of '·—…%％‰′″（）【】《》、，。！？：；“”‘’') chars.add(ch);
     return [...chars].join('');
 }
 
