@@ -1,4 +1,4 @@
-import { useRef, useEffect, Suspense } from 'react';
+import { useRef, useState, useEffect, Suspense } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import { PositionalAudio } from '@react-three/drei';
 import * as THREE from 'three';
@@ -9,6 +9,7 @@ import { useAchievements } from '../../../../context/useAchievements';
 import { useAudio } from '../../../../context/useAudio';
 import { useReducedMotion } from '../../../../utils/motion';
 import { isTouchDevice } from '../../../../utils/deviceDetect';
+import { useRoomVisualReady } from '../../../../hooks/useRoomVisualReady';
 
 // Chunk length for looping flight effect (matches SkyChunk)
 const CHUNK_LENGTH = 40;
@@ -31,7 +32,7 @@ const hasBlockingUi = () => Boolean(document.querySelector('.map-panel.open'));
 
 const AboutRoom = ({ onReady, isExiting, isWarmup }) => {
     const { camera, scene } = useThree();
-    const { isTeleporting, overlayContent } = useScene();
+    const { isTeleporting, overlayContent, enteredViaTeleport } = useScene();
     const { unlockAchievement, hidePopup } = useAchievements();
     const { globalVolume, isMuted, audioEnabled } = useAudio();
     const reducedMotion = useReducedMotion();
@@ -69,8 +70,10 @@ const AboutRoom = ({ onReady, isExiting, isWarmup }) => {
 
     // Track if we've signaled ready
     const hasSignaledReady = useRef(false);
+    const [visualReady, setVisualReady] = useState(false);
     const frameCount = useRef(0);
     const FRAMES_TO_WAIT = 25;
+    useRoomVisualReady('about', visualReady && !enteredViaTeleport);
 
     // Momentum-based scroll state
     const scrollPosition = useRef(0);
@@ -123,6 +126,7 @@ const AboutRoom = ({ onReady, isExiting, isWarmup }) => {
 
                 hasSignaledReady.current = true;
                 onReady?.();
+                setVisualReady(true);
             }
         }
 

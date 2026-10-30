@@ -162,23 +162,24 @@ const CorridorSegment = ({
             {/* === DOOR SECTIONS (wall + door + label as one unit) === */}
             {/* Hidden during entrance animation for segment -1 */}
             {!hideSegmentDoors && visibleDoors.map((door) => (
-                <DoorSection
-                    key={door.id}
-                    position={[
-                        door.x,
-                        0,
-                        zOffset + door.relativeZ + 2
-                    ]}
-                    side={door.side}
-                    label={door.label}
-                    roomId={door.roomId}
-                    icon={door.icon}
-                    color={door.color}
-                    enterDistance={door.enterDistance}
-                    onEnter={() => onDoorEnter?.(door.roomId)}
-                    setCameraOverride={setCameraOverride}
-                    segmentIndex={segmentIndex}
-                />
+                <Suspense key={door.id} fallback={null}>
+                    <DoorSection
+                        position={[
+                            door.x,
+                            0,
+                            zOffset + door.relativeZ + 2
+                        ]}
+                        side={door.side}
+                        label={door.label}
+                        roomId={door.roomId}
+                        icon={door.icon}
+                        color={door.color}
+                        enterDistance={door.enterDistance}
+                        onEnter={() => onDoorEnter?.(door.roomId)}
+                        setCameraOverride={setCameraOverride}
+                        segmentIndex={segmentIndex}
+                    />
+                </Suspense>
             ))}
 
             {/* === LIGHTING === */}
@@ -186,10 +187,12 @@ const CorridorSegment = ({
 
             {/* === SEGMENT END DOORS (hidden during entrance) === */}
             {!soloRoom && !hideSegmentDoors && (
-                <SegmentDoors
-                    position={[0, 0, zOffset - SEGMENT_LENGTH + 5]}
-                    corridorHeight={3.5}
-                />
+                <Suspense fallback={null}>
+                    <SegmentDoors
+                        position={[0, 0, zOffset - SEGMENT_LENGTH + 5]}
+                        corridorHeight={3.5}
+                    />
+                </Suspense>
             )}
         </group>
     );

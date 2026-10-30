@@ -15,6 +15,7 @@ import { smallSrc } from '../../../../utils/colorTexture';
 import { usePaintMaterial } from '../Gallery/usePaintMaterial';
 import { useReducedMotion } from '../../../../utils/motion';
 import { isTouchDevice } from '../../../../utils/deviceDetect';
+import { useRoomVisualReady } from '../../../../hooks/useRoomVisualReady';
 
 const STUDIO_ENTER_DISTANCE = 8;
 const BASE_FALL_SPEED = 0.04;
@@ -513,7 +514,7 @@ const StudioRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
     const initialMonitors = layout.kind === 'mobile' ? 4 : 8;
     const [mountedMonitors, setMountedMonitors] = useState(initialMonitors);
 
-    const { openOverlay, overlayContent, isTeleporting } = useScene();
+    const { openOverlay, overlayContent, isTeleporting, enteredViaTeleport } = useScene();
     const { showTutorial, unlockAchievement, hidePopup } = useAchievements();
     const { globalVolume, isMuted, audioEnabled } = useAudio();
     // 触屏端等首次交互后再拉环境声与主屏视频（0.35MB 音频 + 0.38MB 视频），别和片墙封面抢带宽
@@ -651,6 +652,8 @@ const StudioRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
     // 锁存只在房间真正退场时清空——挂载那一刻 showRoom 还是 false，此时清空会把传送标记抹掉。
     const wasTeleportedRef = useRef(false);
     const hadShownRoom = useRef(false);
+    const [paintDone, setPaintDone] = useState(false);
+    const paintTimerRef = useRef(null);
     useEffect(() => {
         if (isTeleporting) wasTeleportedRef.current = true;
     }, [isTeleporting]);
@@ -660,17 +663,27 @@ const StudioRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
     }, [showRoom]);
 
     useEffect(() => {
+        if (paintTimerRef.current) clearTimeout(paintTimerRef.current);
         if (showRoom && !isWarmup) {
-            if (wasTeleportedRef.current || isTeleporting || reducedMotion) {
+            if (wasTeleportedRef.current || enteredViaTeleport || isTeleporting || reducedMotion) {
                 paintUniforms.uPaintProgress.value = 1.0;
+                setPaintDone(true);
             } else {
+                setPaintDone(false);
                 resetPaint();
                 animatePaint(0.2, 2.5);
+                paintTimerRef.current = setTimeout(() => setPaintDone(true), 2700);
             }
         } else {
             paintUniforms.uPaintProgress.value = 1.0;
+            setPaintDone(false);
         }
-    }, [showRoom, isWarmup, isTeleporting, reducedMotion, animatePaint, resetPaint, paintUniforms]);
+        return () => {
+            if (paintTimerRef.current) clearTimeout(paintTimerRef.current);
+        };
+    }, [showRoom, isWarmup, isTeleporting, reducedMotion, enteredViaTeleport, animatePaint, resetPaint, paintUniforms]);
+
+    useRoomVisualReady('studio', showRoom && paintDone && !enteredViaTeleport);
 
     useEffect(() => {
         const handleWheel = (event) => {

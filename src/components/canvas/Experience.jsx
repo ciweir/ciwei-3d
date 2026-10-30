@@ -42,9 +42,30 @@ const SceneReadyGate = ({ onReady }) => {
 
 const Experience = ({ onSceneReady }) => {
     // Use SceneContext for room state
-    const { hasEntered, markEntered, enterRoom, isTeleporting, isInRoom, initialRoom, currentRoom } = useScene();
+    const { hasEntered, markEntered, enterRoom, isTeleporting, isInRoom, initialRoom, currentRoom, enteredViaTeleport, roomVisualReady, markRoomVisualReady, exitRequested } = useScene();
 
-    const { camera } = useThree();
+    const { camera, gl } = useThree();
+    const renderReadyRef = useRef({ room: null, frames: 0, enteredAt: 0 });
+    useFrame(() => {
+        if (!currentRoom || isTeleporting || !enteredViaTeleport || roomVisualReady === currentRoom) {
+            renderReadyRef.current = { room: currentRoom, frames: 0, enteredAt: 0 };
+            return;
+        }
+        if (renderReadyRef.current.room !== currentRoom) {
+            renderReadyRef.current = { room: currentRoom, frames: 0, enteredAt: performance.now() };
+        }
+        // 传送末尾还会短暂绘制门/走廊；稳定窗内不认，避免海报在房间真正出画前撤掉。
+        if (performance.now() - renderReadyRef.current.enteredAt < 800) return;
+        // 空白期 gl.info.render.calls 为 0；连续两帧有调用再放行，避免 Suspense/编译瞬间。
+        if (gl.info.render.calls >= 12) {
+            renderReadyRef.current.frames += 1;
+            if (renderReadyRef.current.frames >= 2) {
+                markRoomVisualReady(currentRoom);
+            }
+        } else {
+            renderReadyRef.current.frames = 0;
+        }
+    });
     // 入口先渲染；走廊在推门/已进入时才挂载，避免首屏编译整条走廊
     const [corridorRequested, setCorridorRequested] = useState(false);
     // 深链直连：段内先只挂目标门与房间，进房后再补墙体/装饰（此时相机已在房间内）
@@ -83,12 +104,18 @@ const Experience = ({ onSceneReady }) => {
         setCorridorRequested(true);
     }, []);
 
-    // 进房后延后补挂走廊墙体与装饰：出口需要它们，但进门时不该为它们等编译
+    // 深链进房：等房间真正出画后再补挂走廊墙体/头像帧/端门，
+    // 让头像动画等 279KB 资源不与画廊首帧抢带宽；用户提前退出则立即补挂。
     useEffect(() => {
         if (!soloRoom || currentRoom !== soloRoom) return undefined;
-        const timer = window.setTimeout(() => setSoloRoom(null), 800);
+        if (exitRequested) {
+            setSoloRoom(null);
+            return undefined;
+        }
+        if (roomVisualReady !== soloRoom) return undefined;
+        const timer = window.setTimeout(() => setSoloRoom(null), 200);
         return () => window.clearTimeout(timer);
-    }, [soloRoom, currentRoom]);
+    }, [soloRoom, currentRoom, roomVisualReady, exitRequested]);
 
     // 深链直接进房间：入口不参与渲染，省掉 49 张门面贴图与首次编译
     const showEntrance = !hasEntered && !initialRoom;

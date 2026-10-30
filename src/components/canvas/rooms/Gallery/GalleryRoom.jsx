@@ -18,6 +18,7 @@ import GalleryClouds from './GalleryClouds';
 import { useAudio } from '../../../../context/useAudio';
 import { usePaintMaterial } from './usePaintMaterial';
 import { useGalleryProjects } from '../../../../hooks/useSanityData';
+import { useRoomVisualReady } from '../../../../hooks/useRoomVisualReady';
 
 // Reusable Vector3 to avoid allocations in useFrame
 const _tempScale = new THREE.Vector3();
@@ -94,7 +95,7 @@ const GalleryText = forwardRef(({ children, ...props }, ref) => {
 GalleryText.displayName = 'GalleryText';
 
 const GalleryRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
-    const { isTeleporting } = useScene();
+    const { isTeleporting, enteredViaTeleport } = useScene();
     const { showTutorial, unlockAchievement, hidePopup } = useAchievements();
     const { play, audioEnabled, isMuted } = useAudio();
     const reducedMotion = useReducedMotion();
@@ -130,7 +131,9 @@ const GalleryRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
     
     // Track transition state to disable interactions
     const [isTransitioning, setIsTransitioning] = useState(false);
-    
+    const [paintDone, setPaintDone] = useState(false);
+    const paintTimerRef = useRef(null);
+
     // Track if user teleported into this room 
     const wasTeleportedRef = useRef(false);
     useEffect(() => {
@@ -138,14 +141,17 @@ const GalleryRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
     }, [isTeleporting]);
 
     useEffect(() => {
+        if (paintTimerRef.current) clearTimeout(paintTimerRef.current);
         // When the room officially shows up (doors open and user flies in)
         if (showRoom && !isWarmup) {
-            if (wasTeleportedRef.current || isTeleporting || reducedMotion) {
+            if (wasTeleportedRef.current || enteredViaTeleport || isTeleporting || reducedMotion) {
                 // 减少动态效果：直接显示彩色房间，不做笔刷揭幕
                 uniformsData.uPaintProgress.value = 1.0;
                 setIsTransitioning(false);
+                setPaintDone(true);
             } else {
                 setIsTransitioning(true);
+                setPaintDone(false);
                 // resetPaint() in case we re-enter
                 resetPaint();
                 // 手机端缩短“上色揭幕”：2.5s 在长屏上会像卡住，1.3s 仍然保留笔触感。
@@ -154,15 +160,22 @@ const GalleryRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
                 animatePaint(0.2, paintDuration);
 
                 // Re-enable interactions once painting finishes
-                setTimeout(() => {
+                paintTimerRef.current = setTimeout(() => {
                     setIsTransitioning(false);
+                    setPaintDone(true);
                 }, (0.2 + paintDuration) * 1000);
             }
         } else {
             // Immediately reveal for warmup or hide if not showing
             uniformsData.uPaintProgress.value = 1.0;
+            setPaintDone(false);
         }
-    }, [showRoom, isWarmup, isTeleporting, reducedMotion]);
+        return () => {
+            if (paintTimerRef.current) clearTimeout(paintTimerRef.current);
+        };
+    }, [showRoom, isWarmup, isTeleporting, reducedMotion, enteredViaTeleport]);
+
+    useRoomVisualReady('gallery', showRoom && paintDone && !enteredViaTeleport);
 
     const handleCardClick = async (clickedIndex) => {
         if (globalIsAnimating || isTransitioning) return;

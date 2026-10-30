@@ -19,6 +19,7 @@ import { isTouchDevice } from '../../../../utils/deviceDetect';
 import { useColorTexture as useTexture } from '../../../../utils/colorTexture';
 import { usePaintMaterial } from '../Gallery/usePaintMaterial';
 import { useReducedMotion } from '../../../../utils/motion';
+import { useRoomVisualReady } from '../../../../hooks/useRoomVisualReady';
 
 const WAVE_LAYERS = 4;
 
@@ -96,7 +97,7 @@ const PHASE = {
 
 const ContactRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
     const { camera } = useThree();
-    const { isTeleporting } = useScene();
+    const { isTeleporting, enteredViaTeleport } = useScene();
     const { hidePopup } = useAchievements();
     const { globalVolume, isMuted, audioEnabled } = useAudio();
     const reducedMotion = useReducedMotion();
@@ -168,6 +169,8 @@ const ContactRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
     });
 
     const [, setIsTransitioning] = useState(false);
+    const [paintDone, setPaintDone] = useState(false);
+    const paintTimerRef = useRef(null);
 
     const wasTeleportedRef = useRef(false);
     useEffect(() => {
@@ -175,22 +178,32 @@ const ContactRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
     }, [isTeleporting]);
 
     useEffect(() => {
+        if (paintTimerRef.current) clearTimeout(paintTimerRef.current);
         if (showRoom && !isWarmup) {
-            if (wasTeleportedRef.current || isTeleporting || reducedMotion) {
+            if (wasTeleportedRef.current || enteredViaTeleport || isTeleporting || reducedMotion) {
                 uniformsData.uPaintProgress.value = 1.0;
                 setIsTransitioning(false);
+                setPaintDone(true);
             } else {
                 setIsTransitioning(true);
+                setPaintDone(false);
                 resetPaint();
                 animatePaint(0.2, 2.5);
-                setTimeout(() => {
+                paintTimerRef.current = setTimeout(() => {
                     setIsTransitioning(false);
+                    setPaintDone(true);
                 }, 2700);
             }
         } else {
             uniformsData.uPaintProgress.value = 1.0;
+            setPaintDone(false);
         }
-    }, [showRoom, isWarmup, isTeleporting, reducedMotion]);
+        return () => {
+            if (paintTimerRef.current) clearTimeout(paintTimerRef.current);
+        };
+    }, [showRoom, isWarmup, isTeleporting, reducedMotion, enteredViaTeleport]);
+
+    useRoomVisualReady('contact', showRoom && paintDone && !enteredViaTeleport);
 
     // Track if we've signaled ready
     const hasSignaledReady = useRef(false);

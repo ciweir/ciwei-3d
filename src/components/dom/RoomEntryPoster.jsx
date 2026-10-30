@@ -4,7 +4,7 @@ import { useColorEnabled } from '../../utils/colorMode';
 import { isTouchDevice } from '../../utils/deviceDetect';
 import '../../styles/RoomEntryPoster.scss';
 
-const FALLBACK_HIDE_MS = 9000;
+const FALLBACK_HIDE_MS = 20000;
 const LEAVE_MS = 360;
 const STATUS_DELAY_MS = 1500;
 
@@ -26,7 +26,7 @@ const posterSrcFor = (room, colorEnabled) => {
  * 避免用户面对纸张/空场景等待。地图传送与普通开门都走同一接管。
  */
 const RoomEntryPoster = () => {
-    const { teleportTarget, teleportPhase, isTeleporting, currentRoom, readingProject } = useScene();
+    const { teleportTarget, roomVisualReady, readingProject, exitRequested } = useScene();
     const colorEnabled = useColorEnabled();
     const [phase, setPhase] = useState('hidden'); // hidden | visible | leaving
     const [activeRoom, setActiveRoom] = useState('gallery');
@@ -86,12 +86,12 @@ const RoomEntryPoster = () => {
 
     useEffect(() => {
         if (phase === 'hidden') return;
-        const roomReady = teleportPhase === 'opening';
-        const teleportEnded = !isTeleporting && teleportPhase === null && currentRoom === activeRoom;
-        if (roomReady || teleportEnded) {
+        // 只认“首个可见帧”信号；currentRoom/传送阶段都会早于画面出现。
+        // 用户提前退出时不再等房间就绪，直接交回走廊。
+        if (exitRequested || roomVisualReady === activeRoom) {
             setPhase('leaving');
         }
-    }, [teleportPhase, isTeleporting, currentRoom, activeRoom, phase]);
+    }, [roomVisualReady, activeRoom, phase, exitRequested]);
 
     useEffect(() => {
         if (phase !== 'leaving') return undefined;

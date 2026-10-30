@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { Suspense, useState, useCallback, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 
 import CorridorSegment, { SEGMENT_LENGTH } from './CorridorSegment';
@@ -92,17 +92,19 @@ const InfiniteCorridorManager = ({
     return (
         <group>
             {activeSegments.map((segmentIndex) => (
-                <SegmentVisibilityWrapper key={`seg-wrap-${segmentIndex}`} segmentIndex={segmentIndex}>
-                    <CorridorSegment
-                        key={`segment-${segmentIndex}`}
-                        segmentIndex={segmentIndex}
-                        onDoorEnter={onDoorEnter}
-                        hideSegmentDoors={hideDoorsForSegments.includes(segmentIndex)}
-                        zClip={clipSegmentNeg1 && segmentIndex === -1 ? 22 : 100000}
-                        setCameraOverride={setCameraOverride}
-                        soloRoom={soloRoom}
-                    />
-                </SegmentVisibilityWrapper>
+                <Suspense key={`seg-susp-${segmentIndex}`} fallback={null}>
+                    <SegmentVisibilityWrapper segmentIndex={segmentIndex}>
+                        <CorridorSegment
+                            key={`segment-${segmentIndex}`}
+                            segmentIndex={segmentIndex}
+                            onDoorEnter={onDoorEnter}
+                            hideSegmentDoors={hideDoorsForSegments.includes(segmentIndex)}
+                            zClip={clipSegmentNeg1 && segmentIndex === -1 ? 22 : 100000}
+                            setCameraOverride={setCameraOverride}
+                            soloRoom={soloRoom}
+                        />
+                    </SegmentVisibilityWrapper>
+                </Suspense>
             ))}
         </group>
     );

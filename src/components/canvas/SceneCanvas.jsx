@@ -101,6 +101,10 @@ const GALLERY_SHARED_TEXTURES = [
 
 // 深链直接进房间：只预载目标房间 + UI，不再一次性拉整条走廊；
 // 走廊按需挂载时只加载所在段需要的贴图
+const INITIAL_UI_TEXTURES = DEEP_LINK_ROOM
+    // 头像逐帧动画只用于走廊开场；深链进房时不可见，等退出到走廊再按需加载。
+    ? UI_TEXTURES.filter((path) => !path.includes('/avatar_anim/'))
+    : UI_TEXTURES;
 const INITIAL_TEXTURES = DEEP_LINK_ROOM
     ? [
         ...(DEEP_LINK_ROOM === 'gallery'
@@ -108,9 +112,9 @@ const INITIAL_TEXTURES = DEEP_LINK_ROOM
             : DEEP_LINK_ROOM === 'studio'
                 ? (ROOM_TEXTURES.studio || []).map(smallSrc)
                 : (ROOM_TEXTURES[DEEP_LINK_ROOM] || [])),
-        ...UI_TEXTURES,
+        ...INITIAL_UI_TEXTURES,
     ]
-    : [...ENTRANCE_TEXTURES, ...UI_TEXTURES];
+    : [...ENTRANCE_TEXTURES, ...INITIAL_UI_TEXTURES];
 // 工作室屏幕里始终是彩色成片（见 StudioRoom 的 buildBackgroundItems），
 // 与“线稿/彩色”显示模式无关，必须在 filterTexturesByDevice 之后再并回去，
 // 否则触屏默认线稿模式会把它们当彩色封面整条过滤掉，预载等于没做。
@@ -120,6 +124,25 @@ const filteredInitial = [
 ];
 
 filteredInitial.forEach((path) => useTexture.preload(path));
+
+// 3D 字体由 troika 在文本首次排版时才 fetch，深链上常拖到 5s 后才开始。
+// 空闲时先取一次，让浏览器 HTTP 缓存接管 troika 的正式请求。
+const PRELOAD_3D_FONTS = [
+    '/fonts/NotoSansSC-3D.woff',
+    '/fonts/NotoSerifSC-Headings-3D.woff',
+];
+if (typeof window !== 'undefined') {
+    const prefetchFonts = () => {
+        PRELOAD_3D_FONTS.forEach((src) => {
+            fetch(src, { cache: 'force-cache' }).catch(() => {});
+        });
+    };
+    if ('requestIdleCallback' in window) {
+        window.requestIdleCallback(prefetchFonts, { timeout: 1600 });
+    } else {
+        window.setTimeout(prefetchFonts, 800);
+    }
+}
 
 const SceneLoadingProgress = ({ onProgress }) => {
     const { progress, active } = useProgress();

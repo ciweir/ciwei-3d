@@ -20,7 +20,7 @@ const isVisible = (el) => {
     return el.getClientRects().length > 0 && style.visibility !== 'hidden' && style.display !== 'none';
 };
 
-const ReadingRoomView = ({ project, onClose }) => {
+const ReadingRoomView = ({ project, onClose, returnLabel = '返回画廊' }) => {
     const [use3D] = useState(() => hasWebGL());
     const [sceneOn, setSceneOn] = useState(false);
     const [sceneFailed, setSceneFailed] = useState(false);
@@ -140,7 +140,7 @@ const ReadingRoomView = ({ project, onClose }) => {
             <div className="reading-room__topbar">
                 <div className="reading-room__eyebrow">阅读室 · 深读档案</div>
                 <button type="button" className="reading-room__close" onClick={onClose}>
-                    ← 返回画廊
+                    ← {returnLabel}
                 </button>
             </div>
 
@@ -210,7 +210,7 @@ const ReadingRoomView = ({ project, onClose }) => {
 
                     <footer className="reading-room__footer">
                         <button type="button" className="reading-room__close" onClick={onClose}>
-                            ← 返回画廊
+                            ← {returnLabel}
                         </button>
                     </footer>
                 </article>

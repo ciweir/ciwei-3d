@@ -125,7 +125,7 @@ const DoorSection = ({
         teleportPhase // We need this to delay reset until curtain is closed
     } = useScene();
 
-    const { globalVolume, isMuted } = useAudio();
+    const { globalVolume, isMuted, audioEnabled } = useAudio();
 
     // Audio Refs for 3D positional sound
     const hoverAudioRef = useRef();
@@ -1264,30 +1264,35 @@ const DoorSection = ({
                 </group>
 
                 {/* SPATIAL AUDIO NODES (Attached slightly in front of the door) */}
-                <PositionalAudio
-                    ref={hoverAudioRef}
-                    url="/sounds/uchyleniedrzwi.mp3"
-                    distanceModel="exponential"
-                    rolloffFactor={DOOR_AUDIO_SETTINGS.rolloff}
-                    refDistance={DOOR_AUDIO_SETTINGS.distance}
-                    loop={false}
-                />
-                <PositionalAudio
-                    ref={openAudioRef}
-                    url="/sounds/otwarciedrzwi.mp3"
-                    distanceModel="exponential"
-                    rolloffFactor={DOOR_AUDIO_SETTINGS.rolloff}
-                    refDistance={DOOR_AUDIO_SETTINGS.distance}
-                    loop={false}
-                />
-                <PositionalAudio
-                    ref={closeAudioRef}
-                    url="/sounds/zamknieciedrzwi.mp3"
-                    distanceModel="exponential"
-                    rolloffFactor={DOOR_AUDIO_SETTINGS.rolloff}
-                    refDistance={DOOR_AUDIO_SETTINGS.distance}
-                    loop={false}
-                />
+                {/* 深链自动进房时用户还没交互，音效不该抢首帧带宽；首次交互后再挂载。 */}
+                {audioEnabled && (
+                    <>
+                        <PositionalAudio
+                            ref={hoverAudioRef}
+                            url="/sounds/uchyleniedrzwi.mp3"
+                            distanceModel="exponential"
+                            rolloffFactor={DOOR_AUDIO_SETTINGS.rolloff}
+                            refDistance={DOOR_AUDIO_SETTINGS.distance}
+                            loop={false}
+                        />
+                        <PositionalAudio
+                            ref={openAudioRef}
+                            url="/sounds/otwarciedrzwi.mp3"
+                            distanceModel="exponential"
+                            rolloffFactor={DOOR_AUDIO_SETTINGS.rolloff}
+                            refDistance={DOOR_AUDIO_SETTINGS.distance}
+                            loop={false}
+                        />
+                        <PositionalAudio
+                            ref={closeAudioRef}
+                            url="/sounds/zamknieciedrzwi.mp3"
+                            distanceModel="exponential"
+                            rolloffFactor={DOOR_AUDIO_SETTINGS.rolloff}
+                            refDistance={DOOR_AUDIO_SETTINGS.distance}
+                            loop={false}
+                        />
+                    </>
+                )}
             </group>
         </group >
     );

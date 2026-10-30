@@ -102,6 +102,26 @@ function DocumentMetaBridge({ ready }) {
   return null;
 }
 
+// 深链进房：首帧海报覆盖期先不显示导航，避免返回键“看得见但点不动”；
+// 房间首个可见帧出现后再接管，12s 兜底保证仍可退出。
+const NavigationGate = () => {
+  const { roomVisualReady } = useScene();
+  const [revealed, setRevealed] = useState(!INITIAL_ROOM);
+
+  useEffect(() => {
+    if (roomVisualReady) setRevealed(true);
+  }, [roomVisualReady]);
+
+  useEffect(() => {
+    if (revealed) return undefined;
+    const timer = setTimeout(() => setRevealed(true), 12000);
+    return () => clearTimeout(timer);
+  }, [revealed]);
+
+  if (!revealed) return null;
+  return <NavigationUI />;
+};
+
 function AppContent() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [sceneReady, setSceneReady] = useState(false);
@@ -207,7 +227,7 @@ function AppContent() {
               {/* Navigation UI - Hamburger, Map, Back, Audio */}
               {isLoaded && (
                 <>
-                  <NavigationUI />
+                  <NavigationGate />
                   <GlobalOverlay />
                   <ReadingRoom />
                   <PaperTransition />

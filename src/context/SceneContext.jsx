@@ -13,6 +13,8 @@ export const SceneProvider = ({ children }) => {
     const [exitRequested, setExitRequested] = useState(false); // Signal to request exit from room
     const [overlayContent, setOverlayContent] = useState(null); // Content for overlay (Studio monitor etc)
     const [readingProject, setReadingProject] = useState(null); // 阅读室（批次 2）：当前深读的项目
+    // 房间首个可见帧（上色/贴图就绪）才撤入口海报，避免导航先出现、画面还在白屏
+    const [roomVisualReady, setRoomVisualReady] = useState(null);
 
     // Teleportation states
     const [teleportTarget, setTeleportTarget] = useState(null); // Room ID to teleport to
@@ -20,11 +22,15 @@ export const SceneProvider = ({ children }) => {
     const [teleportPhase, setTeleportPhase] = useState(null);   // 'closing' | 'teleporting' | 'opening' | null
     const [pendingDoorClick, setPendingDoorClick] = useState(null); // Label of door to click after teleport
     const [isFastTeleport, setIsFastTeleport] = useState(false); // Fast teleport in progress (skip animations)
+    // 传送/深链进房：纸面和首帧海报已遮住等待，房间不该再跑一遍笔刷上色
+    const teleportEntryRef = useRef(false);
+    const [enteredViaTeleport, setEnteredViaTeleport] = useState(false);
 
     // Inspecting state removed to avoid global re-renders
 
     const enterRoom = useCallback((roomId) => {
         setCurrentRoom(roomId);
+        setEnteredViaTeleport(teleportEntryRef.current);
         setExitRequested(false); // Clear any pending exit request
         setOverlayContent(null); // Clear overlay on room change
 
@@ -40,12 +46,25 @@ export const SceneProvider = ({ children }) => {
         setCurrentRoom(null);
         setExitRequested(false);
         setOverlayContent(null);
+        setRoomVisualReady(null);
+        teleportEntryRef.current = false;
+        setEnteredViaTeleport(false);
     }, []);
 
     // Request exit - this signals to DoorSection to trigger exit animation
     const requestExit = useCallback(() => {
         setExitRequested(true);
         setOverlayContent(null);
+        setRoomVisualReady(null);
+        teleportEntryRef.current = false;
+        setEnteredViaTeleport(false);
+    }, []);
+
+    const markRoomVisualReady = useCallback((roomId) => {
+        setRoomVisualReady(roomId);
+        if (typeof performance !== 'undefined') {
+            performance.mark(`ciwei:room-visual-ready:${roomId}`);
+        }
     }, []);
 
     // Clear exit request - called by DoorSection after handling
@@ -86,6 +105,9 @@ export const SceneProvider = ({ children }) => {
         setIsFastTeleport(true); // Enable fast teleport mode
         setTeleportPhase('closing'); // Paper starts closing
         setOverlayContent(null);
+        setRoomVisualReady(null);
+        teleportEntryRef.current = true;
+        setEnteredViaTeleport(true);
     }, [isTeleporting, currentRoom]);
 
     // Called when paper close animation completes - actually move camera
@@ -137,12 +159,17 @@ export const SceneProvider = ({ children }) => {
         setTeleportPhase(null);
         setPendingDoorClick(null);
         setIsFastTeleport(false);
+        setRoomVisualReady(null);
+        teleportEntryRef.current = false;
+        setEnteredViaTeleport(false);
     }, []);
 
     const value = useMemo(() => ({
         currentRoom,
         hasEntered,
         exitRequested,
+        roomVisualReady,
+        markRoomVisualReady,
         overlayContent, // Exposed
         readingProject, // 阅读室（批次 2）
         openReadingRoom, // Exposed
@@ -164,6 +191,7 @@ export const SceneProvider = ({ children }) => {
         teleportPhase,
         pendingDoorClick,
         isFastTeleport,
+        enteredViaTeleport,
         teleportTo,
         startTeleportTransition,
         openTeleportTransition,
@@ -175,6 +203,8 @@ export const SceneProvider = ({ children }) => {
         currentRoom,
         hasEntered,
         exitRequested,
+        roomVisualReady,
+        markRoomVisualReady,
         overlayContent,
         readingProject,
         openReadingRoom,
@@ -192,6 +222,7 @@ export const SceneProvider = ({ children }) => {
         teleportPhase,
         pendingDoorClick,
         isFastTeleport,
+        enteredViaTeleport,
         teleportTo,
         startTeleportTransition,
         openTeleportTransition,
