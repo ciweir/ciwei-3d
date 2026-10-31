@@ -1134,6 +1134,11 @@ const ProjectCard = memo(forwardRef(({ index, project, clothespinTexture, curren
 
     const handleClick = (e) => {
         e.stopPropagation();
+        // 点开前先收干净 hover 的掀起动画，避免与起飞 timeline 抢同一组属性
+        if (paperRef.current) {
+            gsap.killTweensOf(paperRef.current.position);
+            gsap.killTweensOf(paperRef.current.rotation);
+        }
         if (onClick) onClick(index);
     };
 
@@ -1382,6 +1387,29 @@ const ProjectCard = memo(forwardRef(({ index, project, clothespinTexture, curren
                         maybeSwitchToVideo();
                     }, 800);
                 }
+
+                /* 纸片被轻轻掀起：向观者前移一点点 + 极小的侧倾，木夹保持不动，
+                   观感像纸被指尖拨了一下。基准 y=-1.1 与 openCard/closeCard 的 localBaseY 一致。 */
+                if (!isSelected && !isAnimating && paperRef.current) {
+                    if (reducedMotion) {
+                        gsap.set(paperRef.current.position, { y: -1.07, z: 0.16 });
+                        gsap.set(paperRef.current.rotation, { z: -0.03 });
+                    } else {
+                        gsap.to(paperRef.current.position, {
+                            y: -1.07,
+                            z: 0.16,
+                            duration: 0.5,
+                            ease: 'power2.out',
+                            overwrite: 'auto'
+                        });
+                        gsap.to(paperRef.current.rotation, {
+                            z: -0.03,
+                            duration: 0.5,
+                            ease: 'power2.out',
+                            overwrite: 'auto'
+                        });
+                    }
+                }
             }}
             onPointerLeave={(e) => {
                 if (isMobile || isTransitioning) return;
@@ -1407,6 +1435,28 @@ const ProjectCard = memo(forwardRef(({ index, project, clothespinTexture, curren
                 if (videoSwapTimer.current) clearTimeout(videoSwapTimer.current);
                 videoElRef.current?.pause();
                 setUseVideo(false);
+
+                // 收回纸片；已选中/配合打开动画时不抢位置，交给 openCard 接管
+                if (!isSelected && !isAnimating && paperRef.current) {
+                    if (reducedMotion) {
+                        gsap.set(paperRef.current.position, { y: -1.1, z: 0 });
+                        gsap.set(paperRef.current.rotation, { z: 0 });
+                    } else {
+                        gsap.to(paperRef.current.position, {
+                            y: -1.1,
+                            z: 0,
+                            duration: 0.55,
+                            ease: 'power2.out',
+                            overwrite: 'auto'
+                        });
+                        gsap.to(paperRef.current.rotation, {
+                            z: 0,
+                            duration: 0.55,
+                            ease: 'power2.out',
+                            overwrite: 'auto'
+                        });
+                    }
+                }
             }}
         >
             {/* Clothespin (Top Center) - Does NOT move with paperRef */}
