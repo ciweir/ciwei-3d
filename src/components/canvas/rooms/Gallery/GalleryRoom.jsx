@@ -95,7 +95,7 @@ const GalleryText = forwardRef(({ children, ...props }, ref) => {
 GalleryText.displayName = 'GalleryText';
 
 const GalleryRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
-    const { isTeleporting, enteredViaTeleport } = useScene();
+    const { isTeleporting, enteredViaTeleport, roomVisualReady } = useScene();
     const { showTutorial, unlockAchievement, hidePopup } = useAchievements();
     const { play, audioEnabled, isMuted } = useAudio();
     const reducedMotion = useReducedMotion();
@@ -131,7 +131,10 @@ const GalleryRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
     
     // Track transition state to disable interactions
     const [isTransitioning, setIsTransitioning] = useState(false);
-    const [paintDone, setPaintDone] = useState(false);
+    // 房间贴图/网格真正就绪（onReady 在 5 帧后才触发），用它替代“上色完成”作为撤海报条件
+    const [assetReady, setAssetReady] = useState(false);
+    // 开门后的相机进门动画约 1.5s，等它走完再撤海报，避免静帧直接切成门口视角
+    const [flyInDone, setFlyInDone] = useState(false);
     const paintTimerRef = useRef(null);
 
     // Track if user teleported into this room 
@@ -141,41 +144,55 @@ const GalleryRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
     }, [isTeleporting]);
 
     useEffect(() => {
-        if (paintTimerRef.current) clearTimeout(paintTimerRef.current);
-        // When the room officially shows up (doors open and user flies in)
-        if (showRoom && !isWarmup) {
-            if (wasTeleportedRef.current || enteredViaTeleport || isTeleporting || reducedMotion) {
-                // 减少动态效果：直接显示彩色房间，不做笔刷揭幕
-                uniformsData.uPaintProgress.value = 1.0;
-                setIsTransitioning(false);
-                setPaintDone(true);
-            } else {
-                setIsTransitioning(true);
-                setPaintDone(false);
-                // resetPaint() in case we re-enter
-                resetPaint();
-                // 手机端缩短“上色揭幕”：2.5s 在长屏上会像卡住，1.3s 仍然保留笔触感。
-                const paintDuration = isTouchDevice() ? 1.3 : 2.5;
-                // Start the paint animation with a slight delay so it happens *during* fly-in
-                animatePaint(0.2, paintDuration);
-
-                // Re-enable interactions once painting finishes
-                paintTimerRef.current = setTimeout(() => {
-                    setIsTransitioning(false);
-                    setPaintDone(true);
-                }, (0.2 + paintDuration) * 1000);
-            }
-        } else {
-            // Immediately reveal for warmup or hide if not showing
-            uniformsData.uPaintProgress.value = 1.0;
-            setPaintDone(false);
+        if (!showRoom) {
+            setFlyInDone(false);
+            return undefined;
         }
+        const timer = window.setTimeout(() => setFlyInDone(true), 1500);
+        return () => window.clearTimeout(timer);
+    }, [showRoom]);
+
+    // 海报撤下之后才让观众看到笔刷揭幕；在此之前房间保持线稿
+    const revealed = roomVisualReady === 'gallery';
+
+    useEffect(() => {
+        if (paintTimerRef.current) clearTimeout(paintTimerRef.current);
+
+        if (!showRoom || isWarmup) {
+            // 未进房/预热：保持满上色，退房再进时不残留半成品
+            uniformsData.uPaintProgress.value = 1.0;
+            setIsTransitioning(false);
+            return undefined;
+        }
+
+        if (wasTeleportedRef.current || enteredViaTeleport || isTeleporting || reducedMotion) {
+            // 减少动态效果 / 传送进房：直接显示彩色房间，不做笔刷揭幕
+            uniformsData.uPaintProgress.value = 1.0;
+            setIsTransitioning(false);
+            return undefined;
+        }
+
+        if (!revealed) {
+            // 海报还盖着：保持线稿，等它撤下再表演
+            resetPaint();
+            return undefined;
+        }
+
+        setIsTransitioning(true);
+        // 不从 0 起：撤下海报时房间已有约三成底色，避免整屏纸白被当成白屏
+        uniformsData.uPaintProgress.value = 0.35;
+        // 手机端缩短“上色揭幕”：2.5s 在长屏上会像卡住，1.3s 仍然保留笔触感。
+        const paintDuration = isTouchDevice() ? 1.3 : 2.5;
+        animatePaint(0.2, paintDuration);
+
+        // Re-enable interactions once painting finishes
+        paintTimerRef.current = setTimeout(() => setIsTransitioning(false), (0.2 + paintDuration) * 1000);
         return () => {
             if (paintTimerRef.current) clearTimeout(paintTimerRef.current);
         };
-    }, [showRoom, isWarmup, isTeleporting, reducedMotion, enteredViaTeleport]);
+    }, [showRoom, revealed, isWarmup, isTeleporting, reducedMotion, enteredViaTeleport]);
 
-    useRoomVisualReady('gallery', showRoom && paintDone && !enteredViaTeleport);
+    useRoomVisualReady('gallery', showRoom && assetReady && flyInDone && !enteredViaTeleport);
 
     const handleCardClick = async (clickedIndex) => {
         if (globalIsAnimating || isTransitioning) return;
@@ -217,6 +234,7 @@ const GalleryRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
         frameCount.current++;
         if (frameCount.current >= FRAMES_TO_WAIT) {
             hasSignaledReady.current = true;
+            setAssetReady(true);
             onReady?.();
 
             // Wait for the DoorSection 1.5s camera fly-in to finish before showing tutorial

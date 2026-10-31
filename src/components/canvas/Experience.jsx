@@ -47,23 +47,31 @@ const Experience = ({ onSceneReady }) => {
     const { camera, gl } = useThree();
     const renderReadyRef = useRef({ room: null, frames: 0, enteredAt: 0 });
     useFrame(() => {
+        const state = renderReadyRef.current;
         if (!currentRoom || isTeleporting || !enteredViaTeleport || roomVisualReady === currentRoom) {
-            renderReadyRef.current = { room: currentRoom, frames: 0, enteredAt: 0 };
+            // 原地清字段，不每帧新建对象（稳定态下这会变成 60/s 的垃圾）
+            state.room = null;
+            state.frames = 0;
+            state.enteredAt = 0;
             return;
         }
-        if (renderReadyRef.current.room !== currentRoom) {
-            renderReadyRef.current = { room: currentRoom, frames: 0, enteredAt: performance.now() };
+        if (state.room !== currentRoom) {
+            state.room = currentRoom;
+            state.frames = 0;
+            state.enteredAt = performance.now();
         }
+        const elapsed = performance.now() - state.enteredAt;
         // 传送末尾还会短暂绘制门/走廊；稳定窗内不认，避免海报在房间真正出画前撤掉。
-        if (performance.now() - renderReadyRef.current.enteredAt < 800) return;
+        if (elapsed < 800) return;
         // 空白期 gl.info.render.calls 为 0；连续两帧有调用再放行，避免 Suspense/编译瞬间。
-        if (gl.info.render.calls >= 12) {
-            renderReadyRef.current.frames += 1;
-            if (renderReadyRef.current.frames >= 2) {
+        // 6s 兜底：低端机 draw call 长期达不到阈值时也要放行，否则海报会一直盖着。
+        if (elapsed > 6000 || gl.info.render.calls >= 12) {
+            state.frames += 1;
+            if (state.frames >= 2) {
                 markRoomVisualReady(currentRoom);
             }
         } else {
-            renderReadyRef.current.frames = 0;
+            state.frames = 0;
         }
     });
     // 入口先渲染；走廊在推门/已进入时才挂载，避免首屏编译整条走廊

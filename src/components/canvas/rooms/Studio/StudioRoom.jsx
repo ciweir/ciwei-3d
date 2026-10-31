@@ -514,7 +514,7 @@ const StudioRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
     const initialMonitors = layout.kind === 'mobile' ? 4 : 8;
     const [mountedMonitors, setMountedMonitors] = useState(initialMonitors);
 
-    const { openOverlay, overlayContent, isTeleporting, enteredViaTeleport } = useScene();
+    const { openOverlay, overlayContent, isTeleporting, enteredViaTeleport, roomVisualReady } = useScene();
     const { showTutorial, unlockAchievement, hidePopup } = useAchievements();
     const { globalVolume, isMuted, audioEnabled } = useAudio();
     // 触屏端等首次交互后再拉环境声与主屏视频（0.35MB 音频 + 0.38MB 视频），别和片墙封面抢带宽
@@ -652,8 +652,10 @@ const StudioRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
     // 锁存只在房间真正退场时清空——挂载那一刻 showRoom 还是 false，此时清空会把传送标记抹掉。
     const wasTeleportedRef = useRef(false);
     const hadShownRoom = useRef(false);
-    const [paintDone, setPaintDone] = useState(false);
-    const paintTimerRef = useRef(null);
+    // 房间贴图/网格真正就绪（onReady 在 5 帧后才触发），用它替代“上色完成”作为撤海报条件
+    const [assetReady, setAssetReady] = useState(false);
+    // 开门后的相机进门动画约 1.5s，等它走完再撤海报，避免静帧直接切成门口视角
+    const [flyInDone, setFlyInDone] = useState(false);
     useEffect(() => {
         if (isTeleporting) wasTeleportedRef.current = true;
     }, [isTeleporting]);
@@ -663,27 +665,38 @@ const StudioRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
     }, [showRoom]);
 
     useEffect(() => {
-        if (paintTimerRef.current) clearTimeout(paintTimerRef.current);
-        if (showRoom && !isWarmup) {
-            if (wasTeleportedRef.current || enteredViaTeleport || isTeleporting || reducedMotion) {
-                paintUniforms.uPaintProgress.value = 1.0;
-                setPaintDone(true);
-            } else {
-                setPaintDone(false);
-                resetPaint();
-                animatePaint(0.2, 2.5);
-                paintTimerRef.current = setTimeout(() => setPaintDone(true), 2700);
-            }
-        } else {
-            paintUniforms.uPaintProgress.value = 1.0;
-            setPaintDone(false);
+        if (!showRoom) {
+            setFlyInDone(false);
+            return undefined;
         }
-        return () => {
-            if (paintTimerRef.current) clearTimeout(paintTimerRef.current);
-        };
-    }, [showRoom, isWarmup, isTeleporting, reducedMotion, enteredViaTeleport, animatePaint, resetPaint, paintUniforms]);
+        const timer = window.setTimeout(() => setFlyInDone(true), 1500);
+        return () => window.clearTimeout(timer);
+    }, [showRoom]);
 
-    useRoomVisualReady('studio', showRoom && paintDone && !enteredViaTeleport);
+    // 海报撤下之后才让观众看到笔刷揭幕；在此之前房间保持线稿
+    const revealed = roomVisualReady === 'studio';
+
+    useEffect(() => {
+        if (!showRoom || isWarmup) {
+            paintUniforms.uPaintProgress.value = 1.0;
+            return undefined;
+        }
+        if (wasTeleportedRef.current || enteredViaTeleport || isTeleporting || reducedMotion) {
+            paintUniforms.uPaintProgress.value = 1.0;
+            return undefined;
+        }
+        if (!revealed) {
+            // 海报还盖着：保持线稿，等它撤下再表演
+            resetPaint();
+            return undefined;
+        }
+        // 不从 0 起：撤下海报时房间已有约三成底色，避免整屏纸白被当成白屏
+        paintUniforms.uPaintProgress.value = 0.35;
+        animatePaint(0.2, 2.5);
+        return undefined;
+    }, [showRoom, revealed, isWarmup, isTeleporting, reducedMotion, enteredViaTeleport, animatePaint, resetPaint, paintUniforms]);
+
+    useRoomVisualReady('studio', showRoom && assetReady && flyInDone && !enteredViaTeleport);
 
     useEffect(() => {
         const handleWheel = (event) => {
@@ -868,6 +881,7 @@ const StudioRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
             frameCount.current += 1;
             if (frameCount.current >= 5) {
                 hasSignaledReady.current = true;
+                setAssetReady(true);
                 onReady?.();
                 if (!isWarmup) setTimeout(() => showTutorial('studio_interact'), 2000);
             }

@@ -4,7 +4,9 @@ import { useColorEnabled } from '../../utils/colorMode';
 import { isTouchDevice } from '../../utils/deviceDetect';
 import '../../styles/RoomEntryPoster.scss';
 
-const FALLBACK_HIDE_MS = 20000;
+// 兜底撤下时间：必须早于 / 接近 NavigationGate 的 12s，否则海报（z-index 300）
+// 会把已经出现的导航（z-index 100）一起压住，用户最长 20s 没有任何出口。
+const FALLBACK_HIDE_MS = 8000;
 const LEAVE_MS = 360;
 const STATUS_DELAY_MS = 1500;
 

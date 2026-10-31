@@ -97,7 +97,7 @@ const PHASE = {
 
 const ContactRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
     const { camera } = useThree();
-    const { isTeleporting, enteredViaTeleport } = useScene();
+    const { isTeleporting, enteredViaTeleport, roomVisualReady } = useScene();
     const { hidePopup } = useAchievements();
     const { globalVolume, isMuted, audioEnabled } = useAudio();
     const reducedMotion = useReducedMotion();
@@ -169,7 +169,10 @@ const ContactRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
     });
 
     const [, setIsTransitioning] = useState(false);
-    const [paintDone, setPaintDone] = useState(false);
+    // 房间贴图/网格真正就绪（onReady 在 5 帧后才触发），用它替代“上色完成”作为撤海报条件
+    const [assetReady, setAssetReady] = useState(false);
+    // 开门后的相机进门动画约 1.5s，等它走完再撤海报，避免静帧直接切成门口视角
+    const [flyInDone, setFlyInDone] = useState(false);
     const paintTimerRef = useRef(null);
 
     const wasTeleportedRef = useRef(false);
@@ -178,32 +181,49 @@ const ContactRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
     }, [isTeleporting]);
 
     useEffect(() => {
-        if (paintTimerRef.current) clearTimeout(paintTimerRef.current);
-        if (showRoom && !isWarmup) {
-            if (wasTeleportedRef.current || enteredViaTeleport || isTeleporting || reducedMotion) {
-                uniformsData.uPaintProgress.value = 1.0;
-                setIsTransitioning(false);
-                setPaintDone(true);
-            } else {
-                setIsTransitioning(true);
-                setPaintDone(false);
-                resetPaint();
-                animatePaint(0.2, 2.5);
-                paintTimerRef.current = setTimeout(() => {
-                    setIsTransitioning(false);
-                    setPaintDone(true);
-                }, 2700);
-            }
-        } else {
-            uniformsData.uPaintProgress.value = 1.0;
-            setPaintDone(false);
+        if (!showRoom) {
+            setFlyInDone(false);
+            return undefined;
         }
+        const timer = window.setTimeout(() => setFlyInDone(true), 1500);
+        return () => window.clearTimeout(timer);
+    }, [showRoom]);
+
+    // 海报撤下之后才让观众看到笔刷揭幕；在此之前房间保持线稿
+    const revealed = roomVisualReady === 'contact';
+
+    useEffect(() => {
+        if (paintTimerRef.current) clearTimeout(paintTimerRef.current);
+
+        if (!showRoom || isWarmup) {
+            uniformsData.uPaintProgress.value = 1.0;
+            setIsTransitioning(false);
+            return undefined;
+        }
+
+        if (wasTeleportedRef.current || enteredViaTeleport || isTeleporting || reducedMotion) {
+            uniformsData.uPaintProgress.value = 1.0;
+            setIsTransitioning(false);
+            return undefined;
+        }
+
+        if (!revealed) {
+            // 海报还盖着：保持线稿，等它撤下再表演
+            resetPaint();
+            return undefined;
+        }
+
+        setIsTransitioning(true);
+        // 不从 0 起：撤下海报时房间已有约三成底色，避免整屏纸白被当成白屏
+        uniformsData.uPaintProgress.value = 0.35;
+        animatePaint(0.2, 2.5);
+        paintTimerRef.current = setTimeout(() => setIsTransitioning(false), 2700);
         return () => {
             if (paintTimerRef.current) clearTimeout(paintTimerRef.current);
         };
-    }, [showRoom, isWarmup, isTeleporting, reducedMotion, enteredViaTeleport]);
+    }, [showRoom, revealed, isWarmup, isTeleporting, reducedMotion, enteredViaTeleport]);
 
-    useRoomVisualReady('contact', showRoom && paintDone && !enteredViaTeleport);
+    useRoomVisualReady('contact', showRoom && assetReady && flyInDone && !enteredViaTeleport);
 
     // Track if we've signaled ready
     const hasSignaledReady = useRef(false);
@@ -276,6 +296,7 @@ const ContactRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
             frameCount.current++;
             if (frameCount.current >= FRAMES_TO_WAIT) {
                 hasSignaledReady.current = true;
+                setAssetReady(true);
                 onReady?.();
             }
         }
