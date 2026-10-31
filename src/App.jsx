@@ -177,6 +177,9 @@ function AppContent() {
     requestAnimationFrame(() => {
       setSceneReady(true);
     });
+    // 场景首帧已出：通知 SceneCanvas 把 3D 字体预取排到首屏之后，别抢纹理带宽
+    window.__ciweiSceneReady = true;
+    window.dispatchEvent(new CustomEvent('ciwei:scene-ready'));
   }, []);
 
   const handleSceneProgress = useCallback(({ progress, active }) => {

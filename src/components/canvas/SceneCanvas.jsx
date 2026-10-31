@@ -126,23 +126,24 @@ const filteredInitial = [
 filteredInitial.forEach((path) => useTexture.preload(path));
 
 // 3D 字体由 troika 在文本首次排版时才 fetch，深链上常拖到 5s 后才开始。
-// 空闲时先取一次，让浏览器 HTTP 缓存接管 troika 的正式请求。
+// 预取只为让 troika 的正式请求命中 HTTP 缓存，但它必须排在首屏之后：
+// 原先 1.6s 的空闲回调会和房间纹理抢 4G 带宽（studio 因此慢了约 0.9s）。
+// 现在改成「场景首帧出来后再空闲预取」，慢网直接跳过。
 const PRELOAD_3D_FONTS = [
     '/fonts/NotoSansSC-3D.woff',
     '/fonts/NotoSerifSC-Headings-3D.woff',
 ];
-if (typeof window !== 'undefined') {
-    const prefetchFonts = () => {
-        PRELOAD_3D_FONTS.forEach((src) => {
-            fetch(src, { cache: 'force-cache' }).catch(() => {});
-        });
-    };
-    if ('requestIdleCallback' in window) {
-        window.requestIdleCallback(prefetchFonts, { timeout: 1600 });
-    } else {
-        window.setTimeout(prefetchFonts, 800);
+
+const isSlowNetwork = () => {
+    try {
+        const conn = navigator.connection;
+        if (!conn) return false;
+        if (conn.saveData) return true;
+        return /slow-2g|2g|3g/.test(conn.effectiveType || '');
+    } catch {
+        return false;
     }
-}
+};
 
 const SceneLoadingProgress = ({ onProgress }) => {
     const { progress, active } = useProgress();
@@ -162,6 +163,35 @@ const SceneCanvas = ({
     onProgress,
 }) => {
     const { readingProject } = useScene();
+
+    // 3D 字体预取：等场景首帧出来（ciwei:scene-ready）再空闲取一次，
+    // 不再和首屏纹理争带宽；慢网（2G/3G/省流）直接跳过，交给 troika 按需加载。
+    useEffect(() => {
+        let timer = null;
+        const prefetch = () => {
+            if (isSlowNetwork()) return;
+            PRELOAD_3D_FONTS.forEach((src) => {
+                fetch(src, { cache: 'force-cache' }).catch(() => {});
+            });
+        };
+        const schedule = () => {
+            if (window.requestIdleCallback) {
+                window.requestIdleCallback(prefetch, { timeout: 1200 });
+            } else {
+                prefetch();
+            }
+        };
+        const handleReady = () => {
+            if (timer) clearTimeout(timer);
+            timer = window.setTimeout(schedule, 1500);
+        };
+        window.addEventListener('ciwei:scene-ready', handleReady);
+        if (window.__ciweiSceneReady) handleReady();
+        return () => {
+            window.removeEventListener('ciwei:scene-ready', handleReady);
+            if (timer) clearTimeout(timer);
+        };
+    }, []);
 
     // 入口可见后优先预取画廊首屏（共享贴图 + 9 张卡封面），让地图点击画廊时
     // 不再临时下载；随后再分批预取走廊，避免 80 张一次性拉取造成卡顿。
