@@ -4,6 +4,7 @@ import gsap from 'gsap';
 import { TextPlugin } from 'gsap/TextPlugin';
 import ciweiProjects from '../../data/ciwei-projects.json';
 import ProjectVideo from './ProjectVideo';
+import { useEscapeLayer } from '../../utils/escapeLayer';
 import '../../styles/GlobalOverlay.scss';
 
 gsap.registerPlugin(TextPlugin);
@@ -12,6 +13,11 @@ const GlobalOverlay = () => {
     const { overlayContent, closeOverlay, openOverlay } = useScene();
     const [, setIsVisible] = useState(false);
     const [animateOpen, setAnimateOpen] = useState(false);
+
+    // 项目浮层是最上层的 modal：Esc 只关它，不再冒泡去触发走廊退房
+    useEscapeLayer(Boolean(overlayContent), () => {
+        closeOverlay();
+    });
 
     // Check if mobile based on window width
     const [isMobile, setIsMobile] = useState(window.innerWidth < 768);

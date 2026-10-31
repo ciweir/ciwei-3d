@@ -10,6 +10,7 @@ import GallerySwipeHint from './GallerySwipeHint';
 import ContactCard from './ContactCard';
 import AboutCard from './AboutCard';
 import { useColorEnabled, toggleColorEnabled, setColorLoadScope } from '../../utils/colorMode';
+import { useEscapeLayer } from '../../utils/escapeLayer';
 import { useColorLoadPending } from '../../utils/colorLoadStatus';
 import { isTouchDevice } from '../../utils/deviceDetect';
 import {
@@ -216,18 +217,12 @@ const NavigationUI = () => {
         }
     }, [isMenuOpen]);
 
-    // Global Escape key handler — closes any open panel
-    useEffect(() => {
-        const handleEscape = (e) => {
-            if (e.key === 'Escape') {
-                if (isMenuOpen) setIsMenuOpen(false);
-                if (isAudioMenuOpen) setIsAudioMenuOpen(false);
-                if (isAchievementsOpen) setIsAchievementsOpen(false);
-            }
-        };
-        window.addEventListener('keydown', handleEscape);
-        return () => window.removeEventListener('keydown', handleEscape);
-    }, [isMenuOpen, isAudioMenuOpen, isAchievementsOpen]);
+    // Esc：任何面板开着时只关面板，不再顺带把房间也退掉（层级见 utils/escapeLayer）
+    useEscapeLayer(isMenuOpen || isAudioMenuOpen || isAchievementsOpen, () => {
+        setIsMenuOpen(false);
+        setIsAudioMenuOpen(false);
+        setIsAchievementsOpen(false);
+    });
 
     // Focus trap handler for map panel
     const handleMapKeyDown = (e) => {

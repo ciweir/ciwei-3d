@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useId, useRef, useState } from 'react';
 import ProjectVideo from './ProjectVideo';
 import SceneErrorBoundary from '../dom/SceneErrorBoundary';
 import { hasWebGL } from '../../utils/webglSupport';
+import { useEscapeLayer } from '../../utils/escapeLayer';
 
 const ReadingRoomAtmosphere = lazy(() => import('./ReadingRoomAtmosphere'));
 
@@ -29,6 +30,13 @@ const ReadingRoomView = ({ project, onClose, returnLabel = '返回画廊' }) => 
     const restoreFocusRef = useRef(null);
     const titleId = useId();
 
+    // 阅读室是最上层：Esc 只关它，不再冒泡去触发走廊的退房
+    useEscapeLayer(true, () => {
+        // 全屏视频里先让浏览器退出全屏，避免一次 Esc 同时关阅读室
+        if (document.fullscreenElement) return false;
+        onClose();
+    });
+
     useEffect(() => {
         if (!use3D) return undefined;
         // 先让文字排完，再挂载 3D 背景，避免抢首帧
@@ -43,14 +51,6 @@ const ReadingRoomView = ({ project, onClose, returnLabel = '返回画廊' }) => 
         root?.focus({ preventScroll: true });
 
         const handleKey = (e) => {
-            if (e.key === 'Escape') {
-                // 全屏视频里先让浏览器退出全屏，避免一次 Esc 同时关阅读室
-                if (document.fullscreenElement) return;
-                e.preventDefault();
-                onClose();
-                return;
-            }
-
             if (e.key !== 'Tab' || !root) return;
 
             const items = [...root.querySelectorAll(FOCUSABLE)].filter(isVisible);
