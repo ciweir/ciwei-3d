@@ -820,6 +820,12 @@ const ProjectCard = memo(forwardRef(({ index, project, clothespinTexture, curren
     ].filter(Boolean);
     const [hovered, setHovered] = useState(false);
     const [btnHovered, setBtnHovered] = useState(false);
+    // 悬停掀起：纸片向观者前移 + 侧倾 + 轻微放大，木夹不动。
+    // 基准 y=-1.1 与 openCard/closeCard 的 localBaseY 保持一致。
+    const HOVER_LIFT_Y = -1.05;
+    const HOVER_LIFT_Z = 0.2;
+    const HOVER_TILT_Z = -0.045;
+    const HOVER_SCALE = 1.03;
     // 背面文字只在首次悬停/打开时创建：30 张卡一次性建 100+ 个 troika 文本，
     // 首次进画廊要等它们逐个建网格，是房间就绪慢的另一主因。
     const [detailsMounted, setDetailsMounted] = useState(false);
@@ -1138,6 +1144,7 @@ const ProjectCard = memo(forwardRef(({ index, project, clothespinTexture, curren
         if (paperRef.current) {
             gsap.killTweensOf(paperRef.current.position);
             gsap.killTweensOf(paperRef.current.rotation);
+            gsap.killTweensOf(paperRef.current.scale);
         }
         if (onClick) onClick(index);
     };
@@ -1392,18 +1399,27 @@ const ProjectCard = memo(forwardRef(({ index, project, clothespinTexture, curren
                    观感像纸被指尖拨了一下。基准 y=-1.1 与 openCard/closeCard 的 localBaseY 一致。 */
                 if (!isSelected && !isAnimating && paperRef.current) {
                     if (reducedMotion) {
-                        gsap.set(paperRef.current.position, { y: -1.07, z: 0.16 });
-                        gsap.set(paperRef.current.rotation, { z: -0.03 });
+                        gsap.set(paperRef.current.position, { y: HOVER_LIFT_Y, z: HOVER_LIFT_Z });
+                        gsap.set(paperRef.current.rotation, { z: HOVER_TILT_Z });
+                        gsap.set(paperRef.current.scale, { x: HOVER_SCALE, y: HOVER_SCALE, z: 1 });
                     } else {
                         gsap.to(paperRef.current.position, {
-                            y: -1.07,
-                            z: 0.16,
+                            y: HOVER_LIFT_Y,
+                            z: HOVER_LIFT_Z,
                             duration: 0.5,
                             ease: 'power2.out',
                             overwrite: 'auto'
                         });
                         gsap.to(paperRef.current.rotation, {
-                            z: -0.03,
+                            z: HOVER_TILT_Z,
+                            duration: 0.5,
+                            ease: 'power2.out',
+                            overwrite: 'auto'
+                        });
+                        gsap.to(paperRef.current.scale, {
+                            x: HOVER_SCALE,
+                            y: HOVER_SCALE,
+                            z: 1,
                             duration: 0.5,
                             ease: 'power2.out',
                             overwrite: 'auto'
@@ -1441,6 +1457,7 @@ const ProjectCard = memo(forwardRef(({ index, project, clothespinTexture, curren
                     if (reducedMotion) {
                         gsap.set(paperRef.current.position, { y: -1.1, z: 0 });
                         gsap.set(paperRef.current.rotation, { z: 0 });
+                        gsap.set(paperRef.current.scale, { x: 1, y: 1, z: 1 });
                     } else {
                         gsap.to(paperRef.current.position, {
                             y: -1.1,
@@ -1451,6 +1468,14 @@ const ProjectCard = memo(forwardRef(({ index, project, clothespinTexture, curren
                         });
                         gsap.to(paperRef.current.rotation, {
                             z: 0,
+                            duration: 0.55,
+                            ease: 'power2.out',
+                            overwrite: 'auto'
+                        });
+                        gsap.to(paperRef.current.scale, {
+                            x: 1,
+                            y: 1,
+                            z: 1,
                             duration: 0.55,
                             ease: 'power2.out',
                             overwrite: 'auto'
