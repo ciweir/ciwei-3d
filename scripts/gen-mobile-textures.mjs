@@ -14,7 +14,8 @@ const PUB = 'public';
 const MANIFEST = 'src/config/mobileTextureManifest.js';
 const manifestOnly = process.argv.includes('--manifest-only');
 const TARGETS = [
-    { dir: 'covers', width: 512 },
+    // 封面：屏幕上的侧屏卡片实际投影不到 200px，448 足够，再大会白花带宽
+    { dir: 'covers', width: 448 },
     { dir: 'textures', width: 768, recurse: true },
 ];
 
@@ -51,13 +52,20 @@ for (const target of TARGETS) {
         const out = file.replace(/\.webp$/i, '-mobile.webp');
         const publicPath = '/' + file.replace(/\\/g, '/').replace(/^public\//, '');
         if (manifestOnly) {
-            if (fs.existsSync(out)) manifest.push(publicPath);
+            // 只重建清单：已有变体且确实比原图小的才登记
+            if (fs.existsSync(out) && fs.statSync(out).size < fs.statSync(file).size) manifest.push(publicPath);
             continue;
         }
         await sharp(file)
             .resize({ width: target.width, withoutEnlargement: true })
             .webp({ quality: 78, effort: 6 })
             .toFile(out);
+        // 重编码未必更小：变体反而更大时丢弃，让 smallSrc 回退到原图
+        if (fs.statSync(out).size >= fs.statSync(file).size) {
+            fs.unlinkSync(out);
+            skipped += 1;
+            continue;
+        }
         manifest.push(publicPath);
         generated += 1;
     }
