@@ -79,6 +79,8 @@ export const AudioProvider = ({ children }) => {
     // 合成音由 utils/sfx.js 自行读取静音与音量，不需要依赖这里的状态。
     useEffect(() => {
         const handlePointerDown = (e) => {
+            // 只认主键/触摸；右键、中键不该发出纸面轻点
+            if (e.button !== 0) return;
             const target = e.target;
             if (!target || typeof target.closest !== 'function') return;
             if (target.closest('button, a[href], [role="button"]')) playTick();

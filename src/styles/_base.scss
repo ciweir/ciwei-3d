@@ -66,7 +66,7 @@ body {
 }
 
 // === 墨点光标（2026-10-30）===
-// 只在有真实指针的桌面端启用；触屏与减少动效环境保持系统光标。
+// 只在有真实指针的桌面端启用；触屏保持系统光标。
 // 3D 场景里的 hover 通过行内 var(--cursor-ink-pointer) 覆盖，
 // 因此各处「恢复默认」的行内样式写空字符串，交回这里。
 button,
@@ -88,6 +88,13 @@ input[type='range'] {
     [role='button'],
     input[type='range'] {
         cursor: var(--cursor-ink-pointer);
+    }
+
+    // 长文阅读保留 I-beam：墨点是「世界」的语言，不该啃掉读文的系统光标
+    .reading-room__para,
+    .reading-room__results li,
+    .reading-missing__text {
+        cursor: text;
     }
 }
 

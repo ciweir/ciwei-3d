@@ -38,14 +38,23 @@ const ensureContext = () => {
 
 // 首次调用时上下文常处于 suspended，需等 resume 完成后再合成，
 // 否则第一次点击会静默失败（后续点击正常）。
+// 浏览器策略、音频设备缺失或上下文被关闭都可能让合成抛错，
+// 这里一律吞掉——界面音效失败不该影响任何交互。
 const withContext = (render) => {
     const audio = ensureContext();
     if (!audio) return;
+    const run = () => {
+        try {
+            render(audio);
+        } catch {
+            // 静默失败
+        }
+    };
     if (audio.state === 'suspended') {
-        audio.resume().then(() => render(audio)).catch(() => {});
+        audio.resume().then(run).catch(() => {});
         return;
     }
-    render(audio);
+    run();
 };
 
 // 纸张轻点：极短噪声过带通，衰减很快，听感像指尖敲纸
