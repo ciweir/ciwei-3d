@@ -127,7 +127,8 @@
   </script>
 
   <!-- SEO Fallback for WebGL SPAs (2026 Crawl Optimization) -->
-  <div id="seo-content" class="sr-only-seo">
+  <!-- inert：这段只为爬虫存在，视觉隐藏后可聚焦的链接会让键盘用户的焦点丢在虚空里 -->
+  <div id="seo-content" class="sr-only-seo" inert aria-hidden="true">
     <!-- SEO 长文（2026-10-12 已换为此唯真实内容，中文分段；部署时如有新素材可再充实） -->
     <header>
       <h1>此唯 · 视频导演 | 3D 作品集</h1>

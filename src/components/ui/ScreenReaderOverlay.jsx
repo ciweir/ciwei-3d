@@ -11,7 +11,7 @@ import '../../styles/ScreenReaderOverlay.scss';
  * Visually hidden via .sr-only but fully accessible to assistive tech.
  */
 const ScreenReaderOverlay = () => {
-    const { hasEntered, isInRoom, currentRoom, teleportTo, requestExit } = useScene();
+    const { hasEntered, isInRoom, currentRoom, teleportTo, requestExit, openOverlay, openReadingRoom } = useScene();
     
     // 取数据生成给 SEO / 爬虫的隐藏 HTML
     const projects = useGalleryProjects();
@@ -111,9 +111,16 @@ const ScreenReaderOverlay = () => {
                                 {projects && projects.length > 0 && (
                                     <ul>
                                         {projects.map((p, i) => (
-                                            <li key={i}>
+                                            <li key={p.id || i}>
                                                 <h4>{p.title}</h4>
                                                 <p>{p.description}</p>
+                                                {/* 3D 卡片只能指针点开；这里给出键盘等价入口 */}
+                                                <button type="button" onClick={() => openOverlay(p)}>
+                                                    查看《{p.title}》详情
+                                                </button>
+                                                <button type="button" onClick={() => openReadingRoom(p)}>
+                                                    在阅读室读《{p.title}》全文
+                                                </button>
                                                 {p.url && <a href={p.url}>访问 {p.title}</a>}
                                             </li>
                                         ))}
@@ -143,6 +150,10 @@ const ScreenReaderOverlay = () => {
                                             <li key={i}>
                                                 <h4>{s.title}（{s.platform}）</h4>
                                                 <p>{s.description}</p>
+                                                {/* 主屏详情同样只有指针路径，这里补键盘入口 */}
+                                                <button type="button" onClick={() => openOverlay(s)}>
+                                                    查看《{s.title}》详情
+                                                </button>
                                                 {s.url && <a href={s.url}>查看内容</a>}
                                             </li>
                                         ))}

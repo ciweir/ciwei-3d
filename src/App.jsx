@@ -227,12 +227,13 @@ function AppContent() {
               {/* Navigation UI - Hamburger, Map, Back, Audio */}
               {isLoaded && (
                 <>
+                  {/* 无障碍层置顶：保证键盘第一下 Tab 就落在它的跳转链接上 */}
+                  <ScreenReaderOverlay />
                   <NavigationGate />
                   <GlobalOverlay />
                   <ReadingRoom />
                   <PaperTransition />
                   <RoomEntryPoster />
-                  <ScreenReaderOverlay />
                 </>
               )}
 
