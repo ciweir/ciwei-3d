@@ -1,10 +1,8 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
-  // 必须与 Cloudflare 上的项目名一致（原先误写成 ciwei-3d-2，该项目不存在）
+  // 与 Cloudflare 上的 Pages 项目名一致（原误写为 ciwei-3d-2，该项目不存在）
   "name": "ciwei-3d",
   "compatibility_date": "2026-10-20",
-  "assets": {
-    "directory": "./dist",
-    "not_found_handling": "single-page-application"
-  }
+  // Pages 专用字段：构建产物目录；SPA 回退已由 public/_redirects 处理
+  "pages_build_output_dir": "./dist"
 }
