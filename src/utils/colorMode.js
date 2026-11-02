@@ -2,7 +2,23 @@ import { useSyncExternalStore } from 'react';
 import { isTouchDevice } from './deviceDetect';
 
 const STORAGE_KEY = 'ciwei-color-mode';
+const SLOW_EFFECTIVE_TYPES = new Set(['slow-2g', '2g', '3g']);
 const listeners = new Set();
+
+/**
+ * 触屏设备的默认上色策略：网络不慢、且硬件够用时才默认彩色。
+ * 彩色贴图比线稿多约 1.5~2.5MB，且两套纹理同时驻留显存，
+ * 低端机会因此掉帧，所以默认保持线稿，由用户手动上色。
+ */
+export const shouldDefaultToColor = ({ nav, isTouch }) => {
+    if (!isTouch || !nav) return true;
+    const connection = nav.connection || nav.mozConnection || nav.webkitConnection;
+    if (connection?.saveData) return false;
+    if (connection?.effectiveType && SLOW_EFFECTIVE_TYPES.has(connection.effectiveType)) return false;
+    // Chrome/Android 提供 deviceMemory；Safari 不提供，退而用 CPU 核心数
+    if (typeof nav.deviceMemory === 'number') return nav.deviceMemory >= 8;
+    return (nav.hardwareConcurrency || 0) >= 6;
+};
 
 const readInitial = () => {
     if (typeof window === 'undefined') return true;
@@ -13,7 +29,7 @@ const readInitial = () => {
     } catch {
         // localStorage can be unavailable in private/embedded contexts
     }
-    return !isTouchDevice();
+    return shouldDefaultToColor({ nav: window.navigator, isTouch: isTouchDevice() });
 };
 
 let enabled = readInitial();
