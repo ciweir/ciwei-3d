@@ -102,19 +102,14 @@ function DocumentMetaBridge({ ready }) {
   return null;
 }
 
-// 深链进房：首帧海报覆盖期先不显示导航，避免返回键“看得见但点不动”；
-// 房间首个可见帧出现后再接管，12s 兜底保证仍可退出。
+// 深链进房时导航要尽早出现：海报（z 300）可能盖 8s，
+// 期间至少让用户看到"可以退出等待"。导航层已抬到海报之上。
 const NavigationGate = () => {
-  const { roomVisualReady } = useScene();
   const [revealed, setRevealed] = useState(!INITIAL_ROOM);
 
   useEffect(() => {
-    if (roomVisualReady) setRevealed(true);
-  }, [roomVisualReady]);
-
-  useEffect(() => {
     if (revealed) return undefined;
-    const timer = setTimeout(() => setRevealed(true), 12000);
+    const timer = setTimeout(() => setRevealed(true), 1500);
     return () => clearTimeout(timer);
   }, [revealed]);
 

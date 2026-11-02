@@ -40,7 +40,7 @@ const PIN_START_POSITION = { x: 50.5, y: 97 };
 const STUDIO_WORK_COUNT = 22;
 
 const NavigationUI = () => {
-    const { currentRoom, isInRoom, requestExit, hasEntered, teleportTo, isTeleporting } = useScene();
+    const { currentRoom, isInRoom, requestExit, hasEntered, teleportTo, isTeleporting, roomVisualReady } = useScene();
     const { isMuted, globalVolume, setGlobalVolume } = useAudio();
     const { showTutorial, activePopup } = useAchievements();
     const colorEnabled = useColorEnabled();
@@ -286,8 +286,9 @@ const NavigationUI = () => {
                 </button>
             )}
 
-            {/* Right side controls - Only visible after entering */}
-            {hasEntered && (
+            {/* Right side controls - 房间视觉就绪前不出现：海报期只留返回键，
+                避免用户在等待时误触地图/音频等复杂操作 */}
+            {hasEntered && (!isInRoom || roomVisualReady === currentRoom) && (
                 <div className={`nav-controls ${isMenuOpen || isAudioMenuOpen ? 'menu-open' : ''} ${isUIHidden ? 'ui-hidden' : ''}`}>
                     {/* Hamburger Menu Button */}
                     <button

@@ -7,7 +7,8 @@
     position: fixed;
     inset: 0;
     pointer-events: none;
-    z-index: 100;
+    // 高于首帧海报（300）、低于纸张转场（320）：海报盖着时按钮仍可点
+    z-index: 301;
 
     // All interactive elements need pointer-events
     button,
