@@ -1,5 +1,6 @@
 import { createContext, useState, useCallback, useMemo, useRef } from 'react';
 import { getInitialRoomFromUrl } from '../hooks/useDocumentMeta';
+import { hapticEnter } from '../utils/haptics';
 
 const SceneContext = createContext(null);
 
@@ -108,6 +109,7 @@ export const SceneProvider = ({ children }) => {
         setRoomVisualReady(null);
         teleportEntryRef.current = true;
         setEnteredViaTeleport(true);
+        hapticEnter();
     }, [isTeleporting, currentRoom]);
 
     // Called when paper close animation completes - actually move camera

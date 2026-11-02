@@ -123,8 +123,8 @@
 
 .color-loading-hint {
     position: fixed;
-    top: 58px;
-    right: 16px;
+    top: calc(58px + env(safe-area-inset-top, 0px));
+    right: calc(16px + env(safe-area-inset-right, 0px));
     z-index: 120;
     padding: 6px 10px 5px;
     background: rgba($paper, 0.94);
@@ -145,8 +145,8 @@
 // === BACK BUTTON ===
 .back-btn {
     position: fixed;
-    top: 0; // Starts from top edge
-    left: 24px;
+    top: env(safe-area-inset-top, 0px);
+    left: calc(24px + env(safe-area-inset-left, 0px));
     animation: fadeSlideDown 0.3s ease-out;
     transition: transform 0.3s ease, opacity 0.3s ease;
 
@@ -173,8 +173,8 @@
 // === RIGHT SIDE CONTROLS ===
 .nav-controls {
     position: fixed;
-    top: 0; // Starts from top edge
-    right: 24px;
+    top: env(safe-area-inset-top, 0px);
+    right: calc(24px + env(safe-area-inset-right, 0px));
     display: flex;
     gap: 12px;
     transition: transform 0.3s ease, opacity 0.3s ease;
@@ -557,8 +557,8 @@
 // === AUDIO PANEL ===
 .audio-panel {
     position: fixed;
-    top: 0;
-    right: 24px;
+    top: env(safe-area-inset-top, 0px);
+    right: calc(24px + env(safe-area-inset-right, 0px));
     width: 220px;
     filter: drop-shadow(0 4px 15px rgba($black, 0.15));
     opacity: 0;
@@ -755,7 +755,7 @@
 // === ENTRANCE HINT - Before entering (same style as corridor hint) ===
 .entrance-hint {
     position: fixed;
-    bottom: 32px;
+    bottom: calc(32px + env(safe-area-inset-bottom, 0px));
     left: 50%;
     transform: translateX(-50%);
     display: flex;
@@ -780,7 +780,7 @@
 // === CORRIDOR HINT - After entering ===
 .corridor-hint {
     position: fixed;
-    bottom: 32px;
+    bottom: calc(32px + env(safe-area-inset-bottom, 0px));
     left: 50%;
     transform: translateX(-50%);
     display: flex;
@@ -908,7 +908,7 @@
 @media (max-width: 768px) {
     .room-browse-hint {
         left: 14px;
-        bottom: 18px;
+        bottom: calc(18px + env(safe-area-inset-bottom, 0px));
         gap: 6px;
         padding: 7px 9px 6px;
         font-size: 10.5px;
@@ -934,16 +934,16 @@
     }
 
     .back-btn {
-        left: 16px;
+        left: calc(16px + env(safe-area-inset-left, 0px));
     }
 
     .nav-controls {
-        right: 16px;
+        right: calc(16px + env(safe-area-inset-right, 0px));
         gap: 8px;
     }
 
     .audio-panel {
-        right: 16px;
+        right: calc(16px + env(safe-area-inset-right, 0px));
 
         // 触控目标尺寸（WCAG 2.5.5：建议 ≥44px）。
         // 必须写在 .audio-card 的嵌套层级下 —— 原规则同层特异性一致，
@@ -996,14 +996,14 @@
 
     .entrance-hint {
         gap: 8px;
-        bottom: 24px;
+        bottom: calc(24px + env(safe-area-inset-bottom, 0px));
         padding: 12px 20px;
         font-size: 13px;
     }
 
     .corridor-hint {
         gap: 8px;
-        bottom: 24px;
+        bottom: calc(24px + env(safe-area-inset-bottom, 0px));
         padding: 12px 20px;
         font-size: 13px;
     }

@@ -2,6 +2,7 @@ import { createContext, useState, useEffect, useCallback, useRef } from 'react';
 import posthog from 'posthog-js';
 import { ACHIEVEMENTS } from './achievementsData';
 import { playUnlock } from '../utils/sfx';
+import { hapticReward } from '../utils/haptics';
 
 /* 默认值：多个 Canvas 子树内的组件会直接解构本 context 的属性
    （例如 useInfiniteCamera 里的 unlockAchievement）。R3F 的上下文桥接
@@ -83,6 +84,8 @@ export const AchievementsProvider = ({ children }) => {
 
             // Trigger sound effect
             playUnlock();
+            // 盖章瞬间给一次双震（Android 有感，iOS 静默）
+            hapticReward();
 
             setActivePopup(prev => {
                 // If this is the current active popup, transition it to 'completed' then hide

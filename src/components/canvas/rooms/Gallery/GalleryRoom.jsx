@@ -10,6 +10,7 @@ import * as THREE from 'three';
 import gsap from 'gsap';
 import { Observer } from 'gsap/all';
 import { useScene } from '../../../../context/useScene';
+import { hapticTap } from '../../../../utils/haptics';
 
 gsap.registerPlugin(Observer);
 import { useAchievements } from '../../../../context/useAchievements';
@@ -196,6 +197,8 @@ const GalleryRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
 
     const handleCardClick = async (clickedIndex) => {
         if (globalIsAnimating || isTransitioning) return;
+        // 翻卡是画廊里最常发生的手势，给一次很短的震动反馈
+        hapticTap();
 
         // Unlock inspect achievement
         unlockAchievement('gallery_inspect');
