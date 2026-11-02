@@ -15,6 +15,12 @@ const DOOR_POSITIONS = [
     { z: -62, side: 'right' },
 ];
 
+// 滚动限幅：触控板惯性或连续滚轮可能单次给出几百上千的 deltaY，
+// 目标点也会无限累积。两者叠加会让相机以极高瞬时速度冲过墙面装饰（贴脸）。
+// 单次最多走 2.5 单位，目标点最多领先相机 14 单位。
+const MAX_SCROLL_STEP = 2.5;
+const MAX_TARGET_LEAD = 14;
+
 /**
  * useInfiniteCamera Hook
  * 
@@ -122,8 +128,12 @@ const useInfiniteCamera = ({
         if (!scrollEnabledRef.current) return;
 
         e.preventDefault();
-        const delta = e.deltaY * scrollSpeed;
-        targetZ.current -= delta;
+        const delta = THREE.MathUtils.clamp(e.deltaY * scrollSpeed, -MAX_SCROLL_STEP, MAX_SCROLL_STEP);
+        targetZ.current = THREE.MathUtils.clamp(
+            targetZ.current - delta,
+            currentZ.current - MAX_TARGET_LEAD,
+            currentZ.current + MAX_TARGET_LEAD
+        );
         unlockAchievement('corridor_explore');
     }, [scrollSpeed, unlockAchievement]);
 
@@ -146,7 +156,12 @@ const useInfiniteCamera = ({
         const delta = keyScrollMap[e.key];
         if (delta !== undefined) {
             e.preventDefault();
-            targetZ.current -= delta * scrollSpeed;
+            // 与滚轮同一限制：连按 PageDown 不能把目标点累计成瞬移
+            targetZ.current = THREE.MathUtils.clamp(
+                targetZ.current - delta * scrollSpeed,
+                currentZ.current - MAX_TARGET_LEAD,
+                currentZ.current + MAX_TARGET_LEAD
+            );
             unlockAchievement('corridor_explore');
         }
 
